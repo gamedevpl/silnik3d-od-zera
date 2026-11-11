@@ -10,7 +10,7 @@ void draw() {
     static double prev = now;
     double elapsed = now - prev;
     prev = now;
-    player.update(elapsed);
+    player.update(0.02);
     frame();
     glfwSwapBuffers(window);
     glfwPollEvents();
