@@ -2,6 +2,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include "frame.hpp"
+#include "clock.hpp"
 
 GLFWwindow* window;
 
@@ -10,7 +11,10 @@ void draw() {
     static double prev = now;
     double elapsed = now - prev;
     prev = now;
-    player.update(elapsed);
+    static Clock clock;
+    clock.advance(elapsed, [](double dt) {
+        player.update(dt);
+    });
     frame();
     glfwSwapBuffers(window);
     glfwPollEvents();
