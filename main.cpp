@@ -14,6 +14,7 @@ void draw() {
     static Clock clock;
     clock.advance(elapsed, [](double dt) {
         player.update(dt);
+        turnFrame(dt);
     });
     frame();
     glfwSwapBuffers(window);
