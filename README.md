@@ -26,3 +26,15 @@ Zamknij okno, aby zakończyć program. Nagrania powstały z kompilacji natywnej 
 - `ep01` – kwadrat jest aktualizowany w krokach 20 ms.
 
 Na przykład `git diff ep00-frozen ep00 -- frame.hpp` pokazuje poprawkę zatrzymanej animacji. Polecenia `:Run`, `:TryBuild` i `:Rates` z filmu należą do narzędzi nagraniowych Vima. W powyższym przepisie można uruchomić samodzielnie każdy etap od `ep00-window`.
+
+## E02 — od kwadratu do kostki
+
+Na ep02-flat osiem wierzchołków daje cztery pozycje na ekranie. ep02-wire łączy osiem rzutowanych narożników. Żółty punkt pozwala śledzić orientację podczas skoku.
+
+W ep02-euler kolejność obrotów to Y(yaw) · X(pitch) · Z(roll). ep02-quat-euler składa trzy kwaterniony z tych samych kątów. W ep02 kontroler przechowuje jedną orientację i mnoży ją z prawej strony przez przyrost wokół lokalnej osi.
+
+    c++ -std=c++17 axes.cpp -o axes
+    ./axes 60
+    ./axes 90
+
+Test porównuje obrócone osie bazowe po yaw +45° i roll −45°. Wypisuje największą odległość końców odpowiadających sobie wektorów jednostkowych. Do prób z filmu ustaw TURN=yaw lub TURN=roll i PITCH=60 lub PITCH=90 przy uruchamianiu engine. Bez tych zmiennych kostka skacze i obraca się wokół dwóch osi. Render jest ortograficzny, krawędzie rysuje test nożycowy OpenGL z E01.
