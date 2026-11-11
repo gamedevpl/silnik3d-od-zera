@@ -1,4 +1,5 @@
 #pragma once
+#include "mesh.hpp"
 #include <cmath>
 
 struct Jumper {
@@ -28,11 +29,10 @@ inline void frame() {
     glClear(GL_COLOR_BUFFER_BIT);
     int w, h;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &w, &h);
-    int size = h / 10;
-    int y = h / 10 + int(player.height * h / 70.0);
+    int y = int(h * .28 + player.height * h / 150.0);
+    Paper paper{w/2,y,h/7,std::max(1,h/185)};
     glEnable(GL_SCISSOR_TEST);
-    glScissor((w - size) / 2, y, size, size);
     glClearColor(0.72f, 1.f, 0.86f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    cube(paper);
     glDisable(GL_SCISSOR_TEST);
 }
