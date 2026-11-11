@@ -1,5 +1,5 @@
 #pragma once
-#include "rotation.hpp"
+#include "quat.hpp"
 
 struct Attitude {
     double yaw=0, pitch=0, roll=0;
@@ -12,6 +12,9 @@ struct Attitude {
         else roll -= angle;
     }
     Vec3 apply(Vec3 p) const {
-        return aboutY(aboutX(aboutZ(p,roll),pitch),yaw);
+        Quat y = axisAngle({0,1,0},yaw);
+        Quat x = axisAngle({1,0,0},pitch);
+        Quat z = axisAngle({0,0,1},roll);
+        return rotate(y*x*z,p);
     }
 };
