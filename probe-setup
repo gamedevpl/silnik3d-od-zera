@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the five E00 setup checkpoints with the reader's own toolchain."""
+"""Build the E00 setup checkpoints with the reader's own toolchain."""
 import os
 from pathlib import Path
 import shutil
@@ -20,7 +20,8 @@ if cmake_bin:
 
 stages=[
     ('ep00-missing-glad','glad/gl.h'),('ep00-missing-glfw','GLFW/glfw3.h'),
-    ('ep00-glfw-ready',None),('ep00-loader-before',None),('ep00-loader-after',None)]
+    ('ep00-glfw-ready',None),('ep00-window-default',None),('ep00-window-core',None),
+    ('ep00-loader-before',None),('ep00-loader-after',None)]
 with TemporaryDirectory(prefix='e00-setup-') as tmp:
     tree=Path(tmp)/'engine'
     subprocess.run(['git','clone','-q','--no-checkout',source,tree],check=True)

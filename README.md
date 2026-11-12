@@ -2,6 +2,12 @@
 
 Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+, Ninja i sesji graficznej z OpenGL. Uruchom wybraną komendę w katalogu paczki lub na gałęzi main klonu.
 
+## Jak zacząć od E00
+
+W klonie zacznij od `git clone https://github.com/gamedevpl/silnik3d-od-zera.git` i `cd silnik3d-od-zera`. Jeśli korzystasz z paczki, rozpakuj `silnik-3d.zip` i otwórz terminal w katalogu z plikiem `replay`.
+
+Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka zawiera już plik `silnik-3d.bundle`. W klonie utwórz go poleceniem `git bundle create silnik-3d.bundle HEAD main --tags`. Następnie utwórz `work/engine` i przejdź do niego. W tym miejscu `git clone -q ../../silnik-3d.bundle ../../ref` tworzy kopię do podglądu, a `cp -R ../../ref/vendor .` umieszcza biblioteki w budowanym projekcie. Polecenia z tabeli poniżej uruchamiaj z katalogu zawierającego `replay`.
+
 | Odcinek | Long | Short |
 |---|---|---|
 | E00 | `python3 replay setup` · `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
@@ -29,9 +35,19 @@ W klonie Git zacznij na gałęzi main:
 
 W Vimie zamień `aboutY(p,360)` na `aboutY(p,radians(360))`, zapisz i wyjdź przez `:wq`. Narożnik powinien wrócić z (−18, 101) do (276, 210).
 
+## E00 · Co zapisuje Vim, a co uruchamia powłoka
+
+Na macOS lub Linuksie do próby z początku filmu wystarczą Vim i kompilator C++. Zacznij w pustym katalogu.
+
+    mkdir -p work/engine
+    cd work/engine
+    vim main.cpp
+
+Wpisz `int main() {}` i zapisz przez `:w`. Wykonaj `:!c++ main.cpp -o hello`, wróć do edytora klawiszem Enter, a potem uruchom `:!./hello; echo $?`. Zobaczysz jedynie kod wyjścia 0. Dopisz `#include <cstdio>` nad main i `std::puts("engine online");` w jego ciele, po czym zapisz plik. Ponownie uruchom hello. Stary program wciąż nic nie wypisuje. Polecenie `:!ls -1t main.cpp hello` pokaże nowszy main.cpp na górze. Powtórz kompilację, a potem uruchomienie. Tym razem zobaczysz „engine online” i zero.
+
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
-Uruchom `python3 replay setup` w sesji graficznej. Komenda buduje pięć wersji na Twoim komputerze. Pierwsze dwie kompilacje powinny zatrzymać się kolejno na `glad/gl.h` i `GLFW/glfw3.h`. Trzecia sprawdza inicjalizację GLFW. Dwie ostatnie wypisują wynik ładowania funkcji OpenGL przed uaktywnieniem kontekstu i po nim. W klonie porównasz tę jedną linię poleceniem:
+Uruchom `python3 replay setup` w sesji graficznej. Pierwsze dwie kompilacje zatrzymują się na brakujących nagłówkach GLAD i GLFW. Trzecia uruchamia GLFW. Kolejne dwie tworzą okno 640 × 360 i odczytują wersję kontekstu, najpierw domyślną, potem po zażądaniu OpenGL 3.3 core. Na Macu użytym w filmie były to 2.1 i 4.1. Wynik na Twoim komputerze zależy od sterownika. Dwie ostatnie próby ładują funkcje OpenGL przed uaktywnieniem kontekstu i po nim. Tę jedną zmianę możesz porównać w klonie.
 
     git diff ep00-loader-before ep00-loader-after -- main.cpp
 
