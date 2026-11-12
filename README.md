@@ -61,3 +61,4 @@ Przy końcu `python3 replay 01` pojawiają się dwie klatki przy 30 FPS. W drugi
 At the end of `python3 replay 01`, compare two frames at 30 FPS. On frame two the clock has 46.667 ms before the first step. The single check leaves 26.667 ms, the loop leaves 6.667 ms. The test compiles each checkpoint’s clock.hpp.
 
 W E00 polecenie `python3 replay 00` najpierw liczy prezentacje bufora. Próbnik prosi okno o zamknięcie przy ósmej prezentacji. W ep00-one-frame program sam kończy się po jednej, w ep00-draw-loop dochodzi do ośmiu. Po przeniesieniu rysowania do frame.hpp (ep00-window) ponownie otrzymujemy osiem. Każdy wiersz RGB pochodzi z odczytu piksela przed zamianą buforów.
+From work/engine, run `python3 ../../probe-swaps .` to measure the source you just saved. In stock Vim type `:!python3 ../../probe-swaps .`. This is the terminal equivalent of the filmed :Swaps shortcut.
