@@ -9,6 +9,17 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 | E02 | `python3 replay 02` | `python3 replay edges` |
 
 
+
+## E02 · punkty / corner experiment
+
+Na gałęzi main uruchom `python3 replay corners`. The command traces six builds from one old square through eight projected corners. To change the second corner yourself, make a clean worktree:
+
+    git worktree add --detach ../e02-points ep02-stacked-corners
+    c++ -std=c++17 -I../e02-points corner-trace.cpp -o ../e02-points/points
+    ../e02-points/points
+
+Zmień corners[2] na corners[3] w pliku ../e02-points/mesh.hpp i powtórz obie ostatnie komendy.
+
 ## E02 · test przy 89° / the 89° test
 
 Na gałęzi main uruchom `python3 replay 02`. From main this repeats the 60°, 89° and 90° Euler test and compares all three controllers at 90°. Requires Git, Python 3 and a C++17 compiler. Własny kąt sprawdzisz w osobnym katalogu roboczym:
