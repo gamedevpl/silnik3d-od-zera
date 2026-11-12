@@ -1,6 +1,13 @@
 /* Page logic: language switch, season tabs, episode rows. Data lives in series.js. */
 (function(){
 const { repo: REPO, playlist: PLAYLIST, seasons: SEASONS } = window.SERIES;
+const NOTES = window.NOTES || {};
+
+/* Reader progress: { e00: { w: 1, p: 1 } }, kept only in this browser. */
+const KEY = "silnik:progress";
+let progress = {};
+try { progress = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(_){}
+const done = (slug, k) => !!(progress[slug] && progress[slug][k]);
 
 const T = {
   pl: {
@@ -20,6 +27,7 @@ const T = {
     epsTitle:"Odcinki", 
     premiere:"Premiera", soonNote:"Do tego czasu kod i zadanie już czekają poniżej.",
     open:"Rozwiń", nextUp:"Najbliższa premiera", latest:"Najnowszy", startHere:"Zacznij tutaj", outNow:"Już jest", planned:"W planie", season:"Sezon", watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
+    doneW:"Obejrzane", doneP:"Zadanie: PASS", progressLabel:"Twój postęp", note:"Notatka",
     exLabel:"Twoja kolej", runCmds:"W terminalu uruchom kolejno:",
     afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
     solution:"Rozwiązanie", fullCode:"Pełny kod po odcinku", startBranch:"Gałąź startowa",
@@ -52,6 +60,7 @@ const T = {
     epsTitle:"Episodes", 
     premiere:"Premiere", soonNote:"The code and the exercise are already waiting below.",
     open:"Open", nextUp:"Next premiere", latest:"Latest", startHere:"Start here", outNow:"Out now", planned:"Planned", season:"Season", watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
+    doneW:"Watched", doneP:"Exercise: PASS", progressLabel:"Your progress", note:"Note",
     exLabel:"Your turn", runCmds:"Run these commands in your terminal:",
     afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
     solution:"Solution", fullCode:"Full code after the episode", startBranch:"Start branch",
@@ -100,6 +109,9 @@ function body(e, L, now){
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
   const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${esc(n)}</a>` : esc(n)}</li>`).join("");
+  const nt = NOTES[e.slug] && NOTES[e.slug][lang];
+  const noteHtml = nt ? nt.html.replace(/\[\[(\d+:\d\d)\]\]/g, (_, t) => `<a class="ts" href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${t}</a>`) : "";
+  const check = k => `<button type="button" class="check" data-check="${k}" data-slug="${e.slug}" aria-pressed="${done(e.slug, k)}"><i aria-hidden="true"></i>${k === "w" ? L.doneW : L.doneP}</button>`;
   return `
     <div class="ep">
       <div>
@@ -122,7 +134,21 @@ function body(e, L, now){
           <a href="${REPO}/tree/${e.ep}">${L.fullCode}</a>
         </div>
       </div>
+      <div class="checks">${check("w")}${check("p")}</div>
+      ${nt ? `<details class="note"><summary><img class="pix" src="art/m-focus.png" alt="" width="41" height="39"><span class="label">${L.note}</span><b>${esc(nt.t)}</b><small>${esc(nt.min)}</small></summary><article>${noteHtml}</article></details>` : ""}
     </div>`;
+}
+
+/* Paints ticks in the rows and wakes up the mascots at the bottom, one sixth of the way at a time. */
+function paintProgress(){
+  const eps = SEASONS.flatMap(s => s.episodes).filter(e => e.video);
+  const total = eps.length * 2, n = eps.reduce((a, e) => a + done(e.slug, "w") + done(e.slug, "p"), 0);
+  document.querySelectorAll(".ticks").forEach(t => { t.children[0].classList.toggle("on", done(t.dataset.slug, "w")); t.children[1].classList.toggle("on", done(t.dataset.slug, "p")); });
+  document.querySelectorAll(".check").forEach(b => b.setAttribute("aria-pressed", done(b.dataset.slug, b.dataset.check)));
+  const faces = document.querySelectorAll(".faces .strip img"), lit = total ? Math.round(faces.length * n / total) : 0;
+  faces.forEach((f, i) => f.classList.toggle("lit", i < lit));
+  const c = document.getElementById("progressCount");
+  if (c) c.textContent = `${T[lang].progressLabel}: ${n}/${total}`;
 }
 
 function renderEpisodes(){
@@ -147,10 +173,11 @@ function renderEpisodes(){
       : `<span class="pill soon-pill">${isF ? L.nextUp + " · " : ""}${fmtShort(e.at, lang)}</span>`;
     const isOpen = first ? isF : open.has(e.slug);
     return `<details class="row${isF ? " featured" : ""}" id="${e.slug}"${isOpen ? " open" : ""}>
-      <summary class="row-head"><canvas class="thumb pix" width="48" height="30" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><span class="ep-num">${code(e)}</span><h3>${esc(d.t)}</h3><span class="ep-meta">${e.len}</span>${pill}<span class="chev" aria-hidden="true"></span></summary>
+      <summary class="row-head"><canvas class="thumb pix" width="48" height="30" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><span class="ep-num">${code(e)}</span><h3>${esc(d.t)}</h3><span class="ticks" data-slug="${e.slug}" aria-hidden="true"><i></i><i></i></span><span class="ep-meta">${e.len}</span>${pill}<span class="chev" aria-hidden="true"></span></summary>
       ${body(e, L, now)}
     </details>`;
   }).join("");
+  paintProgress();
 }
 
 function setLang(next){
@@ -170,6 +197,13 @@ document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click
 document.addEventListener("click", ev => {
   const tab = ev.target.closest("[data-season]");
   if (tab){ season = +tab.dataset.season; renderEpisodes(); return; }
+  const chk = ev.target.closest(".check");
+  if (chk){
+    const p = progress[chk.dataset.slug] || (progress[chk.dataset.slug] = {});
+    p[chk.dataset.check] = p[chk.dataset.check] ? 0 : 1;
+    try { localStorage.setItem(KEY, JSON.stringify(progress)); } catch(_){}
+    paintProgress(); return;
+  }
   const c = ev.target.closest(".copy");
   if (c){
     navigator.clipboard.writeText(c.dataset.copy).then(() => {
@@ -182,7 +216,7 @@ document.addEventListener("click", ev => {
   const seek = ev.target.closest("a[data-seek]");
   const plain = !(ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button);
   const p = ev.target.closest(".video[data-yt] .play");
-  const box = p ? p.parentElement : seek && plain ? seek.closest(".ep").querySelector(".video[data-yt]") : null;
+  const box = p ? p.parentElement : seek && plain ? seek.closest(".row").querySelector(".video[data-yt]") : null;
   if (box){
     if (seek) ev.preventDefault();
     const start = seek ? `&start=${seek.dataset.seek}` : "";
