@@ -1,4 +1,4 @@
-#include "clock.hpp"
+#include <clock.hpp>
 #include <cstdio>
 
 int main() {
