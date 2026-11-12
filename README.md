@@ -1,3 +1,27 @@
+# E02 · Wyprostuj boki kostki
+
+Kostka ma już dwanaście krawędzi, ale boki idą na skos. W `mesh.hpp` popraw połączenia między dwiema ramkami. Sprawdź wszystkie cztery pary. Do żółtego narożnika 6 ma prowadzić narożnik 2.
+
+```sh
+git clone -b e02-start https://github.com/gamedevpl/silnik3d-od-zera.git
+cd silnik3d-od-zera
+python3 check.py
+```
+
+Pierwsze uruchomienie pokazuje pomiar i `RETRY`. Zmień plik, zapisz i ponów `python3 check.py`, aż zobaczysz `PASS`. Test kompiluje kod z Twojego katalogu. Potrzebujesz Gita, Pythona 3 i kompilatora C++17 (GCC lub Clang). Porównaj swoją próbę z gałęzią rozwiązania bez przełączania plików roboczych:
+
+```sh
+git diff origin/e02-solution -- mesh.hpp
+```
+
+Pełny stan końcowy odcinka ma tag `ep02`.
+
+## Straighten the sides of the cube
+
+The cube has twelve edges, but its sides run diagonally. In `mesh.hpp`, fix the connections between the two face loops. Check all four pairs. Corner 2 should connect to the yellow corner 6.
+
+Run the three commands above with Git, Python 3 and a C++17 compiler (GCC or Clang). The first run prints the measurement and `RETRY`. Edit the file, save it and rerun `python3 check.py` until it prints `PASS`. The diff command compares your working file against the solution branch. The full episode ends at the tag shown above.
+
 # Silnik 3D w C++ od zera
 
 Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
