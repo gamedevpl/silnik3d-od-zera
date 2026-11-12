@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','setup','edges','turns','pulse','clock','race','corners','landing','steps'))
+parser.add_argument('episode',choices=('00','01','02','setup','edges','turns','pulse','clock','race','frame','corners','landing','steps'))
 parser.add_argument('--source',type=Path,help='For landing, steps, turns or pulse: compile the code from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
@@ -86,12 +86,22 @@ elif ep=='landing':
             for tag in ('ep01-fall','ep01-clamp','ep01-bounce'):
                 run(['git','-C',repo,'switch','-q','--detach',tag])
                 sample(repo,tag)
+elif ep=='frame':
+    bundle = base / 'silnik-3d.bundle'
+    with TemporaryDirectory(prefix='one-frame-') as work:
+        tree = Path(work) / 'engine'
+        run(['git', 'clone', '-q', '--no-checkout', bundle if bundle.is_file() else base, tree])
+        for checkpoint in ('ep01-matched-tick', 'ep01-loop-30hz'):
+            run(['git', '-C', tree, 'switch', '-q', '--detach', checkpoint])
+            print(f'{checkpoint} | one frame at 15 FPS', flush=True)
+            run([sys.executable, base / 'frame', '15', '--source', tree])
 elif ep=='race':
     trials=[('ep01-single-step',30),('ep01-matched-tick',30),('ep01-matched-tick',15),
             ('ep01-loop-30hz',15),('ep01',15)]
     for checkpoint,fps in trials:
         print(f'\n{checkpoint} | {fps} vs 240 FPS',flush=True)
         run([sys.executable,base/'race',str(fps),'--version',checkpoint])
+    run([sys.executable, __file__, 'frame'])
 elif ep in ('pulse','clock'):
     middle='ep00-unused-elapsed' if ep=='pulse' else 'ep00-static-elapsed'
     tags=['.'] if args.source else ['ep00-frozen','ep00-fast',middle,'ep00']

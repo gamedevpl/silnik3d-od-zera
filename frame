@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Trace step callbacks in one rendered frame of the selected clock.hpp."""
+import argparse
+from pathlib import Path
+import subprocess
+from tempfile import TemporaryDirectory
+
+base = Path(__file__).resolve().parent
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('fps', type=int)
+parser.add_argument('--source', type=Path, default=Path.cwd(), help='directory containing clock.hpp')
+args = parser.parse_args()
+if not 1 <= args.fps <= 1000:
+    parser.error('fps must be between 1 and 1000')
+src = args.source.resolve()
+if not (src/'clock.hpp').is_file():
+    parser.error('clock.hpp is missing in '+str(src))
+with TemporaryDirectory(prefix='frame-trace-') as tmp:
+    binary = Path(tmp)/'trace'
+    subprocess.run(['c++','-std=c++17','-I',src,base/'clock-trace.cpp','-o',binary],check=True)
+    subprocess.run([binary,str(args.fps)],check=True)

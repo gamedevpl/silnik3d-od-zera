@@ -87,11 +87,15 @@ Na gałęzi main uruchom `python3 replay 02`. From main this repeats the 60°, 8
 
 W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas pierwszego kontaktu z ziemią przy wybranej liczbie klatek i przy 240 FPS. Próbnik zatrzymuje skok po pierwszym kontakcie wewnątrz kroku fizyki. Dzięki temu wykrywa też lądowanie, po którym postać odbiłaby się przed kolejną klatką. Podany czas oznacza chwilę klatki zawierającej kontakt. Dokładność ogranicza czas jednej klatki.
 
-Aby samemu sprawdzić poprawkę, pracuj na etapie ep01-matched-tick. Z katalogu ref uruchom `python3 ../race 15`, zamień if na while w clock.hpp, zapisz i ponów to samo polecenie. Komenda :Race 15 z filmu odpowiada temu testowi z terminala.
+Polecenie `python3 replay frame` porównuje jedną klatkę z filmu przed poprawką i po niej. Wystarczą Git, Python 3 i kompilator C++17. Możesz też własnoręcznie zmienić warunek.
+
+Z głównego katalogu klonu na gałęzi main.
 
     git worktree add --detach ref ep01-matched-tick
-    cd ref
-    python3 ../race 15
+    python3 frame 15 --source ref
+    vim ref/clock.hpp
+
+Zamień `if (lag >= tick)` na `while (lag >= tick)` i zapisz przez `:wq`. Powtórz `python3 frame 15 --source ref`. W tej samej klatce 66,667 ms wykonają się teraz dwa kroki po 33,333 ms. Reszta spadnie z 33,333 ms do zera. Aby porównać także czasy lądowania, uruchom `python3 ../race 15` z katalogu ref.
 
 Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
 
