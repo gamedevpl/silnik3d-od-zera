@@ -2,6 +2,8 @@
 
 Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+, Ninja i sesji graficznej z OpenGL. Uruchom wybraną komendę w katalogu paczki lub na gałęzi main klonu.
 
+[E02 in English](README.en.md)
+
 ## Jak zacząć od E00
 
 W klonie zacznij od `git clone https://github.com/gamedevpl/silnik3d-od-zera.git` i `cd silnik3d-od-zera`. Jeśli korzystasz z paczki, rozpakuj `silnik-3d.zip` i otwórz terminal w katalogu z plikiem `replay`.
@@ -35,17 +37,30 @@ Z katalogu z plikiem replay uruchom `python3 replay steps`, aby porównać wynik
 
 ## E02 Short · skąd się wzięła przekątna
 
-Do próby wystarczą Git, Python 3 i kompilator C++17. W rozpakowanym zestawie, w katalogu z plikiem `replay`, utwórz roboczą kopię początkowej pomyłki:
+W katalogu rozpakowanego zestawu, obok pliku `replay`, przygotuj początek sesji. Potrzebujesz Git, Vima, Pythona 3 i kompilatora C++17.
 
-    git clone -b ep02-crossed-sides silnik-3d.bundle ref
+    git clone -b ep02-marked-rings silnik-3d.bundle ref
     cd ref
     vim mesh.hpp
 
-W pełnym klonie z GitHuba, obok pliku `replay`, w pierwszym poleceniu użyj `git clone -b ep02-crossed-sides . ref`. Z Vima uruchom `:!python3 ../replay edges --source .`. Próbnik kompiluje zapisany `mesh.hpp` i wypisuje końce odcinków rzeczywiście podanych do `paper.line`. Jedna z czterech par to `1->6`.
+W klonie z GitHuba użyj `git clone -b ep02-marked-rings . ref` w pierwszym wierszu. Jeśli chcesz zobaczyć skok w oknie, w katalogu `ref` wykonaj jednorazowo `cmake -S . -B build -G Ninja`. W zwykłym Vimie odpowiednikiem filmowego `:Run` jest `:!cmake --build build && ./build/engine`. Zamknij okno gry, żeby wrócić do edycji.
 
-Wpisz `:e corners.hpp` i znajdź róg, który ma takie same x i y jak szóstka. Wróć przez `:b#`. Przy wywołaniu `paper.line(dots[i], dots[next+4]);` ustaw kursor na słowie `next`. Wpisz `ciwi`, naciśnij Esc i zapisz plik przez `:w`. Polecenie `:!!` powtarza poprzedni test powłoki. Nadal są 12 krawędzi. Boki to teraz `0->4 1->5 2->6 3->7`. Polecenie `python3 replay edges` z katalogu paczki powtarza trzy zapisane etapy.
+1. Wpisz `:18` i Enter. `yy` kopiuje tylną krawędź, `p` wkleja kopię. Zapisz `:w` i uruchom próbę. Nadal widać dwie ramki. Z Vima możesz to sprawdzić także bez grafiki poleceniem `:!python3 ../replay edges --source .`. Są już 12 wywołań, a lista bocznych połączeń jest pusta.
+2. W kopii, w wierszu 19, wpisz `0f+`, potem `2x` i `:w`. Próbnik pokazuje m.in. `1->6`. Liczba wywołań nadal wynosi 12.
+3. Wpisz `:e corners.hpp`. Spośród przednich rogów tylko 1 i 2 mają takie samo x jak szóstka. Jedynie dwójka ma również to samo y. Wróć przez `:b#`. Wpisz `/next`, Enter. Kursor stoi na słowie `next` w drugim argumencie.
+4. Wpisz `ciw`, potem literę `i`, Esc i `:w`. `:!!` powtarza poprzednią komendę powłoki. Jeśli ostatnio uruchamiałeś grę, ponownie wpisz pełne polecenie próbnika. Tym razem dostaniesz `0->4 1->5 2->6 3->7`. Ponownie uruchom grę, aby zobaczyć poprawioną kostkę podczas skoku.
 
-Aby odtworzyć także początek filmu, w pierwszym poleceniu wybierz tag `ep02-marked-rings`. W `mesh.hpp` ustaw kursor na wierszu 18. Naciśnij `yy`, następnie `p`. Na kopii ustaw kursor na pierwszym znaku `+`, usuń `+4` klawiszami `2x` i zapisz przez `:w`. Teraz możesz wykonać tę samą próbę dla skrzyżowanych boków.
+Tag `ep02-crossed-sides` pozwala zacząć od pomyłki w kroku 3, a `ep02-wire` zawiera poprawkę. Polecenie `python3 replay edges` z katalogu zestawu porównuje trzy zapisane etapy.
+
+## E02 · skąd minus przy roll?
+
+W katalogu głównym klonu utwórz drugi katalog poleceniem `git clone -b ep02-euler . sign-edit`. W paczce offline użyj `git clone -b ep02-euler silnik-3d.bundle sign-edit`. Wykonaj `cd sign-edit` i `vim axes.cpp`.
+
+Wyszukaj `/roll.turn`. Oba wywołania przekazują 45°. Wpisz `:e attitude.hpp` i wyszukaj `/roll -=`. Kontroler odejmuje argument od roll. Zajrzyj do `:e ../steer.cpp` i znajdź `/pose.turn(`. Klawisz Z przekazuje −1° w każdym z 45 kroków. W ten sposób zwiększa roll o 45°. Wróć przez `:b axes.cpp`. Pod wierszem dwóch wywołań otwórz nowy wiersz klawiszem `o` i wpisz:
+
+    std::printf("roll = %g deg\n", roll.roll / radians(1));
+
+Naciśnij Esc i zapisz `:w`. Wykonaj `:!c++ -std=c++17 axes.cpp -o axes && ./axes 90`. W oddzielnym przebiegu próbnika roll wynosi −45°, a największa odległość między końcami odpowiadających osi wynosi 0,000. Wróć przez Enter, usuń dodany wydruk przez `u`, zapisz przez `:w`. Zmień ostatni argument polecenia z 90 na 60 i powtórz pomiar. Odstęp wyniesie 0,383.
 
 ## E02 · czy inna oś cofnie obrót?
 
