@@ -18,6 +18,19 @@ Przejdź E00 w Vimie od [pierwszego zapisu pliku](#e00--co-zapisuje-vim-a-co-uru
 
 
 
+## E01 · jedna długa klatka bez OpenGL
+
+W grze zegar ma poruszyć skoczka. W tej próbie chcemy jedynie policzyć wywołania, jakie spowoduje jedna klatka trwająca 1/3 sekundy. Wystarczą Git, Vim, Python 3 i kompilator C++17.
+
+    git clone -b ep01-clock-coupled . clock-edit
+    cd clock-edit
+    vim clock.hpp
+
+Wpisz w Vimie `:!python3 ../frame 3`. Kompilator zatrzyma się na `player.update(tick)`. Wróć przez Enter. Wyszukaj `/player.update`, naciśnij Enter i wpisz `ct(`. Wpisz słowo `step`, naciśnij Esc i zapisz przez `:w`. Powtórz ostatnią komendę powłoki przez `:!!`. Tym razem sam zegar wykona 16 kroków po 20 ms, a 13,333 ms zachowa na później.
+
+Na początku dodaj `#include <algorithm>`. W funkcji advance zastąp `lag += elapsed;` przez `lag += std::min(elapsed, 0.25);`. Zapisz plik i ponów `:!!`. Zegar przyjął 250 z 333,333 ms. Wykonał 12 kroków i zachował 10 ms. Tagi `ep01-clock-uncapped` i `ep01-clock-capped` zawierają obie poprawne wersje do porównania. Gra nadal używa starej pętli w draw(). Końcowy tag `ep01` podpina Clock do skoczka.
+
+
 ## E02 Short · skąd się wzięła przekątna
 
 Do próby wystarczą Git, Python 3 i kompilator C++17. W rozpakowanym zestawie, w katalogu z plikiem `replay`, utwórz roboczą kopię początkowej pomyłki:
