@@ -11,11 +11,11 @@ from tempfile import TemporaryDirectory
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing','steps'))
-parser.add_argument('--source',type=Path,help='For landing or steps: compile the jumper from this edited engine directory.')
+parser.add_argument('--source',type=Path,help='For landing, steps or pulse: compile the code from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
-if args.source and ep not in ('steps','landing'):
-    parser.error('--source is available for the landing and steps exercises.')
+if args.source and ep not in ('steps','landing','pulse'):
+    parser.error('--source is available for landing, steps and pulse.')
 
 def run(args,cwd=None):
     subprocess.run(args,cwd=cwd,check=True)
@@ -91,11 +91,12 @@ elif ep=='race':
         print(f'\n{checkpoint} | {fps} vs 240 FPS',flush=True)
         run([sys.executable,base/'race',str(fps),'--version',checkpoint])
 elif ep in ('pulse','clock'):
-    tags=['ep00-frozen','ep00-fast']
-    if ep=='clock':tags.append('ep00-static-elapsed')
-    for tag in [*tags,'ep00']:
+    middle='ep00-unused-elapsed' if ep=='pulse' else 'ep00-static-elapsed'
+    tags=['.'] if args.source else ['ep00-frozen','ep00-fast',middle,'ep00']
+    for tag in tags:
         print(f'\n{tag} | first clock = 0.20 s',flush=True)
-        run([sys.executable,base/'probe',tag,'arg','--start-time','0.20'])
+        mode='pulse' if ep=='pulse' else 'arg'
+        run([sys.executable,base/'probe',tag,mode,'--start-time','0.20'],cwd=args.source)
 elif ep=='corners':
     origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base
     with TemporaryDirectory(prefix='cube-points-') as scratch:

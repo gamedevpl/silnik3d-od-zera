@@ -14,8 +14,8 @@ parser.add_argument('--count-steps',action='store_true',help='Count actual calls
 args=parser.parse_args()
 if not math.isfinite(args.start_time) or args.start_time < 0: parser.error('Use a finite nonnegative clock.')
 if args.frame_count is not None and (not args.frames or args.frame_count < 1): parser.error('--frame-count needs --frames and a positive count.')
-angle=args.rate=='arg'
-pixel=args.rate in ('pixel','arg')
+angle=args.rate in ('arg','pulse')
+pixel=args.rate in ('pixel','arg','pulse')
 hz=30 if pixel else int(args.rate)
 if not 1<=hz<=1000:parser.error('Use 1–1000 FPS.')
 configured=os.environ.get('CMAKE_BIN_DIR')
@@ -59,6 +59,9 @@ with tempfile.TemporaryDirectory(prefix='cpp-engine-probe-') as tmp:
     if angle:
         import re
         wrapped,count=re.subn(r'std::cos\(([^()]*)\)',r'std::cos(probeArgument(\1))',text)
+        if args.rate=='pulse':
+            time_var='elapsed' if re.search(r'\bdouble elapsed\s*=',text) else '-1.0'
+            wrapped,count=re.subn(r'std::cos\(([^()]*)\)',lambda match:'std::cos(probePulse('+match[1]+', '+time_var+'))',text)
         if count!=1:parser.error('This checkpoint has no single cosine to trace.')
         shutil.copy(src/'main.cpp',driver)
         (driver/'frame.hpp').write_text(wrapped)

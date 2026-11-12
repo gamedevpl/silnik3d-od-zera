@@ -19,6 +19,12 @@ static double probeArgument(double value) {
     return value;
 }
 
+static double probePulse(double value, double elapsed) {
+    if(elapsed>=0 && (n==0 || n==hz))
+        std::printf("elapsed=%.3f s   ",elapsed);
+    return probeArgument(value);
+}
+
 static GLFWwindow* movieWindow(int w,int h,const char* title,GLFWmonitor* m,GLFWwindow* other){
     glfwWindowHint(GLFW_VISIBLE,GLFW_FALSE);
     return glfwCreateWindow(w,h,title,m,other);

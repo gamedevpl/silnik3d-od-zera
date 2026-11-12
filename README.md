@@ -143,7 +143,13 @@ For the vertical E02 experiment run `python3 replay edges`. This compiles mesh.h
 
 ### Short E00
 
-Uruchom `python3 replay pulse`. Test ustawia zegar pierwszej klatki na 0,20 s dla wszystkich trzech wersji. Porównaj argument cosinusa i piksel po upływie sekundy.
+W katalogu po rozpakowaniu paczki lub na gałęzi main uruchom `python3 replay pulse`. Python buduje i uruchamia rzeczywisty projekt C++. Wszystkie cztery próby zaczynają się w 0,20 s. W trzeciej elapsed zmienia się z 0,000 na 1,000, ale argument cosinusa pozostaje równy 0,360. W czwartej argument zmienia się z 0,000 na 1,800 i piksel zmienia kolor.
+
+    git worktree add --detach ../pulse-edit ep00-unused-elapsed
+
+W `../pulse-edit/frame.hpp` zmień tylko `cos(start * 1.8)` na `cos(elapsed * 1.8)`. Po zapisie uruchom w dotychczasowym katalogu:
+
+    python3 replay pulse --source ../pulse-edit
 
 ### E00 · zegar i pomarańczowy piksel
 
