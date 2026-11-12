@@ -3,8 +3,18 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 
+GLFWwindow* window;
+
 int main() {
     if (!glfwInit()) return 1;
-    std::puts("GLFW ready");
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    window = glfwCreateWindow(640, 360, "Engine", nullptr, nullptr);
+    if (!window) { glfwTerminate(); return 1; }
+    std::puts(gladLoadGL(glfwGetProcAddress)
+              ? "GLAD ready" : "GLAD failed");
+    glfwDestroyWindow(window);
     glfwTerminate();
 }
