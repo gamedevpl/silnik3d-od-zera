@@ -11,8 +11,9 @@ int main(int argc, char** argv) {
         std::printf("frame 1: +%.3f ms\n", elapsed * 1000);
         int steps = 0;
         clock.advance(elapsed, [&](double tick) {
+            ++steps;
             std::printf("step %d: lag %.3f ms, tick %.3f ms\n",
-                        ++steps, clock.lag * 1000, tick * 1000);
+                        steps, clock.lag * 1000, tick * 1000);
         });
         std::printf("return: %d step%s, lag %.3f ms\n", steps, steps == 1 ? "" : "s", clock.lag * 1000);
         return 0;
