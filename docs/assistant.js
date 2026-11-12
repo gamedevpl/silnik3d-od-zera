@@ -4,13 +4,13 @@
    Loaded only where that model exists; everywhere else the page simply has no helper. */
 import { createPageAgent } from "./vendor/genaicode-browser.js";
 
-const { T, lang, code } = window.SILNIK;
+const { T, lang, code, isOut } = window.SILNIK;
 const SERIES = window.SERIES;
 const L = () => T[lang()];
 const all = SERIES.seasons.flatMap(s => s.episodes);
 const ready = all.filter(e => e.video);
 const byId = id => ready.find(e => code(e) === String(id).toUpperCase());
-const isLive = e => Date.now() >= Date.parse(e.at);
+const isLive = e => isOut(e, Date.now());
 const day = iso => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Warsaw" }).format(new Date(iso));
 const clock = sec => Math.floor(sec / 60) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

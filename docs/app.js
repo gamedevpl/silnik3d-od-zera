@@ -17,9 +17,9 @@ const T = {
     s2t:"Klonujesz start", s2p:"Każde zadanie ma gałąź startową. Jedna komenda git clone i masz dokładnie ten kod, który był na ekranie, z jednym zepsutym miejscem.",
     s3t:"Naprawiasz do PASS", s3p:"python3 check.py najpierw powie RETRY. Poprawiasz jeden plik i uruchamiasz ponownie. Po PASS porównujesz swoją wersję z rozwiązaniem.",
     termRetry:"tło nie pulsuje",
-    epsTitle:"Odcinki", epsLede:"Premiery w środy o 18:00 czasu polskiego. Short z każdego odcinka wychodzi kilka dni później.",
+    epsTitle:"Odcinki", epsLede:"Trzy odcinki na start. Zacznij od E00 albo wskocz tam, gdzie coś Cię ciekawi: każdy ma własne zadanie.",
     premiere:"Premiera", soonNote:"Do tego czasu kod i zadanie już czekają poniżej.",
-    open:"Rozwiń", nextUp:"Najbliższa premiera", latest:"Najnowszy", outNow:"Już jest", planned:"W planie", season:"Sezon", watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
+    open:"Rozwiń", nextUp:"Najbliższa premiera", latest:"Najnowszy", startHere:"Zacznij tutaj", outNow:"Już jest", planned:"W planie", season:"Sezon", watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
     exLabel:"Twoja kolej", runCmds:"W terminalu uruchom kolejno:",
     afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
     solution:"Rozwiązanie", fullCode:"Pełny kod po odcinku", startBranch:"Gałąź startowa",
@@ -30,7 +30,7 @@ const T = {
     req3:"Kod na licencji MIT. Bierz, zmieniaj, buduj swoje.",
     nextTitle:"Co dalej",
     nextP:"Odcinek 2 kończy się zapowiedzią trójkątów. Zanim nagram ciąg dalszy, chcę zobaczyć, jak Wam idą zadania. Napisz pod filmem, co zadziałało, a co nie.",
-    made:"Made by", madeBy:"Prowadzi Grzegorz, który robi gry od 1997, dziś głównie przeglądarkowe na gamedev.pl.",
+    made:"Made by",
     games:"Gry w przeglądarce",
     askOpen:"Zapytaj o serię", askTitle:"Zapytaj o serię", askHello:"Pytaj o odcinki, zadania i o to, w której minucie coś było.",
     askNote:"Działa w Twojej przeglądarce, nic nie wysyła. Mały model: odpowiada po angielsku i czasem się myli.",
@@ -54,9 +54,9 @@ const T = {
     s2t:"Clone the start", s2p:"Every exercise has a start branch. One git clone and you have exactly the code from the screen, with one broken spot.",
     s3t:"Fix it until PASS", s3p:"python3 check.py first prints RETRY. Change one file and run it again. Once you get PASS, compare your edit with the solution.",
     termRetry:"background does not pulse",
-    epsTitle:"Episodes", epsLede:"New episodes on Wednesdays, 18:00 Warsaw time. A Short from each episode follows a few days later.",
+    epsTitle:"Episodes", epsLede:"Three episodes to start with. Begin at E00 or jump to whatever interests you: each one has its own exercise.",
     premiere:"Premiere", soonNote:"The code and the exercise are already waiting below.",
-    open:"Open", nextUp:"Next premiere", latest:"Latest", outNow:"Out now", planned:"Planned", season:"Season", watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
+    open:"Open", nextUp:"Next premiere", latest:"Latest", startHere:"Start here", outNow:"Out now", planned:"Planned", season:"Season", watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
     exLabel:"Your turn", runCmds:"Run these commands in your terminal:",
     afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
     solution:"Solution", fullCode:"Full code after the episode", startBranch:"Start branch",
@@ -67,7 +67,7 @@ const T = {
     req3:"The code is MIT licensed. Take it, change it, build your own.",
     nextTitle:"What's next",
     nextP:"Episode 2 ends with triangles coming up. Before I record more, I want to see how the exercises go for you. Tell me under the video what worked and what didn't.",
-    made:"Made by", madeBy:"By Grzegorz, making games since 1997, these days mostly browser games on gamedev.pl.",
+    made:"Made by",
     games:"Browser games",
     askOpen:"Ask about the series", askTitle:"Ask about the series", askHello:"Ask about episodes, exercises, or the minute something happened.",
     askNote:"Runs in your browser and sends nothing out. It is a small model: it can be wrong.",
@@ -82,6 +82,8 @@ const T = {
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tsToSec = ts => ts.split(":").reduce((a,b)=>a*60+(+b),0);
+/* An episode is treated as published unless it sets `premiere: true`; then it shows a premiere card until `at`. */
+const isOut = (e, now) => !e.premiere || now >= Date.parse(e.at);
 const code = e => "E" + String(e.n).padStart(2, "0");
 const TZ = "Europe/Warsaw";
 const fmtLong = (iso, lang) => new Intl.DateTimeFormat(T[lang].dateFmt,{weekday:"long",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit",timeZone:TZ}).format(new Date(iso));
@@ -89,14 +91,17 @@ const fmtShort = (iso, lang) => new Intl.DateTimeFormat(T[lang].dateFmt,{day:"nu
 
 let lang = "pl", season = null;
 
-/* The episode to open first: the next premiere, or the latest one that is out. */
+/* The episode to open first: the next premiere, or the first episode of the newest season. */
 function featured(now){
   const all = SEASONS.flatMap(s => s.episodes.map(e => ({ s, e }))).filter(x => x.e.video);
-  return all.find(x => Date.parse(x.e.at) > now) || all[all.length - 1] || null;
+  const next = all.find(x => !isOut(x.e, now));
+  if (next || !all.length) return next || null;
+  const newest = all[all.length - 1].s;
+  return all.find(x => x.s === newest);
 }
 
 function body(e, L, now){
-  const d = e[lang], live = now >= Date.parse(e.at), shortLive = e.short && now >= Date.parse(e.shortAt);
+  const d = e[lang], live = isOut(e, now), shortLive = e.short && now >= Date.parse(e.shortAt);
   const cmds = `git clone -b ${e.slug}-start ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
   const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
   const video = live
@@ -146,9 +151,9 @@ function renderEpisodes(){
     const d = e[lang];
     if (!e.video)
       return `<div class="row planned" id="${e.slug}"><div class="row-head"><span class="ep-num">${code(e)}</span><h3>${esc(d.t)}</h3><span class="pill">${L.planned}</span></div></div>`;
-    const live = now >= Date.parse(e.at), isF = f && f.e === e;
+    const live = isOut(e, now), isF = f && f.e === e;
     const pill = live
-      ? `<span class="pill live">${isF ? L.latest : L.outNow}</span>`
+      ? (isF ? `<span class="pill live">${L.startHere}</span>` : "")
       : `<span class="pill soon-pill">${isF ? L.nextUp + " · " : ""}${fmtShort(e.at, lang)}</span>`;
     const isOpen = first ? isF : open.has(e.slug);
     return `<details class="row${isF ? " featured" : ""}" id="${e.slug}"${isOpen ? " open" : ""}>
@@ -204,7 +209,7 @@ document.addEventListener("click", ev => {
 })();
 
 /* For assistant.js. */
-window.SILNIK = { T, lang: () => lang, code, render: renderEpisodes };
+window.SILNIK = { T, lang: () => lang, code, isOut, render: renderEpisodes };
 
 /* The CRT shows what episode 2 ends with: 8 corners, 12 edges, corner 6 in yellow.
    Drawn at the monitor's own 95x60 pixels, like the film. */
