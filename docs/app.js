@@ -10,7 +10,7 @@ const T = {
     lede:"Budujemy własny silnik 3D, zaczynając od pustego katalogu. Bez lektora: prawdziwy Vim, prawdziwe błędy i napisy PL/EN. Każdy odcinek kończy się zadaniem, które sprawdzisz u siebie jedną komendą.",
     ctaPlaylist:"Playlista na YouTube", ctaCode:"Kod na GitHubie",
     factSubs:"napisy PL/EN",
-    bubble:"12 krawędzi.<br>Czemu jedna<br>po skosie?", crumb:"Silnik 3D od zera",
+    bubble:"12 krawędzi.<br>Czemu jedna<br>po skosie?", bubblePass:"PASS", crumb:"Silnik 3D od zera",
     howTitle:"Jak to działa",
     howLede:"Oglądasz, jak kod powstaje, a na końcu dostajesz jedną małą rzecz do naprawienia samodzielnie.",
     s1t:"Oglądasz", s1p:"Od pustego main() do działającego programu. Bez lektora, z napisami po polsku albo angielsku. Rozdziały w opisie pozwalają wrócić do konkretnego miejsca.",
@@ -47,7 +47,7 @@ const T = {
     lede:"Building my own 3D engine, starting from an empty folder. No voiceover: real Vim, real errors and subtitles in English and Polish. Every episode ends with an exercise you check on your machine with one command.",
     ctaPlaylist:"YouTube playlist", ctaCode:"Code on GitHub",
     factSubs:"EN/PL subtitles",
-    bubble:"12 edges.<br>Why is one<br>diagonal?", crumb:"3D Engine From Scratch",
+    bubble:"12 edges.<br>Why is one<br>diagonal?", bubblePass:"PASS", crumb:"3D Engine From Scratch",
     howTitle:"How it works",
     howLede:"You watch the code being written, and at the end you get one small thing to fix yourself.",
     s1t:"Watch", s1p:"From an empty main() to a running program. No voiceover, subtitles in English or Polish. Chapters in the description take you back to any step.",
@@ -106,7 +106,7 @@ function body(e, L, now){
   const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
   const video = live
     ? `<div class="video" data-yt="${e.video}"><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
-    : `<div class="video"><div class="soon"><img class="pix" src="room.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtLong(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
+    : `<div class="video"><div class="soon"><img class="pix" src="art/room-rear.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtLong(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
   const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${esc(n)}</a>` : esc(n)}</li>`).join("");
@@ -206,6 +206,45 @@ document.addEventListener("click", ev => {
   if (!T[l]) { try { l = localStorage.getItem("lang"); } catch(_){} }
   if (!T[l]) l = (navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
   setLang(l);
+})();
+
+/* The hero cuts between the two camera angles of the film: the face with the screen in its
+   glasses, and the view over the shoulder at the CRT. Sheets are 320x180 frames at 12 fps. */
+(function hero(){
+  const face = document.getElementById("face"), rear = document.querySelector(".shot.rear"), bub = document.getElementById("heroBubble");
+  const SHEETS = { idle: 42, puzzled: 30, satisfied: 30, curious: 30, surprised: 30 };
+  const CUTS = [
+    { sheet: "idle", bubble: "bubble" },
+    { sheet: "puzzled", bubble: "bubble" },
+    { rear: 5 },
+    { sheet: "satisfied", bubble: "bubblePass", hold: 1.5 },
+    { rear: 4 },
+    { sheet: "surprised" },
+    { sheet: "curious", bubble: "bubble" },
+    { rear: 5 },
+  ];
+  for (const name in SHEETS) new Image().src = `art/face-${name}.png`;
+  let cut = 0, frame = 0, held = 0, text = "";
+  function show(){
+    const c = CUTS[cut], key = c.rear ? "" : c.bubble || "";
+    rear.hidden = !c.rear; face.hidden = !!c.rear;
+    if (!c.rear){
+      const n = SHEETS[c.sheet];
+      face.style.backgroundImage = `url(art/face-${c.sheet}.png)`;
+      face.style.backgroundSize = `${n * 100}% 100%`;
+      face.style.backgroundPosition = `${Math.min(frame, n - 1) / (n - 1) * 100}% 0`;
+    }
+    const next = key ? T[lang][key] : "";
+    if (next !== text){ bub.innerHTML = text = next; }
+  }
+  function tick(){
+    const c = CUTS[cut], len = c.rear ? c.rear * 12 : SHEETS[c.sheet] + (c.hold || 0) * 12;
+    if (++frame >= len){ frame = 0; cut = (cut + 1) % CUTS.length; }
+    show();
+  }
+  show();
+  document.addEventListener("silnik:lang", () => { text = ""; show(); });
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(tick, 1000 / 12);
 })();
 
 /* For assistant.js. */

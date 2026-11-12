@@ -73,14 +73,19 @@ h1 .sub{display:block;font-size:.4em;letter-spacing:0;color:var(--muted);font-we
 /* the room from the film */
 .pix{image-rendering:pixelated;image-rendering:crisp-edges}
 .scene{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 4px var(--ink),0 24px 60px rgba(0,0,0,.55)}
-.scene>img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.shot{position:absolute;inset:0}
+.shot[hidden]{display:none}
+.shot img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.shot.face{background:var(--wall) url(art/face-idle.png) 0 0/4200% 100% no-repeat}
 .scene canvas{position:absolute;left:19.6875%;top:18.3333%;width:29.6875%;height:33.3333%}
 .bubble{position:absolute;background:#f9e4ba;color:var(--ink);font:700 clamp(11px,1.55vw,17px)/1.25 var(--pix);padding:.55em .8em;text-align:center;
   box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink)}
 .bubble:before,.bubble:after{content:"";position:absolute;background:#f9e4ba}
 .bubble:before{width:10px;height:8px;right:22%;bottom:-16px}
 .bubble:after{width:6px;height:6px;right:17%;bottom:-27px}
-.scene .bubble{left:53%;top:24%;white-space:nowrap}
+.scene .bubble{left:5%;top:30%;white-space:nowrap}
+.scene .bubble.rear{left:53%;top:24%}
+.scene .bubble:empty{display:none}
 @media (max-width:900px){.hero .wrap{grid-template-columns:1fr;gap:28px;padding-top:24px;padding-bottom:44px}.hero .scene-col{order:-1}}
 
 /* sections */
@@ -127,7 +132,7 @@ h2{font-size:32px;margin:0 0 8px;letter-spacing:-.6px;font-weight:700}
 .ep-num{font:700 13px var(--sans);color:var(--turquoise);background:rgba(0,228,172,.08);border:1px solid rgba(0,228,172,.2);border-radius:999px;padding:3px 10px;flex:none}
 .ep p.sum{margin:0 0 14px;color:#cbd5e1}
 .video{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 3px var(--ink)}
-.video[data-yt]{background:var(--wall) url(room.png) center/cover;image-rendering:pixelated}
+.video[data-yt]{background:var(--wall) url(art/room-rear.png) center/cover;image-rendering:pixelated}
 .video iframe,.video img{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
 .video button.play{position:absolute;inset:0;border:0;padding:0;background:none;cursor:pointer}
 .video button.play:after{content:"";position:absolute;left:50%;top:50%;width:72px;height:72px;transform:translate(-50%,-50%);border-radius:50%;background:var(--turquoise) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230f1418' d='M8 5v14l11-7z'/%3E%3C/svg%3E") center/32px no-repeat;box-shadow:0 0 28px var(--turquoise-glow)}
@@ -178,13 +183,14 @@ footer .right a{color:var(--muted)}
 /* ask the mascot */
 .ask{position:fixed;right:20px;bottom:20px;z-index:200;font-weight:600}
 .ask-open{display:flex;align-items:center;gap:10px;background:var(--panel-card);color:var(--text);border:1px solid rgba(0,228,172,.35);border-radius:999px;padding:10px 18px 10px 12px;font:700 15px var(--sans);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 24px rgba(0,228,172,.15)}
-.ask-open img{width:35px;height:30px;animation:askbob 2.4s ease-in-out infinite}
-@keyframes askbob{50%{transform:translateY(-3px)}}
-@media (prefers-reduced-motion:reduce){.ask-open img{animation:none}}
+.head{display:block;width:74px;height:56px;flex:none;background:url(art/face-head.png) 0 0/3108px 56px no-repeat;image-rendering:pixelated;animation:head 3.5s steps(42) infinite}
+@keyframes head{to{background-position:-3108px 0}}
+@media (prefers-reduced-motion:reduce){.head{animation:none}}
+.ask-open .head{margin:-14px 0 -10px -4px}
 .ask-panel{width:min(380px,calc(100vw - 24px));max-height:min(600px,calc(100vh - 90px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--panel-border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden}
 .ask-panel[hidden],.ask-open[hidden],.ask-form[hidden],.ask-model[hidden],.ask-new[hidden]{display:none}
 .ask-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--panel-border)}
-.ask-head img{width:28px;height:24px}
+.ask-head .head{margin:-6px 0 -12px -6px}
 .ask-head b{flex:1}
 .ask-head button{background:none;border:0;color:var(--muted);font:600 14px var(--sans);cursor:pointer;padding:4px 6px}
 .ask-head .ask-close{font-size:22px;line-height:1}
@@ -209,7 +215,7 @@ footer .right a{color:var(--muted)}
 .ask-form input:focus{outline:2px solid var(--turquoise);outline-offset:1px}
 .ask-form button{background:var(--turquoise);color:#0f1418;border:0;border-radius:999px;padding:0 16px;font:700 14px var(--sans);cursor:pointer}
 .ask-note{margin:0;padding:0 14px 10px;font-size:12px;color:var(--muted);line-height:1.35}
-@media (max-width:560px){.ask{right:12px;bottom:12px}.ask-open span{display:none}.ask-open{padding:10px 12px}}
+@media (max-width:560px){.ask{right:12px;bottom:12px}.ask-open span.lbl{display:none}.ask-open{padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -252,9 +258,12 @@ footer .right a{color:var(--muted)}
     </div>
     <div class="scene-col">
       <div class="scene">
-        <img class="pix" src="room.png" alt="" width="320" height="180">
-        <canvas class="pix" id="cube" width="95" height="60" aria-hidden="true"></canvas>
-        <div class="bubble" data-t="bubble"></div>
+        <div class="shot rear" hidden>
+          <img class="pix" src="art/room-rear.png" alt="" width="320" height="180">
+          <canvas class="pix" id="cube" width="95" height="60" aria-hidden="true"></canvas>
+        </div>
+        <div class="shot face pix" id="face" role="img" aria-label="gamedev.pl"></div>
+        <div class="bubble" id="heroBubble"></div>
       </div>
     </div>
   </div>

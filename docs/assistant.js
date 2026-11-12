@@ -87,9 +87,9 @@ const root = document.createElement("div");
 root.className = "ask";
 root.hidden = true;
 root.innerHTML = `
-  <button type="button" class="ask-open"><img src="mascot.svg" alt=""><span></span></button>
+  <button type="button" class="ask-open"><i class="head" aria-hidden="true"></i><span class="lbl"></span></button>
   <div class="ask-panel" role="dialog" aria-modal="false" hidden>
-    <div class="ask-head"><img src="mascot.svg" alt=""><b></b><button type="button" class="ask-new"></button><button type="button" class="ask-close" aria-label="">×</button></div>
+    <div class="ask-head"><i class="head" aria-hidden="true"></i><b></b><button type="button" class="ask-new"></button><button type="button" class="ask-close" aria-label="">×</button></div>
     <div class="ask-log" aria-live="polite"></div>
     <div class="ask-model"></div>
     <form class="ask-form"><input type="text" autocomplete="off" maxlength="300"><button type="submit"></button></form>
@@ -117,7 +117,7 @@ function rich(text) {
 function draw(state) {
   const l = L(), status = state.model.status, turns = state.session.turns, running = state.session.status === "running";
   root.hidden = status === "unavailable" || status === "checking";
-  $(".ask-open span").textContent = l.askOpen;
+  $(".ask-open .lbl").textContent = l.askOpen;
   $(".ask-head b").textContent = l.askTitle;
   $(".ask-new").textContent = l.askNew;
   $(".ask-new").hidden = !turns.length;
