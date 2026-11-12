@@ -70,3 +70,7 @@ The first part of `python3 replay 01` runs four versions of the square. bg_test 
 W pionowym E02 uruchom `python3 replay edges`. Program kompiluje mesh.hpp z trzech etapów i zapisuje końce odcinków przekazanych do paper.line. Dwie ramki mają osiem odcinków. W obu kolejnych wersjach jest dwanaście. W ep02-crossed-sides wśród par jest 1→6, w ep02-wire jest 2→6. Wymagane Git, Python 3 i kompilator C++17.
 
 For the vertical E02 experiment run `python3 replay edges`. This compiles mesh.hpp at three checkpoints and records the endpoints sent to paper.line. The two loops contain eight edges. Both later versions contain twelve. The crossed build includes 1→6, the repaired build includes 2→6. Requires Git, Python 3 and a C++17 compiler.
+
+### Short E00
+
+Uruchom `python3 replay pulse`. Test ustawia zegar pierwszej klatki na 0,20 s dla wszystkich trzech wersji. Porównaj argument cosinusa i piksel po upływie sekundy.

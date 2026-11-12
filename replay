@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','edges'))
+parser.add_argument('episode',choices=('00','01','02','edges','pulse'))
 ep=parser.parse_args().episode
 
 def run(args,cwd=None):
@@ -45,6 +45,10 @@ if ep in ('00','01'):
                 print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
                 run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
                 run([work/'trace'])
+elif ep=='pulse':
+    for tag in ('ep00-frozen','ep00-fast','ep00'):
+        print(f'\n{tag} | first clock = 0.20 s',flush=True)
+        run([sys.executable,base/'probe',tag,'arg','--start-time','0.20'])
 elif ep=='edges':
     with TemporaryDirectory(prefix='cube-edges-') as scratch:
         work=Path(scratch)

@@ -9,11 +9,13 @@ static int n=0, hz=60, limit=1;
 static FILE* sink=nullptr;
 static double measured=0, previousY=0, landing=-1;
 static bool sampleColor=false;
+static double originSeconds=0;
+static double movieTime(){return originSeconds+double(n)/hz;}
 static double probeArgument(double value) {
-    if(n==0 || n==hz) std::printf("t=%.1f s   arg=%.3f\n",double(n)/hz,value);
+    if(n==0 || n==hz) std::printf("t=%.1f s   arg=%.3f\n",movieTime(),value);
     return value;
 }
-static double movieTime(){return double(n)/hz;}
+
 static GLFWwindow* movieWindow(int w,int h,const char* title,GLFWmonitor* m,GLFWwindow* other){
     glfwWindowHint(GLFW_VISIBLE,GLFW_FALSE);
     return glfwCreateWindow(w,h,title,m,other);
@@ -54,7 +56,8 @@ static void present(GLFWwindow* w){
     ++n;
 }
 int main(int argc,char** argv){
-    if(argc!=4)return 2;
+    if(argc!=4 && argc!=5)return 2;
+    if(argc==5)originSeconds=std::atof(argv[4]);
     hz=std::atoi(argv[1]);limit=std::atoi(argv[2]);
     sampleColor=argv[3][0]=='@';
     if(!sampleColor && argv[3][0]!='-'){sink=std::fopen(argv[3],"wb");if(!sink)return 3;}
