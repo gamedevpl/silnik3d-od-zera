@@ -104,7 +104,7 @@ function body(e, L, now){
     : `<div class="video"><div class="soon"><img class="pix" src="room.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtLong(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
-  const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s">${esc(n)}</a>` : esc(n)}</li>`).join("");
+  const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${esc(n)}</a>` : esc(n)}</li>`).join("");
   return `
     <div class="ep">
       <div>
@@ -183,10 +183,16 @@ document.addEventListener("click", ev => {
     }).catch(() => {});
     return;
   }
+  /* A chapter plays from its moment in the player on the page; a modified click still opens YouTube. */
+  const seek = ev.target.closest("a[data-seek]");
+  const plain = !(ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button);
   const p = ev.target.closest(".video[data-yt] .play");
-  if (p){
-    const box = p.parentElement, id = box.dataset.yt;
-    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="YouTube"></iframe>`;
+  const box = p ? p.parentElement : seek && plain ? seek.closest(".ep").querySelector(".video[data-yt]") : null;
+  if (box){
+    if (seek) ev.preventDefault();
+    const start = seek ? `&start=${seek.dataset.seek}` : "";
+    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${box.dataset.yt}?autoplay=1&rel=0${start}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="YouTube"></iframe>`;
+    if (seek) box.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 });
 
