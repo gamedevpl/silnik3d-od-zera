@@ -14,9 +14,20 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 
 Polecenie `python3 replay turns` kompiluje pięć wersji mesh.hpp i mierzy pozycję narożnika 6 względem środka kostki przy skali 200. Porównaj pierwsze trzy pomiary. Wpisanie 360 bezpośrednio do aboutY przesuwa róg; po zamianie 360 stopni na radiany róg wraca na miejsce. Dwie ostatnie próby obracają kostkę o +45° wokół Y i −45° wokół Z.
 
+Po rozpakowaniu ZIP-a zacznij w katalogu z tym plikiem README:
+
+    git clone silnik-3d.bundle ref
+    git -C ref worktree add --detach ../turn ep02-turn-360
+    vim turn/mesh.hpp
+    python3 replay turns --source turn
+
+W klonie Git zacznij na gałęzi main:
+
     git worktree add --detach ../turn ep02-turn-360
     vim ../turn/mesh.hpp
     python3 replay turns --source ../turn
+
+W Vimie zamień `aboutY(p,360)` na `aboutY(p,radians(360))`, zapisz i wyjdź przez `:wq`. Narożnik powinien wrócić z (−18, 101) do (276, 210).
 
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
