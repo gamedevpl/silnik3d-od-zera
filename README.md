@@ -1,5 +1,23 @@
 # Silnik 3D w C++ od zera
 
+## Ćwiczenia po odcinku
+
+Wybierz gałąź startową swojego odcinka. W jej README znajdziesz zadanie i instrukcje PL/EN. Do próby wystarczą Git, Python 3 i kompilator C++17.
+
+| Odcinek | Zadanie | Start | Rozwiązanie ćwiczenia | Tag końca odcinka |
+| --- | --- | --- | --- | --- |
+| E00 | Przywróć puls tła. | [e00-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-start) | [e00-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-solution) | `ep00` |
+| E01 | Ogranicz nadrabianie czasu po długiej klatce. | [e01-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-start) | [e01-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-solution) | `ep01` |
+| E02 | Wyprostuj boczne krawędzie kostki. | [e02-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [e02-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | `ep02` |
+
+```sh
+git clone -b e00-start https://github.com/gamedevpl/silnik3d-od-zera.git
+cd silnik3d-od-zera
+python3 check.py
+```
+
+Po rozpakowaniu paczki offline użyj w pierwszym poleceniu `silnik-3d.bundle silnik3d-od-zera` w miejscu adresu HTTPS.
+
 Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+, Ninja i sesji graficznej z OpenGL. Uruchom wybraną komendę w katalogu paczki lub na gałęzi main klonu.
 
 [E02 in English](README.en.md)

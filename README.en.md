@@ -1,5 +1,23 @@
 # E02 · Build the cube in C++
 
+## Try the episode exercises
+
+Choose the start branch for your episode. Its README has the task and instructions in Polish and English. The check needs Git, Python 3 and a C++17 compiler.
+
+| Episode | Task | Start | Exercise solution | End-of-episode tag |
+| --- | --- | --- | --- | --- |
+| E00 | Make the background pulse again. | [e00-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-start) | [e00-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-solution) | `ep00` |
+| E01 | Cap the catch-up time after a long frame. | [e01-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-start) | [e01-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-solution) | `ep01` |
+| E02 | Straighten the side edges of the cube. | [e02-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [e02-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | `ep02` |
+
+```sh
+git clone -b e00-start https://github.com/gamedevpl/silnik3d-od-zera.git
+cd silnik3d-od-zera
+python3 check.py
+```
+
+With the extracted offline kit, replace the HTTPS URL in the first command with `silnik-3d.bundle silnik3d-od-zera`.
+
 ## E02 Short · where the diagonal came from
 
 The two experiments work from the repository root on `main` or beside `replay` in the extracted kit. You need Git, Vim, Python 3 and a C++17 compiler.
