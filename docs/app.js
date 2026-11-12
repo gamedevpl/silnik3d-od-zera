@@ -1,6 +1,6 @@
 /* Page logic: language switch, season tabs, episode rows. Data lives in series.js. */
 (function(){
-const { repo: REPO, playlist: PLAYLIST, seasons: SEASONS } = window.SERIES;
+const { repo: REPO, playlist: PLAYLIST, seasons: SEASONS, upcoming: UPCOMING = [] } = window.SERIES;
 const NOTES = window.NOTES || {};
 
 /* Reader progress: { e00: { w: 1, p: 1 } }, kept only in this browser. */
@@ -27,6 +27,7 @@ const T = {
     epsTitle:"Odcinki", 
     premiere:"Premiera", soonNote:"Do tego czasu kod i zadanie już czekają poniżej.",
     open:"Rozwiń", nextUp:"Najbliższa premiera", latest:"Najnowszy", startHere:"Zacznij tutaj", outNow:"Już jest", planned:"W planie", season:"Sezon", watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
+    seasonCount:"{a} z {b} odcinków gotowe", nextEps:"Dalej w tym sezonie", nextSeasons:"Kolejne sezony",
     doneW:"Obejrzane", doneP:"Zadanie: PASS", progressLabel:"Twój postęp", note:"Notatka",
     exLabel:"Twoja kolej", runCmds:"W terminalu uruchom kolejno:",
     afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
@@ -60,6 +61,7 @@ const T = {
     epsTitle:"Episodes", 
     premiere:"Premiere", soonNote:"The code and the exercise are already waiting below.",
     open:"Open", nextUp:"Next premiere", latest:"Latest", startHere:"Start here", outNow:"Out now", planned:"Planned", season:"Season", watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
+    seasonCount:"{a} of {b} episodes out", nextEps:"Next in this season", nextSeasons:"Next seasons",
     doneW:"Watched", doneP:"Exercise: PASS", progressLabel:"Your progress", note:"Note",
     exLabel:"Your turn", runCmds:"Run these commands in your terminal:",
     afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
@@ -177,6 +179,12 @@ function renderEpisodes(){
       ${body(e, L, now)}
     </details>`;
   }).join("");
+  const next = s.next || [], ready = s.episodes.filter(e => e.video).length;
+  document.getElementById("seasonIntro").innerHTML = `<b>${esc(s[lang].t)}</b><span>${esc(s[lang].d || "")}</span><small>${L.seasonCount.replace("{a}", ready).replace("{b}", s.episodes.length + next.length)}</small>`;
+  const tile = (num, x, d, big) => `<li${big ? ' class="big"' : ""}><canvas class="pix" width="${big ? 96 : 48}" height="${big ? 54 : 30}" data-demo="${x.demo}" aria-hidden="true"></canvas><div><span class="ep-num">${num}</span><span class="pill">${L.planned}</span><h3>${esc(x[lang].t)}</h3><p>${esc(d)}</p></div></li>`;
+  document.getElementById("teasers").innerHTML =
+    (next.length ? `<h3 class="sub">${L.nextEps}</h3><ul class="tiles">${next.map(x => tile(code(x), x, x[lang].q)).join("")}</ul>` : "")
+    + (UPCOMING.length ? `<h3 class="sub">${L.nextSeasons}</h3><ul class="tiles two">${UPCOMING.map(x => tile(`${L.season} ${x.n}`, x, x[lang].d, true)).join("")}</ul>` : "");
   paintProgress();
 }
 
@@ -317,6 +325,68 @@ window.SILNIK = { T, lang: () => lang, code, isOut, render: renderEpisodes };
       });
     },
   };
+  /* Teasers for planned episodes and seasons. */
+  const bg = (g,W,H,c) => { g.fillStyle = c || "#151423"; g.fillRect(0,0,W,H); };
+  const box = (g,x,y,w,h,c) => { g.fillStyle = c; g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); };
+  Object.assign(DRAW, {
+    /* E03: a triangle fills row by row. */
+    tri(g,W,H,t){
+      bg(g,W,H); const rows = H - 8, n = Math.floor((t * 9) % (rows + 10));
+      for (let i = 0; i < rows; i++){ const w = Math.round((i + 1) * (W * 0.5) / rows); box(g, W/2 - w/2, 4 + i, w, 1, i < n ? "#eea75e" : "#353044"); }
+    },
+    /* E04: two faces swap which one is drawn on top. */
+    depth(g,W,H,t){
+      bg(g,W,H); const s = H * 0.5, a = [W*0.24, H*0.16, "#76ddaf"], b = [W*0.42, H*0.34, "#eea75e"];
+      for (const [x,y,c] of (Math.floor(t / 1.4) % 2 ? [a,b] : [b,a])){ box(g,x-1,y-1,s+2,s+2,"#151423"); box(g,x,y,s,s,c); }
+    },
+    /* E05: a checkerboard floor sliding towards the camera. */
+    tex(g,W,H,t){
+      bg(g,W,H,"#242134"); const hz = Math.round(H * 0.3);
+      for (let y = hz; y < H; y++){
+        const d = (y - hz + 1) / (H - hz), z = 1 / d + t * 2;
+        for (let x = 0; x < W; x++){ const u = (x - W/2) / (d * W * 0.5); g.fillStyle = (Math.floor(u * 2) + Math.floor(z * 2)) & 1 ? "#ffe1a2" : "#503849"; g.fillRect(x,y,1,1); }
+      }
+    },
+    /* E06: a ball with a highlight that follows the lamp. */
+    light(g,W,H,t){
+      bg(g,W,H); const r = H * 0.36, cx = W/2, cy = H/2, lx = Math.cos(t * 1.2) * 0.7, ly = -0.5;
+      for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++){
+        const d = x*x + y*y; if (d > r*r) continue;
+        const nx = x / r, ny = y / r, nz = Math.sqrt(Math.max(0, 1 - nx*nx - ny*ny)), k = nx*lx + ny*ly + nz*0.6;
+        g.fillStyle = k > 0.95 ? "#ffe1a2" : k > 0.6 ? "#76ddaf" : k > 0.25 ? "#367879" : "#283b44"; g.fillRect(Math.round(cx + x), Math.round(cy + y), 1, 1);
+      }
+    },
+    /* E07: one mesh, drawn twice. */
+    mesh(g,W,H,t){
+      bg(g,W,H); const s = H * 0.17, pitch = 0.5, P = (ox, yaw) => V.map(([x,y,z]) => { const cy=Math.cos(yaw), sy=Math.sin(yaw), X=x*cy+z*sy, Z0=-x*sy+z*cy; return [ox + X*s, H/2 + (y*Math.cos(pitch) - Z0*Math.sin(pitch))*s]; });
+      [[W*0.28, t*0.8, "#ffe1a2"], [W*0.72, -t*0.5, "#76ddaf"]].forEach(([ox,yaw,c]) => { const p = P(ox,yaw); g.fillStyle = c; for (const [a,b] of E) line(g,p[a][0],p[a][1],p[b][0],p[b][1]); });
+    },
+    /* E08: three objects; one is removed and its place reused. */
+    scene(g,W,H,t){
+      bg(g,W,H); const s = Math.round(H * 0.3), y = H * 0.56, ph = Math.floor(t / 0.9) % 4;
+      box(g, W*0.08, y + s, W*0.84, 1, "#755052");
+      [["#76ddaf",1],["#eea75e", ph !== 1],["#ffe1a2",1]].forEach(([c,on],i) => { const x = W*0.2 + i * W*0.24; if (on) box(g, x, y - (i === 1 && ph === 2 ? 3 : 0), s, s, i === 1 && ph >= 2 ? "#5fd3f3" : c); else { g.fillStyle = "#353044"; g.fillRect(Math.round(x), Math.round(y + s - 1), s, 1); } });
+    },
+    /* Season 2: a robot carries a cell to the socket and the lamp comes on. */
+    robot(g,W,H,t){
+      const p = (t * 0.25) % 1, lit = p > 0.72; bg(g,W,H, lit ? "#503849" : "#151423");
+      const fl = Math.round(H * 0.8), sx = W * 0.82; box(g,0,fl,W,1,"#755052");
+      box(g, W*0.5 - 4, 3, 8, 3, lit ? "#ffe1a2" : "#353044"); if (lit) box(g, W*0.5 - 9, 6, 18, 1, "#eea75e");
+      box(g, sx, fl - 9, 6, 9, "#353044"); box(g, sx + 1, fl - 7, 4, 4, lit ? "#00e4ac" : "#151423");
+      const x = W * 0.1 + Math.min(p / 0.72, 1) * (sx - W * 0.1 - 9);
+      box(g, x, fl - 7, 7, 6, "#76ddaf"); box(g, x + 1, fl - 1, 2, 1, "#283b44"); box(g, x + 4, fl - 1, 2, 1, "#283b44"); box(g, x + 4, fl - 5, 2, 2, "#151423");
+      if (!lit) box(g, x + 2, fl - 11, 3, 4, "#eea75e");
+    },
+    /* Season 3: a level grid; the cursor picks a block and moves it. */
+    editor(g,W,H,t){
+      bg(g,W,H,"#172229"); const c = 6;
+      g.fillStyle = "#283b44"; for (let x = 3; x < W; x += c) g.fillRect(x,0,1,H); for (let y = 3; y < H; y += c) g.fillRect(0,y,W,1);
+      const cell = (i,j,col) => box(g, 4 + i*c, 4 + j*c, c - 1, c - 1, col);
+      [[2,2],[3,2],[4,2],[4,3],[9,5],[10,5],[11,5]].forEach(([i,j]) => cell(i,j,"#755052")); cell(12,2,"#00e4ac");
+      const k = Math.floor(t * 2) % 10, i = 6 + Math.min(k, 4), j = 4 + (k > 5 ? 1 : 0); cell(i,j,"#eea75e");
+      g.fillStyle = "#ffe1a2"; const px = 4 + i*c + 3, py = 4 + j*c + 3; g.fillRect(px,py,1,5); g.fillRect(px,py,4,1); g.fillRect(px+1,py+1,1,1); g.fillRect(px+2,py+2,1,1);
+    },
+  });
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let last = -1;
   function frame(now){
