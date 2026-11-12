@@ -10,6 +10,14 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 
 
 
+## E02 · Pełny obrót
+
+Polecenie `python3 replay turns` kompiluje pięć wersji mesh.hpp i mierzy pozycję narożnika 6 względem środka kostki przy skali 200. Porównaj pierwsze trzy pomiary. Wpisanie 360 bezpośrednio do aboutY przesuwa róg; po zamianie 360 stopni na radiany róg wraca na miejsce. Dwie ostatnie próby obracają kostkę o +45° wokół Y i −45° wokół Z.
+
+    git worktree add --detach ../turn ep02-turn-360
+    vim ../turn/mesh.hpp
+    python3 replay turns --source ../turn
+
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
 Uruchom `python3 replay setup` w sesji graficznej. Komenda buduje pięć wersji na Twoim komputerze. Pierwsze dwie kompilacje powinny zatrzymać się kolejno na `glad/gl.h` i `GLFW/glfw3.h`. Trzecia sprawdza inicjalizację GLFW. Dwie ostatnie wypisują wynik ładowania funkcji OpenGL przed uaktywnieniem kontekstu i po nim. W klonie porównasz tę jedną linię poleceniem:

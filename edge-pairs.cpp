@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <string_view>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -43,10 +44,15 @@ struct RecordingPaper : Paper {
 #include <mesh.hpp>
 #undef Paper
 
-int main() {
+int main(int argc, char** argv) {
     Trace trace;
     cube(RecordingPaper{{0,0,200,1},trace});
     if (trace.vertices.size() != 8) return 1;
+    if (argc == 2 && std::string_view(argv[1]) == "--corner-six") {
+        const Pixel corner = trace.vertices[6];
+        std::printf("corner 6 relative to centre (scale 200): (%d, %d)\n", corner.x, corner.y);
+        return 0;
+    }
     std::printf("edges: %zu\nsides:",trace.edges.size());
     for (auto [a,b] : trace.edges) {
         if ((a<4) != (b<4)) std::printf(" %d->%d",a,b);

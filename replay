@@ -10,11 +10,11 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','setup','edges','pulse','clock','race','corners','landing','steps'))
-parser.add_argument('--source',type=Path,help='For landing, steps or pulse: compile the code from this edited engine directory.')
+parser.add_argument('episode',choices=('00','01','02','setup','edges','turns','pulse','clock','race','corners','landing','steps'))
+parser.add_argument('--source',type=Path,help='For landing, steps, turns or pulse: compile the code from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
-if args.source and ep not in ('steps','landing','pulse'):
+if args.source and ep not in ('steps','landing','pulse','turns'):
     parser.error('--source is available for landing, steps and pulse.')
 
 def run(args,cwd=None):
@@ -111,20 +111,27 @@ elif ep=='corners':
             run(['c++','-std=c++17','-I',repo,base/'corner-trace.cpp','-o',work/'points'])
             run([work/'points'])
 
-elif ep=='edges':
-    with TemporaryDirectory(prefix='cube-edges-') as scratch:
+elif ep in ('edges','turns'):
+    with TemporaryDirectory(prefix='cube-trace-') as scratch:
         work=Path(scratch)
         tree=work/'engine'
-        origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').exists() else base
-        run(['git','clone','-q','--no-checkout',origin,tree])
-        for tag in ('ep02-marked-rings','ep02-crossed-sides','ep02-wire'):
-            run(['git','-C',tree,'switch','-q','--detach',tag])
-            print(tag,flush=True)
-            run(['c++','-std=c++17','-I',tree,base/'edge-pairs.cpp','-o',work/'edges'])
-            run([work/'edges'])
+        if args.source:
+            trials=[(str(args.source),args.source.resolve())]
+        else:
+            origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base
+            run(['git','clone','-q','--no-checkout',origin,tree])
+            tags=(('ep02-wire','ep02-turn-360','ep02-turn-degrees','ep02-turn-y','ep02-turn-z')
+                  if ep=='turns' else ('ep02-marked-rings','ep02-crossed-sides','ep02-wire'))
+            trials=[(tag,tree) for tag in tags]
+        for label,source in trials:
+            if not args.source:
+                run(['git','-C',source,'switch','-q','--detach',label])
+            print(label,flush=True)
+            run(['c++','-std=c++17','-I',source,base/'edge-pairs.cpp','-o',work/'trace'])
+            run([work/'trace','--corner-six'] if ep=='turns' else [work/'trace'])
 
 else:
-    for exercise in ('corners','edges'):
+    for exercise in ('corners','edges','turns'):
         print(f'\n$ python3 replay {exercise}',flush=True)
         run([sys.executable,__file__,exercise])
     with TemporaryDirectory(prefix='silnik-test-') as work:
