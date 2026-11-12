@@ -79,4 +79,10 @@ Uruchom `python3 replay pulse`. Test ustawia zegar pierwszej klatki na 0,20 s dl
 
 W 3:50 zobaczysz pomiar liczby klatek. Po rozpakowaniu paczki użyj `python3 probe-swaps` w jej głównym katalogu. W 5:14 zaczynają się cztery próby z zegarem. Powtórz je z tego samego katalogu poleceniem `python3 replay clock`. Próbnik ustawia pierwszą klatkę na 0,2 s, potem porównuje argument cosinusa i piksel z odczytem przy 1,2 s.
 
-W kopii roboczej Git uruchom `git diff ep00-static-elapsed ep00 -- frame.hpp`, by zobaczyć słowo, które zmienia wynik ostatniej próby. Możesz też przełączyć się na etap ep00-static-elapsed, usunąć static przy elapsed i uruchomić `python3 probe . arg --start-time 0.2` z kopii repozytorium wyposażonej w skrypt probe. Jeśli używasz ZIP-a z oddzielnym klonem ref, odpowiednia komenda z katalogu ref to `python3 ../probe . arg --start-time 0.2`.
+W katalogu głównym klonu dodaj osobny katalog na ćwiczenie:
+
+    git worktree add --detach ref ep00-static-elapsed
+    cd ref
+    python3 ../probe . arg --start-time 0.2
+
+Przed edycją oba argumenty wynoszą zero. W ref/frame.hpp usuń tylko static z deklaracji elapsed. Powtórz ostatnie polecenie. Drugi argument wzrośnie do 1,800. Obie zapisane wersje porównasz przez git diff ep00-static-elapsed ep00 -- frame.hpp w ref.
