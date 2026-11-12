@@ -65,7 +65,7 @@ elif ep=='steps':
             repo=work/'ref'
             run(['git','clone','-q','-b','ep01',origin,repo])
             run(['c++','-std=c++17','-I',repo,base/'boundary-clock.cpp','-o',work/'trace'])
-            print('Clock at the 2.000000 s boundary and on the following frame',flush=True)
+            print('Clock at 1.800000 s, 1.833333 s and around 2.000000 s',flush=True)
             run([work/'trace'])
 elif ep=='landing':
     origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base

@@ -9,7 +9,7 @@ int main() {
             double now = double(frame) / fps;
             double prev = double(frame - 1) / fps;
             clock.advance(now - prev, [&](double) { ++steps; });
-            if (frame >= 2 * fps)
+            if (frame == fps * 9 / 5 || frame == fps * 11 / 6 || frame >= 2 * fps)
                 std::printf("%3d FPS  t=%.6f  steps=%3d  lag=%.17g  tick=%.17g\n",
                             fps, now, steps, clock.lag, clock.tick);
         }

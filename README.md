@@ -30,6 +30,8 @@ Wpisz w Vimie `:!python3 ../frame 3`. Kompilator zatrzyma się na `player.update
 
 Na początku dodaj `#include <algorithm>`. W funkcji advance zastąp `lag += elapsed;` przez `lag += std::min(elapsed, 0.25);`. Zapisz plik i ponów `:!!`. Zegar przyjął 250 z 333,333 ms. Wykonał 12 kroków i zachował 10 ms. Tagi `ep01-clock-uncapped` i `ep01-clock-capped` zawierają obie poprawne wersje do porównania. Gra nadal używa starej pętli w draw(). Końcowy tag `ep01` podpina Clock do skoczka.
 
+Z katalogu z plikiem replay uruchom `python3 replay steps`, aby porównać wynik gry przed przeniesieniem pętli i po nim. W chwili 1,800000 s przebiegi przy 30 i 240 FPS mają 89 i 90 kroków. Przy 1,833333 s oba mają 91. Przy danej częstotliwości renderowania skok zachował swój wcześniejszy przebieg.
+
 
 ## E02 Short · skąd się wzięła przekątna
 
