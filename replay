@@ -11,7 +11,11 @@ from tempfile import TemporaryDirectory
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing'))
-ep=parser.parse_args().episode
+parser.add_argument('--source',type=Path,help='For landing: compile the jumper from this edited engine directory.')
+args=parser.parse_args()
+ep=args.episode
+if args.source and ep!='landing':
+    parser.error('--source is available for the landing exercise.')
 
 def run(args,cwd=None):
     subprocess.run(args,cwd=cwd,check=True)
@@ -50,14 +54,21 @@ elif ep=='landing':
     origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base
     with TemporaryDirectory(prefix='jump-floor-') as scratch:
         work=Path(scratch)
-        repo=work/'ref'
-        run(['git','clone','-q','--no-checkout',origin,repo])
-        for tag in ('ep01-fall','ep01-clamp','ep01-bounce'):
-            run(['git','-C',repo,'switch','-q','--detach',tag])
-            print(tag+'\nframe    height     speed',flush=True)
+        def sample(repo,label):
+            print(label+'\nframe    height     speed',flush=True)
             run(['c++','-std=c++17','-I',repo,'-I',repo/'vendor/glad/include',
                  '-I',repo/'vendor/glfw/include',base/'landing-trace.cpp','-o',work/'landing'])
             run([work/'landing'])
+        if args.source:
+            repo=args.source.resolve()
+            if not (repo/'frame.hpp').is_file():parser.error('Expected frame.hpp in '+str(repo))
+            sample(repo,str(repo))
+        else:
+            repo=work/'ref'
+            run(['git','clone','-q','--no-checkout',origin,repo])
+            for tag in ('ep01-fall','ep01-clamp','ep01-bounce'):
+                run(['git','-C',repo,'switch','-q','--detach',tag])
+                sample(repo,tag)
 elif ep=='race':
     trials=[('ep01-single-step',30),('ep01-matched-tick',30),('ep01-matched-tick',15),
             ('ep01-loop-30hz',15),('ep01',15)]

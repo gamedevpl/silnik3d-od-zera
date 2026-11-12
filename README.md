@@ -5,10 +5,24 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 | Odcinek | Long | Short |
 |---|---|---|
 | E00 | `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
-| E01 | `python3 replay 01` | `python3 replay race` |
+| E01 | `python3 replay 01` · `python3 replay landing` | `python3 replay race` |
 | E02 | Cały long: `python3 replay 02`. Same punkty z pierwszej minuty: `python3 replay corners`. | `python3 replay edges` |
 
 
+
+## E01 · lądowanie na podłodze
+
+Grawitacja i drugie odbicie. Uruchom `python3 replay landing`. W klatce 20 przy 30 FPS porównaj `ep01-fall`, `ep01-clamp` i `ep01-bounce`. Po samym ustawieniu wysokości na zero prędkość wynosi −263,3. Po przywróceniu +270 kwadrat w klatce 21 znów znajduje się nad podłogą. Każdy etap możesz też samodzielnie skompilować i otworzyć jego okno.
+
+Do tej próby liczbowej wystarczą Git, Python 3 i kompilator C++17. W katalogu zestawu utwórz kopię do edycji:
+
+    git worktree add --detach ../skok ep01-clamp
+
+W `../skok/frame.hpp` dopisz `speed = 120;` pod wciętym `height = 0;` w warunku kontaktu. Zapisz plik. Z tego samego katalogu wywołaj:
+
+    python3 replay landing --source ../skok
+
+W klatce 20 otrzymasz prędkość +120,0. Klatkę później wysokość wynosi już 3,1.
 
 ## E02 · punkty / corner experiment
 
@@ -128,5 +142,3 @@ W katalogu głównym klonu dodaj osobny katalog na ćwiczenie:
     python3 ../probe . arg --start-time 0.2
 
 Przed edycją oba argumenty wynoszą zero. W ref/frame.hpp usuń tylko static z deklaracji elapsed. Powtórz ostatnie polecenie. Drugi argument wzrośnie do 1,800. Obie zapisane wersje porównasz przez git diff ep00-static-elapsed ep00 -- frame.hpp w ref.
-
-Grawitacja i drugie odbicie. Uruchom `python3 replay landing`. W klatce 20 przy 30 FPS porównaj `ep01-fall`, `ep01-clamp` i `ep01-bounce`. Po samym ustawieniu wysokości na zero prędkość wynosi −263,3. Po przywróceniu +270 kwadrat w klatce 21 znów znajduje się nad podłogą. Każdy etap możesz też samodzielnie skompilować i otworzyć jego okno.
