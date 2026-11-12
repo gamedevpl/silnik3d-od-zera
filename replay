@@ -30,6 +30,17 @@ if ep in ('00','01'):
     for tag,arg in trials:
         print(f'\n$ ./probe {tag} {arg}',flush=True)
         subprocess.run([sys.executable,base/'probe',tag,arg],env=build_env,check=True)
+    if ep=='01':
+        with TemporaryDirectory(prefix='clock-trace-') as temp:
+            work=Path(temp)
+            tree=work/'engine'
+            run(['git','clone','-q','--no-checkout',base,tree])
+            for tag in ('ep01-single-step','ep01'):
+                run(['git','-C',tree,'switch','-q','--detach',tag])
+                print(f'\n{tag} · 30 FPS',flush=True)
+                print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
+                run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
+                run([work/'trace'])
 else:
     with TemporaryDirectory(prefix='silnik-test-') as work:
         repo=Path(work)/'silnik'

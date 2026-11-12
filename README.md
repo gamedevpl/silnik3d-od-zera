@@ -55,3 +55,7 @@ W ep02-euler kolejność obrotów to Y(yaw) · X(pitch) · Z(roll). ep02-quat-eu
     ./axes 90
 
 Test porównuje obrócone osie bazowe po yaw +45° i roll −45°. Wypisuje największą odległość końców odpowiadających sobie wektorów jednostkowych. Do prób z filmu ustaw TURN=yaw lub TURN=roll i PITCH=60 lub PITCH=90 przy uruchamianiu engine. Bez tych zmiennych kostka skacze i obraca się wokół dwóch osi. Render jest ortograficzny, krawędzie rysuje test nożycowy OpenGL z E01.
+
+Przy końcu `python3 replay 01` pojawiają się dwie klatki przy 30 FPS. W drugiej przed wywołaniem kroku jest 46,667 ms. Pojedynczy warunek zostawia 26,667 ms, pętla 6,667 ms. Pomiar kompiluje rzeczywisty clock.hpp z obu etapów.
+
+At the end of `python3 replay 01`, compare two frames at 30 FPS. On frame two the clock has 46.667 ms before the first step. The single check leaves 26.667 ms, the loop leaves 6.667 ms. The test compiles each checkpoint’s clock.hpp.
