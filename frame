@@ -17,5 +17,7 @@ if not (src/'clock.hpp').is_file():
     parser.error('clock.hpp is missing in '+str(src))
 with TemporaryDirectory(prefix='frame-trace-') as tmp:
     binary = Path(tmp)/'trace'
-    subprocess.run(['c++','-std=c++17','-I',src,base/'clock-trace.cpp','-o',binary],check=True)
-    subprocess.run([binary,str(args.fps)],check=True)
+    compile_result = subprocess.run(['c++', '-std=c++17', '-I', src, base/'clock-trace.cpp', '-o', binary])
+    if compile_result.returncode:
+        raise SystemExit(compile_result.returncode)
+    raise SystemExit(subprocess.run([binary, str(args.fps)]).returncode)
