@@ -102,12 +102,28 @@ h2{font-size:32px;margin:0 0 8px;letter-spacing:-.6px;font-weight:700}
 .term .g{color:#76ddaf}
 
 /* episodes */
-.ep{display:grid;grid-template-columns:1fr 1fr;gap:26px;background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;padding:26px;margin-bottom:26px}
+.seasons{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.seasons button{background:var(--panel);border:1px solid var(--panel-border);color:var(--muted);border-radius:999px;padding:8px 16px;font:700 15px var(--sans);cursor:pointer}
+.seasons button span{margin-left:8px;font-weight:300;font-size:13px}
+.seasons button[aria-selected="true"]{background:rgba(0,228,172,.08);border-color:rgba(0,228,172,.35);color:var(--turquoise)}
+.row{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;margin-bottom:10px}
+.row[open]{border-radius:20px;margin-bottom:22px}
+.row.featured{border-color:rgba(0,228,172,.35)}
+.row-head{display:flex;align-items:center;gap:10px 14px;padding:14px 20px;list-style:none;cursor:pointer}
+.row-head::-webkit-details-marker{display:none}
+.row.planned .row-head{cursor:default;opacity:.55}
+.row-head h3{font-size:19px;margin:0;letter-spacing:-.2px;min-width:0}
+.row[open] .row-head h3{font-size:24px;letter-spacing:-.4px}
+.row-head .ep-meta{font-size:13px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.row.planned .pill{margin-left:auto}
+.pill{font:700 12px var(--sans);border-radius:999px;padding:3px 10px;white-space:nowrap;color:var(--muted);border:1px solid var(--panel-border)}
+.pill.live{color:var(--turquoise);border-color:rgba(0,228,172,.3)}
+.pill.soon-pill{color:var(--amber);border-color:rgba(238,167,94,.35)}
+.chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 4px 4px 2px;flex:none}
+.row[open] .chev{transform:rotate(225deg);margin-bottom:-4px}
+.ep{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:6px 20px 22px}
 .ep>div,.ex{min-width:0}
-.ep-head{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px}
-.ep-num{font:700 13px var(--sans);color:var(--turquoise);background:rgba(0,228,172,.08);border:1px solid rgba(0,228,172,.2);border-radius:999px;padding:3px 10px}
-.ep h3{font-size:26px;margin:0;letter-spacing:-.4px}
-.ep-meta{font-size:13px;color:var(--muted);margin-left:auto}
+.ep-num{font:700 13px var(--sans);color:var(--turquoise);background:rgba(0,228,172,.08);border:1px solid rgba(0,228,172,.2);border-radius:999px;padding:3px 10px;flex:none}
 .ep p.sum{margin:0 0 14px;color:#cbd5e1}
 .video{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 3px var(--ink)}
 .video iframe,.video img{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
@@ -138,7 +154,8 @@ details.ch li code{color:var(--muted);display:inline-block;min-width:44px;font:1
 .copy:hover{background:var(--walnut)}
 .ex .after{font-size:15px;margin:12px 0 0;font-weight:600}
 .ex .sol{margin-top:auto;padding-top:14px;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:15px}
-@media (max-width:900px){.ep{grid-template-columns:1fr;padding:16px}.ep-meta{margin-left:0;width:100%}details.ch ol{columns:1}}
+@media (max-width:900px){.ep{grid-template-columns:1fr;padding:4px 14px 16px}details.ch ol{columns:1}}
+@media (max-width:560px){.row-head{flex-wrap:wrap;padding:12px 14px}.row-head h3{flex:1 1 60%}.row-head .ep-meta{margin-left:0}.row[open] .row-head h3{font-size:21px}}
 
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .box{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:22px}
@@ -155,6 +172,42 @@ footer .made .logo img{width:28px;height:24px;margin-right:8px}
 footer .by{font-weight:300}
 footer .right{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
 footer .right a{color:var(--muted)}
+
+/* ask the mascot */
+.ask{position:fixed;right:20px;bottom:20px;z-index:200;font-weight:600}
+.ask-open{display:flex;align-items:center;gap:10px;background:var(--panel-card);color:var(--text);border:1px solid rgba(0,228,172,.35);border-radius:999px;padding:10px 18px 10px 12px;font:700 15px var(--sans);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 24px rgba(0,228,172,.15)}
+.ask-open img{width:35px;height:30px;animation:askbob 2.4s ease-in-out infinite}
+@keyframes askbob{50%{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.ask-open img{animation:none}}
+.ask-panel{width:min(380px,calc(100vw - 24px));max-height:min(600px,calc(100vh - 90px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--panel-border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden}
+.ask-panel[hidden],.ask-open[hidden],.ask-form[hidden],.ask-model[hidden],.ask-new[hidden]{display:none}
+.ask-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--panel-border)}
+.ask-head img{width:28px;height:24px}
+.ask-head b{flex:1}
+.ask-head button{background:none;border:0;color:var(--muted);font:600 14px var(--sans);cursor:pointer;padding:4px 6px}
+.ask-head .ask-close{font-size:22px;line-height:1}
+.ask-log{flex:1;overflow-y:auto;padding:16px 14px 6px;display:flex;flex-direction:column;gap:14px;min-height:140px;background:var(--wall)}
+.ask-msg.me{align-self:flex-end;background:var(--panel-card);border:1px solid var(--panel-border);border-radius:14px 14px 2px 14px;padding:8px 12px;max-width:85%;font-size:15px}
+.ask-msg.bot{padding:3px 3px 18px}
+.ask-msg.bot .bubble{position:relative;display:inline-block;text-align:left;font-size:14px;line-height:1.4;max-width:100%;overflow-wrap:anywhere}
+.ask-msg.bot .bubble:before{right:auto;left:18px}.ask-msg.bot .bubble:after{right:auto;left:10px}
+.ask-msg.bot .bubble.dim{color:#8e7e79}
+.ask-msg.bot a{color:var(--teal);text-decoration:underline}
+.ask-msg.bot code{background:rgba(41,55,66,.14);padding:0 3px;border-radius:3px;font:inherit}
+.ask-steps{font:700 11px var(--pix);color:#8e7e79;text-transform:uppercase;letter-spacing:1px;margin-bottom:-6px}
+.ask-err{color:#f4aba7;font-size:13px}
+.ask-chips{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ask-chips button{background:none;border:1px solid var(--seam);color:var(--cream);border-radius:999px;padding:5px 12px;font:600 13px var(--sans);cursor:pointer;text-align:left}
+.ask-chips button:hover{border-color:var(--turquoise)}
+.ask-model{padding:12px 14px;text-align:center;color:var(--muted)}
+.ask-dl{background:var(--turquoise);color:#0f1418;border:0;border-radius:999px;padding:9px 16px;font:700 14px var(--sans);cursor:pointer}
+.ask-bar{height:8px;background:var(--ink);border-radius:4px;overflow:hidden;margin-bottom:6px}.ask-bar i{display:block;height:100%;background:var(--turquoise)}
+.ask-form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--panel-border)}
+.ask-form input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--panel-border);border-radius:999px;color:var(--text);padding:9px 14px;font:600 15px var(--sans)}
+.ask-form input:focus{outline:2px solid var(--turquoise);outline-offset:1px}
+.ask-form button{background:var(--turquoise);color:#0f1418;border:0;border-radius:999px;padding:0 16px;font:700 14px var(--sans);cursor:pointer}
+.ask-note{margin:0;padding:0 14px 10px;font-size:12px;color:var(--muted);line-height:1.35}
+@media (max-width:560px){.ask{right:12px;bottom:12px}.ask-open span{display:none}.ask-open{padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -222,6 +275,7 @@ footer .right a{color:var(--muted)}
   <div class="wrap">
     <h2 data-t="epsTitle"></h2>
     <p class="sec-lede" data-t="epsLede"></p>
+    <div id="seasons" class="seasons" role="tablist" hidden></div>
     <div id="episodes"></div>
   </div>
 </section>
@@ -251,230 +305,7 @@ footer .right a{color:var(--muted)}
   </div>
 </footer>
 
-<script>
-const REPO = "https://github.com/gamedevpl/silnik3d-od-zera";
-const PLAYLIST = "https://www.youtube.com/playlist?list=PLFf6J3zhiCW4";
-
-const T = {
-  pl: {
-    navHow:"Jak to działa", navEps:"Odcinki", navCode:"Kod",
-    kicker:"Seria na YouTube · C++ · OpenGL",
-    title:"Silnik 3D w C++ <span class=\"tq\">od zera</span>", titleAlt:"C++ 3D Engine From Scratch",
-    lede:"Budujemy własny silnik 3D, zaczynając od pustego katalogu. Bez lektora: prawdziwy Vim, prawdziwe błędy i napisy PL/EN. Każdy odcinek kończy się zadaniem, które sprawdzisz u siebie jedną komendą.",
-    ctaPlaylist:"Playlista na YouTube", ctaCode:"Kod na GitHubie",
-    factSubs:"napisy PL/EN",
-    bubble:"12 krawędzi.<br>Czemu jedna<br>po skosie?", crumb:"Silnik 3D od zera",
-    howTitle:"Jak to działa",
-    howLede:"Oglądasz, jak kod powstaje, a na końcu dostajesz jedną małą rzecz do naprawienia samodzielnie.",
-    s1t:"Oglądasz", s1p:"Od pustego main() do działającego programu. Bez lektora, z napisami po polsku albo angielsku. Rozdziały w opisie pozwalają wrócić do konkretnego miejsca.",
-    s2t:"Klonujesz start", s2p:"Każde zadanie ma gałąź startową. Jedna komenda git clone i masz dokładnie ten kod, który był na ekranie, z jednym zepsutym miejscem.",
-    s3t:"Naprawiasz do PASS", s3p:"python3 check.py najpierw powie RETRY. Poprawiasz jeden plik i uruchamiasz ponownie. Po PASS porównujesz swoją wersję z rozwiązaniem.",
-    termRetry:"tło nie pulsuje",
-    epsTitle:"Odcinki", epsLede:"Premiery w środy o 18:00 czasu polskiego. Short z każdego odcinka wychodzi kilka dni później.",
-    premiere:"Premiera", soonNote:"Do tego czasu kod i zadanie już czekają poniżej.",
-    watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
-    exLabel:"Twoja kolej", runCmds:"W terminalu uruchom kolejno:",
-    afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
-    solution:"Rozwiązanie", fullCode:"Pełny kod po odcinku", startBranch:"Gałąź startowa",
-    copy:"kopiuj", copied:"skopiowane",
-    reqTitle:"Czego potrzebujesz",
-    req1:"Do zadań: Git, Python 3 i kompilator C++17 (GCC albo Clang).",
-    req2:"Do całego silnika z odcinków: CMake, Ninja, GLFW, GLAD i karta z OpenGL 3.3 core.",
-    req3:"Kod na licencji MIT. Bierz, zmieniaj, buduj swoje.",
-    nextTitle:"Co dalej",
-    nextP:"Odcinek 2 kończy się zapowiedzią trójkątów. Zanim nagram ciąg dalszy, chcę zobaczyć, jak Wam idą zadania. Napisz pod filmem, co zadziałało, a co nie.",
-    made:"Made by", madeBy:"Prowadzi Grzegorz, który robi gry od 1997, dziś głównie przeglądarkowe na gamedev.pl.",
-    games:"Gry w przeglądarce",
-    dateFmt:"pl-PL"
-  },
-  en: {
-    navHow:"How it works", navEps:"Episodes", navCode:"Code",
-    kicker:"YouTube series · C++ · OpenGL",
-    title:"C++ 3D Engine <span class=\"tq\">From Scratch</span>", titleAlt:"Silnik 3D w C++ od zera",
-    lede:"Building my own 3D engine, starting from an empty folder. No voiceover: real Vim, real errors and subtitles in English and Polish. Every episode ends with an exercise you check on your machine with one command.",
-    ctaPlaylist:"YouTube playlist", ctaCode:"Code on GitHub",
-    factSubs:"EN/PL subtitles",
-    bubble:"12 edges.<br>Why is one<br>diagonal?", crumb:"3D Engine From Scratch",
-    howTitle:"How it works",
-    howLede:"You watch the code being written, and at the end you get one small thing to fix yourself.",
-    s1t:"Watch", s1p:"From an empty main() to a running program. No voiceover, subtitles in English or Polish. Chapters in the description take you back to any step.",
-    s2t:"Clone the start", s2p:"Every exercise has a start branch. One git clone and you have exactly the code from the screen, with one broken spot.",
-    s3t:"Fix it until PASS", s3p:"python3 check.py first prints RETRY. Change one file and run it again. Once you get PASS, compare your edit with the solution.",
-    termRetry:"background does not pulse",
-    epsTitle:"Episodes", epsLede:"New episodes on Wednesdays, 18:00 Warsaw time. A Short from each episode follows a few days later.",
-    premiere:"Premiere", soonNote:"The code and the exercise are already waiting below.",
-    watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
-    exLabel:"Your turn", runCmds:"Run these commands in your terminal:",
-    afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
-    solution:"Solution", fullCode:"Full code after the episode", startBranch:"Start branch",
-    copy:"copy", copied:"copied",
-    reqTitle:"What you need",
-    req1:"For the exercises: Git, Python 3 and a C++17 compiler (GCC or Clang).",
-    req2:"For the whole engine from the episodes: CMake, Ninja, GLFW, GLAD and a GPU with OpenGL 3.3 core.",
-    req3:"The code is MIT licensed. Take it, change it, build your own.",
-    nextTitle:"What's next",
-    nextP:"Episode 2 ends with triangles coming up. Before I record more, I want to see how the exercises go for you. Tell me under the video what worked and what didn't.",
-    made:"Made by", madeBy:"By Grzegorz, making games since 1997, these days mostly browser games on gamedev.pl.",
-    games:"Browser games",
-    dateFmt:"en-GB"
-  }
-};
-
-const EPS = [
-  { n:0, slug:"e00", ep:"ep00", file:"frame.hpp", video:"kxuIFEB8rKk", short:"be0Yl4Wor2Y",
-    at:"2026-12-02T17:00:00Z", shortAt:"2026-12-03T17:00:00Z", len:"19:20",
-    pl:{ t:"Pierwsze okno", sum:"Puste main(), CMake i Ninja, GLFW i GLAD, okno OpenGL 3.3 core i tło, które pulsuje kolorem.",
-         exT:"Przywróć puls tła", exP:"Kolor stanął. Uruchom puls tła w <code>frame.hpp</code>. Po poprawce tło ma ściemnieć, rozjaśnić się i znów ściemnieć.",
-         ch:[["0:00","Puste main()"],["1:55","CMake i Ninja"],["3:29","GLFW i GLAD"],["6:37","Prośba o OpenGL 3.3 core"],["10:28","Ładowanie funkcji OpenGL"],["12:20","Pierwsza klatka i pętla"],["15:35","Puls koloru"],["18:47","Twoja kolej"]] },
-    en:{ t:"The First Window", sum:"An empty main(), CMake and Ninja, GLFW and GLAD, an OpenGL 3.3 core window, and a background that pulses with colour.",
-         exT:"Make the background pulse again", exP:"The colour is stuck. Make the background pulse in <code>frame.hpp</code>. After the fix, the background should go dark, light, then dark again.",
-         ch:[["0:00","Empty main()"],["1:55","CMake and Ninja"],["3:29","GLFW and GLAD"],["6:37","Asking for OpenGL 3.3 core"],["10:28","Loading OpenGL functions"],["12:20","First frame and the render loop"],["15:35","Making it pulse"],["18:47","Your turn"]] } },
-  { n:1, slug:"e01", ep:"ep01", file:"clock.hpp", video:"m4CKHxsiZZw", short:"m9NnZidEtzc",
-    at:"2026-12-09T17:00:00Z", shortAt:"2026-12-10T17:00:00Z", len:"16:21",
-    pl:{ t:"Pętla gry i stały krok", sum:"Kwadrat, który skacze, i ten sam skok przy 30, 60 i 240 FPS. glScissor, prędkość i grawitacja, lądowanie i dlaczego liczba klatek zmieniała skok, dopóki fizyka nie dostała własnego stałego kroku 20 ms.",
-         exT:"Ogranicz nadrabianie po długiej klatce", exP:"W <code>clock.hpp</code> ogranicz czas przyjmowany z jednej klatki do 250 ms. Po klatce trwającej 333 ms oczekujesz 12 kroków i 10 ms reszty.",
-         ch:[["0:00","Kwadrat z glScissor"],["1:47","Ustawienie kwadratu"],["2:57","Skok: prędkość i grawitacja"],["6:18","Lądowanie"],["7:37","Czy FPS zmienia skok?"],["8:46","Stały krok czasu"],["11:40","Test zegara bez okna"],["13:50","Limit nadrabiania po przycięciu"],["14:30","Zegar wraca do gry"],["15:49","Twoja kolej"]] },
-    en:{ t:"Game Loop and Fixed Timestep", sum:"A square that jumps, and the same jump at 30, 60 and 240 FPS. glScissor, velocity and gravity, landing, and why the frame rate changed the jump until physics got its own fixed 20 ms step.",
-         exT:"Cap the catch-up after a long frame", exP:"In <code>clock.hpp</code>, cap the time accepted from one frame at 250 ms. After a 333 ms frame, expect 12 steps and a 10 ms remainder.",
-         ch:[["0:00","A square with glScissor"],["1:47","Placing the square"],["2:57","Jump: velocity and gravity"],["6:18","Landing"],["7:37","Does FPS change the jump?"],["8:46","A fixed timestep"],["11:40","Testing the clock without a window"],["13:50","Capping catch-up after a stall"],["14:30","Clock back in the game"],["15:49","Your turn"]] } },
-  { n:2, slug:"e02", ep:"ep02", file:"mesh.hpp", video:"9L4EntUchkk", short:"BF9KTyqnWgw",
-    at:"2026-12-16T17:00:00Z", shortAt:"2026-12-18T17:00:00Z", len:"23:32",
-    pl:{ t:"Kostka, obroty i gimbal lock", sum:"Skaczący kwadrat dostaje głębię. Osiem narożników, dwanaście krawędzi, stopnie i radiany, sterowanie yaw/pitch/roll, przypadek 90°, w którym dwa różne obroty dają ten sam wynik, i dlaczego kwaterniony z tych samych trzech kątów tego nie naprawiają.",
-         exT:"Wyprostuj boczne krawędzie kostki", exP:"W <code>mesh.hpp</code> wyprostuj cztery boki między ramkami kostki. Zachowaj 12 krawędzi. Żółty narożnik 6 ma się łączyć z 2.",
-         ch:[["0:00","Od kwadratu do kostki"],["0:42","Narożniki na ekranie"],["5:51","Obrót punktów"],["7:51","Krawędzie między ścianami"],["9:19","Stopnie i radiany"],["10:39","Sterowanie yaw, pitch, roll"],["15:09","Gimbal lock przy 90°"],["17:44","Kwaterniony z tych samych kątów"],["19:58","Jedna orientacja, lokalne osie"],["22:55","Dalej: trójkąty"],["23:00","Twoja kolej"]] },
-    en:{ t:"A Cube, Rotations and Gimbal Lock", sum:"The jumping square gets depth. Eight corners, twelve edges, degrees vs radians, yaw/pitch/roll controls, the 90° case where two different turns give the same result, and why quaternions built from the same three angles don't fix it.",
-         exT:"Straighten the side edges of the cube", exP:"In <code>mesh.hpp</code>, straighten the four sides between the two face loops. Keep all 12 edges. The yellow corner 6 should connect to corner 2.",
-         ch:[["0:00","From square to cube"],["0:42","Plotting the corners"],["5:51","Rotating the points"],["7:51","Edges between the faces"],["9:19","Degrees vs radians"],["10:39","Yaw, pitch and roll controls"],["15:09","Gimbal lock at 90°"],["17:44","Quaternions from the same angles"],["19:58","One orientation, local axes"],["22:55","Next: triangles"],["23:00","Your turn"]] } }
-];
-
-const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const tsToSec = ts => ts.split(":").reduce((a,b)=>a*60+(+b),0);
-
-function fmtDate(iso, lang){
-  return new Intl.DateTimeFormat(T[lang].dateFmt,{weekday:"long",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit",timeZone:"Europe/Warsaw"}).format(new Date(iso));
-}
-
-function renderEpisodes(lang){
-  const L = T[lang], now = Date.now(), out = [];
-  for (const e of EPS){
-    const d = e[lang], live = now >= Date.parse(e.at), shortLive = now >= Date.parse(e.shortAt);
-    const cmds = `git clone -b ${e.slug}-start ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
-    const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
-    const video = live
-      ? `<div class="video" data-yt="${e.video}"><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
-      : `<div class="video"><div class="soon"><img class="pix" src="room.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtDate(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
-    const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
-      + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
-    const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s">${esc(n)}</a>` : esc(n)}</li>`).join("");
-    out.push(`
-    <article class="ep" id="${e.slug}">
-      <div class="ep-head">
-        <span class="ep-num">E0${e.n}</span>
-        <h3>${esc(d.t)}</h3>
-        <span class="ep-meta">${e.len} · ${new Intl.DateTimeFormat(L.dateFmt,{day:"numeric",month:"short",timeZone:"Europe/Warsaw"}).format(new Date(e.at))}</span>
-      </div>
-      <div>
-        ${video}
-        <p class="sum" style="margin-top:14px">${esc(d.sum)}</p>
-        ${ytLinks ? `<div class="links-row">${ytLinks}</div>` : ""}
-        <details class="ch"><summary>${L.chapters} (${d.ch.length})</summary><ol>${ch}</ol></details>
-      </div>
-      <div class="ex">
-        <span class="label">${L.exLabel}</span>
-        <h4>${esc(d.exT)}</h4>
-        <p>${d.exP}</p>
-        <p style="margin-bottom:8px">${L.runCmds}</p>
-        <div class="cw"><pre class="cmd">${cmds.split("\n").map(l=>`<span class="p">$ </span>${esc(l)}`).join("\n")}</pre><button class="copy" type="button" data-copy="${esc(cmds)}">${L.copy}</button></div>
-        <p class="after">${L.afterPass.replace("{f}", `<code>${e.file}</code>`)}</p>
-        <div class="cw" style="margin-top:8px"><pre class="cmd"><span class="p">$ </span>${esc(diff)}</pre><button class="copy" type="button" data-copy="${esc(diff)}">${L.copy}</button></div>
-        <div class="sol">
-          <a href="${REPO}/tree/${e.slug}-start">${L.startBranch}</a>
-          <a href="${REPO}/tree/${e.slug}-solution">${L.solution}</a>
-          <a href="${REPO}/tree/${e.ep}">${L.fullCode}</a>
-        </div>
-      </div>
-    </article>`);
-  }
-  document.getElementById("episodes").innerHTML = out.join("");
-}
-
-function setLang(lang){
-  if (!T[lang]) lang = "pl";
-  document.documentElement.lang = lang;
-  document.querySelectorAll("[data-t]").forEach(el => { el.innerHTML = T[lang][el.dataset.t]; });
-  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
-  document.title = lang === "pl" ? "Silnik 3D w C++ od zera · gamedev.pl" : "C++ 3D Engine From Scratch · gamedev.pl";
-  renderEpisodes(lang);
-  try { localStorage.setItem("lang", lang); } catch(_){}
-  try { const u = new URL(location); u.searchParams.set("lang", lang); history.replaceState(null, "", u); } catch(_){}
-}
-
-document.getElementById("playlistBtn").href = PLAYLIST;
-document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
-document.addEventListener("click", ev => {
-  const c = ev.target.closest(".copy");
-  if (c){
-    navigator.clipboard.writeText(c.dataset.copy).then(() => {
-      const lang = document.documentElement.lang; c.textContent = T[lang].copied;
-      setTimeout(() => c.textContent = T[lang].copy, 1500);
-    });
-    return;
-  }
-  const p = ev.target.closest(".video[data-yt] .play");
-  if (p){
-    const box = p.parentElement, id = box.dataset.yt;
-    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="YouTube"></iframe>`;
-  }
-});
-
-(function initLang(){
-  let lang = new URLSearchParams(location.search).get("lang");
-  if (!T[lang]) { try { lang = localStorage.getItem("lang"); } catch(_){} }
-  if (!T[lang]) lang = (navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
-  setLang(lang);
-})();
-
-/* The CRT shows what episode 2 ends with: 8 corners, 12 edges, corner 6 in yellow.
-   Drawn at the monitor's own 95x60 pixels, like the film. */
-(function cube(){
-  const cv = document.getElementById("cube"), g = cv.getContext("2d");
-  const V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
-  const E = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const W = cv.width, H = cv.height, s = 15;
-  function line(x0,y0,x1,y1){
-    x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
-    const dx=Math.abs(x1-x0), dy=-Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1; let e=dx+dy;
-    for(;;){ g.fillRect(x0,y0,1,1); if(x0===x1&&y0===y1) break; const e2=2*e; if(e2>=dy){e+=dy;x0+=sx} if(e2<=dx){e+=dx;y0+=sy} }
-  }
-  let last = -1;
-  function frame(now){
-    const step = Math.floor(now / 80);           // ~12 fps, stepped like pixel animation
-    if (step !== last){
-      last = step;
-      const t = reduce ? 1.1 : step * 0.08;
-      const yaw = t*0.6, pitch = 0.5 + Math.sin(t*0.37)*0.25;
-      const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
-      const P = V.map(([x,y,z]) => {
-        const X = x*cy + z*sy, Z0 = -x*sy + z*cy, Y = y*cp - Z0*sp, Z = y*sp + Z0*cp, k = 4.5/(4.5+Z);
-        return [W/2 + X*s*k, H/2 + Y*s*k, Z];
-      });
-      g.fillStyle = "#151423"; g.fillRect(0,0,W,H);
-      for (const [a,b] of E){
-        g.fillStyle = (P[a][2]+P[b][2])/2 > 0.3 ? "#8e7e79" : "#ffe1a2";
-        line(P[a][0],P[a][1],P[b][0],P[b][1]);
-      }
-      P.forEach(([x,y],i) => {
-        x=Math.round(x); y=Math.round(y);
-        if (i === 6){ g.fillStyle = "#eea75e"; g.fillRect(x-2,y-2,5,5); g.fillStyle="#ffe1a2"; g.fillRect(x-1,y-1,3,3); }
-        else { g.fillStyle = "#76ddaf"; g.fillRect(x-1,y-1,3,3); }
-      });
-      g.fillStyle = "#76ddaf"; g.fillRect(2,H-4,(step>>3)%2?3:0,2); // cursor blink
-    }
-    if (!reduce) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
-</script>
+<script src="series.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
