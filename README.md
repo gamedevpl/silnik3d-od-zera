@@ -8,7 +8,7 @@ Otwórz terminal w sklonowanym repozytorium na gałęzi `main`. Potrzebujesz Git
 
 | Odcinek | Polecenie | Co obserwować |
 |---|---|---|
-| E00 | `python3 replay 00` | Argument cosinusa i kolor jednego piksela w dwóch chwilach |
+| E00 | `python3 replay clock` | Argument cosinusa i kolor jednego piksela w dwóch chwilach |
 | E01 | `python3 replay 01` | Wysokość skoku i czas lądowania przy 30 i 240 FPS |
 | E02 | `python3 replay 02` | Odległość osi po dwóch obrotach kostki przy nachyleniu 90° |
 
@@ -77,7 +77,7 @@ Uruchom `python3 replay pulse`. Test ustawia zegar pierwszej klatki na 0,20 s dl
 
 ### E00 · zegar i pomarańczowy piksel
 
-W 3:50 zobaczysz pomiar liczby klatek. Po rozpakowaniu paczki użyj `python3 probe-swaps` w jej głównym katalogu. W 5:14 zaczynają się cztery próby z zegarem. Powtórz je z tego samego katalogu poleceniem `python3 replay clock`. Próbnik ustawia pierwszą klatkę na 0,2 s, potem porównuje argument cosinusa i piksel z odczytem przy 1,2 s.
+W 4:04 zobaczysz pomiar liczby klatek. Po rozpakowaniu paczki użyj `python3 probe-swaps` w jej głównym katalogu. W 5:11 zaczynają się cztery próby z zegarem. Powtórz je z tego samego katalogu poleceniem `python3 replay clock`. Próbnik ustawia pierwszą klatkę na 0,2 s, potem porównuje argument cosinusa i piksel z odczytem przy 1,2 s.
 
 W katalogu głównym klonu dodaj osobny katalog na ćwiczenie:
 
