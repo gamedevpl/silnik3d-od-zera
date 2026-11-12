@@ -74,3 +74,9 @@ For the vertical E02 experiment run `python3 replay edges`. This compiles mesh.h
 ### Short E00
 
 Uruchom `python3 replay pulse`. Test ustawia zegar pierwszej klatki na 0,20 s dla wszystkich trzech wersji. Porównaj argument cosinusa i piksel po upływie sekundy.
+
+### E00 · zegar i pomarańczowy piksel
+
+W 3:50 zobaczysz pomiar liczby klatek. Po rozpakowaniu paczki użyj `python3 probe-swaps` w jej głównym katalogu. W 5:14 zaczynają się cztery próby z zegarem. Powtórz je z tego samego katalogu poleceniem `python3 replay clock`. Próbnik ustawia pierwszą klatkę na 0,2 s, potem porównuje argument cosinusa i piksel z odczytem przy 1,2 s.
+
+W kopii roboczej Git uruchom `git diff ep00-static-elapsed ep00 -- frame.hpp`, by zobaczyć słowo, które zmienia wynik ostatniej próby. Możesz też przełączyć się na etap ep00-static-elapsed, usunąć static przy elapsed i uruchomić `python3 probe . arg --start-time 0.2` z kopii repozytorium wyposażonej w skrypt probe. Jeśli używasz ZIP-a z oddzielnym klonem ref, odpowiednia komenda z katalogu ref to `python3 ../probe . arg --start-time 0.2`.
