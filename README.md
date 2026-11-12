@@ -18,7 +18,7 @@ Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka z
 
 ## E02 · czy inna oś cofnie obrót?
 
-W terminalu, obok `replay`, uruchom `python3 steer ep02-quat-euler`. Biały pierścień zaznacza start żółtego narożnika 6. Naciśnij Y, poczekaj na koniec obrotu, a potem naciśnij Z. Y dodaje 45° yaw, Z dodaje 45° roll. Przy pochyleniu 90° narożnik wraca do pierścienia. Zamknij próbnik klawiszem Esc, uruchom `python3 steer ep02` i powtórz te same ruchy. Tym razem narożnik mija start. Zerem przywrócisz pozycję początkową.
+W terminalu, obok `replay`, uruchom `python3 steer ep02-euler`. Biały pierścień zaznacza start żółtego narożnika 6. Naciśnij Y, poczekaj na koniec obrotu, a potem naciśnij Z. Y dodaje 45° yaw, Z dodaje 45° roll. Przy pochyleniu 90° narożnik wraca do pierścienia. Zamknij próbnik klawiszem Esc, uruchom `python3 steer ep02` i powtórz te same ruchy. Tym razem narożnik mija start. Zerem przywrócisz pozycję początkową. Pośredni etap z filmu, który składa kwaterniony z trzech kątów, możesz sprawdzić przez `python3 steer ep02-quat-euler`. Także tutaj po Z szóstka wraca do pierścienia.
 
 Do tej próby wystarczą Git, Python 3 i kompilator C++17. Aby poeksperymentować ze źródłem w świeżym katalogu zestawu, wykonaj:
 
@@ -28,7 +28,7 @@ Do tej próby wystarczą Git, Python 3 i kompilator C++17. Aby poeksperymentowa�
 
 W pełnym klonie z GitHuba zacznij w katalogu, w którym leżą skrypty `steer` i `replay`, i użyj `git clone -b ep02-quat-euler . ref` w pierwszym wierszu. Jeśli masz już katalog `ref` utworzony z pliku bundle obok tych skryptów, przejdź w nim do etapu poleceniem `git -C ref switch --detach ep02-quat-euler` z katalogu paczki, po czym wykonaj dwa pozostałe wiersze. W pliku zmień `else roll -= angle;` na `else roll += angle;`, zapisz przez `:w` i uruchom `:!python3 ../steer . --trace`. Po Z największy odstęp narożników od startu wynosi teraz 2,000000. Po cofnięciu zmiany przez `u` i zapisie powtórz próbę.
 
-Program kompiluje nagłówek `attitude.hpp` z wybranego etapu. W Vimie otwartym w klonie `ref` obok skryptu z paczki wpisz `:!python3 ../steer .`, aby sprawdzić swój zapisany plik. Okno korzysta z Tkinter i Pillow 10.1 lub nowszej. Możesz wykonać to samo ćwiczenie liczbowo bez obu bibliotek przez `python3 steer ep02-quat-euler --trace` i `python3 steer ep02 --trace`. Ostatnie wiersze podają największą odległość narożnika od jego własnej pozycji startowej. Wyniki po Z wynoszą 0,000000 i 1,780891.
+Program kompiluje nagłówek `attitude.hpp` z wybranego etapu. W Vimie otwartym w klonie `ref` obok skryptu z paczki wpisz `:!python3 ../steer .`, aby sprawdzić swój zapisany plik. Okno korzysta z Tkinter i Pillow 10.1 lub nowszej. Możesz wykonać to samo ćwiczenie liczbowo bez obu bibliotek przez `python3 steer ep02-euler --trace` i `python3 steer ep02 --trace`. Ostatnie wiersze podają największą odległość narożnika od jego własnej pozycji startowej. Wyniki po Z wynoszą 0,000000 i 1,780891.
 
 ## E02 · Pełny obrót
 

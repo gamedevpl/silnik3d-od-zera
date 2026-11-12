@@ -7,7 +7,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parent
-STAGES = ('ep02-quat-euler', 'ep02')
+STAGES = ('ep02-euler', 'ep02-quat-euler', 'ep02')
 SIZE = (720, 404)
 BACK = '#192832'
 GOLD = '#ffcf56'
@@ -127,7 +127,7 @@ def project(stage, temp):
     if stage not in STAGES:
         source = Path(stage).resolve()
         if not (source/'attitude.hpp').is_file():
-            raise SystemExit('Choose ep02-quat-euler, ep02, or a directory containing attitude.hpp')
+            raise SystemExit('Choose an E02 controller tag or a directory containing attitude.hpp')
         return source
     source = temp/'engine'
     bundle = ROOT/'silnik-3d.bundle'
@@ -137,7 +137,7 @@ def project(stage, temp):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('stage', help='ep02-quat-euler, ep02, or a source directory')
+    parser.add_argument('stage', help='ep02-euler, ep02-quat-euler, ep02, or a source directory')
     parser.add_argument('--trace', action='store_true', help='print results for Y, Z without opening a window')
     args = parser.parse_args()
     with TemporaryDirectory() as tmp:

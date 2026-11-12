@@ -156,6 +156,6 @@ else:
                 print(f'$ ./axes {angle}',flush=True)
                 run([repo/'axes',angle],repo)
 
-    for tag in ('ep02-quat-euler','ep02'):
+    for tag in ('ep02-euler','ep02-quat-euler','ep02'):
         print(f'\n$ python3 steer {tag} --trace',flush=True)
         run([sys.executable,base/'steer',tag,'--trace'])
