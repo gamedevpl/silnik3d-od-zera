@@ -8,6 +8,9 @@ struct Jumper {
     void update(double dt) {
         speed -= 800 * dt;
         height += speed * dt;
+        if (height < 0) {
+            height = 0;
+        }
     }
 };
 inline Jumper player;
