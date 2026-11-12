@@ -8,6 +8,8 @@ W klonie zacznij od `git clone https://github.com/gamedevpl/silnik3d-od-zera.git
 
 Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka zawiera już plik `silnik-3d.bundle`. W klonie utwórz go poleceniem `git bundle create silnik-3d.bundle HEAD main --tags`. Następnie utwórz `work/engine` i przejdź do niego. W tym miejscu `git clone -q ../../silnik-3d.bundle ../../ref` tworzy kopię do podglądu, a `cp -R ../../ref/vendor .` umieszcza biblioteki w budowanym projekcie. Polecenia z tabeli poniżej uruchamiaj z katalogu zawierającego `replay`.
 
+Przejdź E00 w Vimie od [pierwszego zapisu pliku](#e00--co-zapisuje-vim-a-co-uruchamia-powłoka) do [pierwszego celu CMake](#e00--co-właściwie-zbudował-ninja).
+
 | Odcinek | Long | Short |
 |---|---|---|
 | E00 | `python3 replay setup` · `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
