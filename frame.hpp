@@ -6,6 +6,7 @@ struct Jumper {
     double speed = 270;
 
     void update(double dt) {
+        speed -= 800 * dt;
         height += speed * dt;
     }
 };
