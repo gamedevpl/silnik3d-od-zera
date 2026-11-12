@@ -1,0 +1,58 @@
+{
+  "room-rear": {
+    "file": "room-rear.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 1,
+    "fps": 0,
+    "screen": [
+      63,
+      33,
+      95,
+      60
+    ]
+  },
+  "face-curious": {
+    "file": "face-curious.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 30,
+    "fps": 12
+  },
+  "face-puzzled": {
+    "file": "face-puzzled.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 30,
+    "fps": 12
+  },
+  "face-surprised": {
+    "file": "face-surprised.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 30,
+    "fps": 12
+  },
+  "face-satisfied": {
+    "file": "face-satisfied.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 30,
+    "fps": 12
+  },
+  "face-idle": {
+    "file": "face-idle.png",
+    "frameWidth": 320,
+    "frameHeight": 180,
+    "frames": 42,
+    "fps": 12
+  },
+  "face-head": {
+    "file": "face-head.png",
+    "frameWidth": 74,
+    "frameHeight": 56,
+    "frames": 42,
+    "fps": 12,
+    "note": "native 1x sprite scale, transparent; scale with image-rendering: pixelated"
+  }
+}
