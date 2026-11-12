@@ -5,7 +5,7 @@
 #include <vector>
 constexpr unsigned GL_COLOR_BUFFER_BIT = 0x4000;
 constexpr unsigned GL_SCISSOR_TEST = 0x0C11;
-static void* window = nullptr;
+static void* glfwGetCurrentContext() { return nullptr; }
 static bool clipped = false;
 using Rect = std::array<int, 4>;
 static Rect rectangle{};
