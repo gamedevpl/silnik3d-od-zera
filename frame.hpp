@@ -9,4 +9,7 @@ inline void frame() {
                  0.09f + 0.31f * pulse,
                  0.06f + 0.04f * pulse, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glScissor(0, 0, 40, 40);
+    glClearColor(0.72f, 1.f, 0.86f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
