@@ -19,7 +19,7 @@ if cmake_bin:
     env['PATH']=cmake_bin+os.pathsep+env.get('PATH','')
 
 stages=[
-    ('ep00-missing-glad','glad/gl.h'),('ep00-missing-glfw','GLFW/glfw3.h'),
+    ('ep00-missing-glad','glad/gl.h'),('ep00-unlinked-glfw','GLFW/glfw3.h'),
     ('ep00-glfw-ready',None),('ep00-window-default',None),('ep00-window-core',None),
     ('ep00-loader-before',None),('ep00-loader-after',None)]
 with TemporaryDirectory(prefix='e00-setup-') as tmp:

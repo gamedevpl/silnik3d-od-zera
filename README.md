@@ -89,6 +89,13 @@ Wróć klawiszem Enter. W trybie normalnym naciśnij `G`, następnie `o` i dopis
 
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
+W filmie oba opisy bibliotek trafiają do projektu jednym zaznaczeniem sześciu wierszy. Możesz zacząć dokładnie przed naprawą drugiego błędu. Z katalogu rozpakowanej paczki wykonaj `git clone -b ep00-unlinked-glfw silnik-3d.bundle proba-glfw`. Z klonu Git użyj `git clone -b ep00-unlinked-glfw . proba-glfw`. Następnie:
+
+    cd proba-glfw
+    vim CMakeLists.txt
+
+W Vimie uruchom `:!cmake -S . -B build -G Ninja`. Naciśnij Enter i przetestuj `:!cmake --build build && ./build/engine`. Zobaczysz błąd dotyczący `GLFW/glfw3.h`, chociaż w projekcie jest już `add_subdirectory(vendor/glfw)`. Naciśnij Enter. Wyszukaj `/PRIVATE glad`, zatwierdź Enterem i klawiszem `w` przejdź na `glad`. Naciśnij `i`, wpisz `glfw ` ze spacją, naciśnij Esc i zapisz przez `:w`. Teraz `:!!` powtarza całe polecenie i program wypisuje `GLFW ready`. Różnicę widać też przez `git diff ep00-unlinked-glfw ep00-glfw-ready -- CMakeLists.txt`.
+
 Uruchom `python3 replay setup` w sesji graficznej. Pierwsze dwie kompilacje zatrzymują się na brakujących nagłówkach GLAD i GLFW. Trzecia uruchamia GLFW. Kolejne dwie tworzą okno 640 × 360 i odczytują wersję kontekstu, najpierw domyślną, potem po zażądaniu OpenGL 3.3 core. Na Macu użytym w filmie były to 2.1 i 4.1. Wynik na Twoim komputerze zależy od sterownika. Dwie ostatnie próby ładują funkcje OpenGL przed uaktywnieniem kontekstu i po nim. Tę jedną zmianę możesz porównać w klonie.
 
     git diff ep00-loader-before ep00-loader-after -- main.cpp
