@@ -13,6 +13,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     window = glfwCreateWindow(640, 360, "Engine", nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }
+    glfwMakeContextCurrent(window);
     std::puts(gladLoadGL(glfwGetProcAddress)
               ? "GLAD ready" : "GLAD failed");
     glfwDestroyWindow(window);
