@@ -78,6 +78,6 @@ else:
             run(['git','switch','-q','--detach',tag],repo)
             print('$ c++ -std=c++17 axes.cpp -o axes',flush=True)
             run(['c++','-std=c++17','axes.cpp','-o','axes'],repo)
-            for angle in (('60','90') if tag=='ep02-euler' else ('90',)):
+            for angle in (('60','89','90') if tag=='ep02-euler' else ('90',)):
                 print(f'$ ./axes {angle}',flush=True)
                 run([repo/'axes',angle],repo)

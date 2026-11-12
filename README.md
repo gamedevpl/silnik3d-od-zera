@@ -8,6 +8,17 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 | E01 | `python3 replay 01` | `python3 replay race` |
 | E02 | `python3 replay 02` | `python3 replay edges` |
 
+
+## E02 · test przy 89° / the 89° test
+
+Na gałęzi main uruchom `python3 replay 02`. From main this repeats the 60°, 89° and 90° Euler test and compares all three controllers at 90°. Requires Git, Python 3 and a C++17 compiler. Własny kąt sprawdzisz w osobnym katalogu roboczym:
+
+    git worktree add --detach ../e02-angles ep02-euler
+    cd ../e02-angles
+    c++ -std=c++17 axes.cpp -o axes
+    ./axes 89
+    ./axes 90
+
 ## Short E01 · skok przy 15 FPS
 
 W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas pierwszego kontaktu z ziemią przy wybranej liczbie klatek i przy 240 FPS. Próbnik zatrzymuje skok po pierwszym kontakcie wewnątrz kroku fizyki. Dzięki temu wykrywa też lądowanie, po którym postać odbiłaby się przed kolejną klatką. Podany czas oznacza chwilę klatki zawierającej kontakt. Dokładność ogranicza czas jednej klatki.
