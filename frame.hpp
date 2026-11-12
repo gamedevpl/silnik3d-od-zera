@@ -13,4 +13,5 @@ inline void frame() {
     glScissor(0, 0, 40, 40);
     glClearColor(0.72f, 1.f, 0.86f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_SCISSOR_TEST);
 }
