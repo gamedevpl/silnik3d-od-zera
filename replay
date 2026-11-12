@@ -82,6 +82,9 @@ elif ep=='edges':
             run([work/'edges'])
 
 else:
+    for exercise in ('corners','edges'):
+        print(f'\n$ python3 replay {exercise}',flush=True)
+        run([sys.executable,__file__,exercise])
     with TemporaryDirectory(prefix='silnik-test-') as work:
         repo=Path(work)/'silnik'
         run(['git','clone','-q',base,repo])

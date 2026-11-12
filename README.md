@@ -6,7 +6,7 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 |---|---|---|
 | E00 | `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
 | E01 | `python3 replay 01` | `python3 replay race` |
-| E02 | `python3 replay 02` | `python3 replay edges` |
+| E02 | Cały long: `python3 replay 02`. Same punkty z pierwszej minuty: `python3 replay corners`. | `python3 replay edges` |
 
 
 
