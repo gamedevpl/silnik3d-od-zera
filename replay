@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing','steps'))
+parser.add_argument('episode',choices=('00','01','02','setup','edges','pulse','clock','race','corners','landing','steps'))
 parser.add_argument('--source',type=Path,help='For landing, steps or pulse: compile the code from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
@@ -20,7 +20,9 @@ if args.source and ep not in ('steps','landing','pulse'):
 def run(args,cwd=None):
     subprocess.run(args,cwd=cwd,check=True)
 
-if ep in ('00','01'):
+if ep=='setup':
+    run([sys.executable,base/'probe-setup'])
+elif ep in ('00','01'):
     build_env=os.environ.copy()
     configured=build_env.get('CMAKE_BIN_DIR')
     installed=Path('/opt/homebrew/share/android-commandlinetools/cmake/3.22.1/bin')

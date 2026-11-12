@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Build the five E00 setup checkpoints with the reader's own toolchain."""
+import os
+from pathlib import Path
+import shutil
+import subprocess
+from tempfile import TemporaryDirectory
+
+base=Path(__file__).resolve().parent
+source=base/'silnik-3d.bundle'
+if not source.is_file():
+    source=base
+env=os.environ.copy()
+cmake_bin=env.get('CMAKE_BIN_DIR')
+fallback=Path('/opt/homebrew/share/android-commandlinetools/cmake/3.22.1/bin')
+if not cmake_bin and not (shutil.which('cmake') and shutil.which('ninja')) and fallback.is_dir():
+    cmake_bin=str(fallback)
+if cmake_bin:
+    env['PATH']=cmake_bin+os.pathsep+env.get('PATH','')
+
+stages=[
+    ('ep00-missing-glad','glad/gl.h'),('ep00-missing-glfw','GLFW/glfw3.h'),
+    ('ep00-glfw-ready',None),('ep00-loader-before',None),('ep00-loader-after',None)]
+with TemporaryDirectory(prefix='e00-setup-') as tmp:
+    tree=Path(tmp)/'engine'
+    subprocess.run(['git','clone','-q','--no-checkout',source,tree],check=True)
+    for tag,missing in stages:
+        print(tag,flush=True)
+        subprocess.run(['git','switch','-q','--detach',tag],cwd=tree,check=True)
+        subprocess.run(['cmake','-S','.','-B','build','-G','Ninja'],cwd=tree,env=env,
+                       check=True,stdout=subprocess.DEVNULL)
+        build=subprocess.run(['cmake','--build','build'],cwd=tree,env=env,text=True,
+                             stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        if missing:
+            lines=[line for line in build.stdout.splitlines() if missing in line and 'error' in line.lower()]
+            if build.returncode==0 or not lines:
+                raise RuntimeError(build.stdout)
+            print(lines[0],flush=True)
+        else:
+            if build.returncode:
+                raise RuntimeError(build.stdout)
+            program=tree/'build'/('engine.exe' if os.name=='nt' else 'engine')
+            subprocess.run([program],cwd=tree,env=env,check=True)

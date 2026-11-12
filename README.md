@@ -4,11 +4,17 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 
 | Odcinek | Long | Short |
 |---|---|---|
-| E00 | `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
+| E00 | `python3 replay setup` · `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
 | E01 | `python3 replay 01` · `python3 replay landing` · `python3 replay steps` | `python3 replay race` |
 | E02 | Cały long: `python3 replay 02`. Same punkty z pierwszej minuty: `python3 replay corners`. | `python3 replay edges` |
 
 
+
+## E00 · Od pierwszego include do uruchomienia GLAD
+
+Uruchom `python3 replay setup` w sesji graficznej. Komenda buduje pięć wersji na Twoim komputerze. Pierwsze dwie kompilacje powinny zatrzymać się kolejno na `glad/gl.h` i `GLFW/glfw3.h`. Trzecia sprawdza inicjalizację GLFW. Dwie ostatnie wypisują wynik ładowania funkcji OpenGL przed uaktywnieniem kontekstu i po nim. W klonie porównasz tę jedną linię poleceniem:
+
+    git diff ep00-loader-before ep00-loader-after -- main.cpp
 
 ## E01 · dlaczego kwadrat stanął przy 240 FPS?
 
