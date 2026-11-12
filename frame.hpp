@@ -10,6 +10,7 @@ struct Jumper {
         height += speed * dt;
         if (height < 0) {
             height = 0;
+            speed = 270;
         }
     }
 };
