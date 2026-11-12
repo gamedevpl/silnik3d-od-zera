@@ -1,0 +1,45 @@
+/* Two trial looks, picked with ?theme=room or ?theme=vim. The chosen one gets folded into index.html. */
+
+/* ---------- room: the page is the film's set. Hard edges, ink outlines, paper, wood. ---------- */
+html body{background:var(--wall) repeating-linear-gradient(90deg,transparent 0 125px,#2b2640 125px 126px,#1f1c2e 126px 127px);font-weight:600}
+html :is(.btn,.step,.row,.video,.scene,.ex,.cmd,.term,.pill,.ep-num,.facts li,.lang,.lang button,.copy,.thumb,.ask-open,.ask-panel,.ask-form input,.ask-form button,.ask-dl,.seasons button,.ask-chips button,.ask-msg.me){border-radius:0!important}
+html header.top{background:var(--ink);border-bottom:3px solid #0d0c17;backdrop-filter:none}
+html :is(h1,h2,.row-head h3,.step h3){font-family:var(--pix);font-weight:700;letter-spacing:-.5px}
+html h1{font-size:clamp(32px,4.4vw,52px);letter-spacing:-2px;text-shadow:4px 4px 0 var(--ink)}
+html h1 .tq{font-weight:700;color:var(--amber)}
+html h2{font-size:30px;display:inline-block;background:#f9e4ba;color:var(--ink);padding:4px 14px;box-shadow:0 0 0 3px var(--ink),6px 6px 0 3px rgba(0,0,0,.35);margin-bottom:26px}
+html .lede{color:var(--cream)}
+html .kicker{color:var(--light,#76ddaf)}
+html .scene{box-shadow:0 0 0 4px var(--ink),10px 10px 0 4px rgba(0,0,0,.4)}
+html .btn{border:0;background:var(--walnut);color:var(--cream);box-shadow:0 0 0 3px var(--ink),5px 5px 0 3px rgba(0,0,0,.4);font-family:var(--pix)}
+html .btn.primary{background:var(--amber);color:var(--ink)}
+html .btn:hover{transform:translate(2px,2px);box-shadow:0 0 0 3px var(--ink),3px 3px 0 3px rgba(0,0,0,.4)}
+html .facts li{background:var(--ink);border:0;color:#b3a39a;font:700 12px var(--pix)}
+/* the desk: a wooden edge between sections */
+html section{border-top:0;position:relative;padding-top:86px}
+html section:before{content:"";position:absolute;left:0;right:0;top:0;height:26px;background:linear-gradient(#a97163 0 3px,#755052 3px 14px,#a16d5e 14px 16px,#473441 16px 26px);box-shadow:0 4px 0 rgba(0,0,0,.25)}
+html :is(.step,.row){background:#2f2a42;border:0;box-shadow:0 0 0 3px var(--ink),6px 6px 0 3px rgba(0,0,0,.35)}
+html .row{margin-bottom:16px}
+html .row.featured{box-shadow:0 0 0 3px var(--ink),0 0 0 6px var(--amber),8px 8px 0 6px rgba(0,0,0,.35)}
+html .step .pic{border-bottom:3px solid var(--ink)}
+html .step:before{border-radius:0;background:var(--amber);color:var(--ink);font-family:var(--pix);box-shadow:0 0 0 2px var(--ink)}
+html .step p,html .ep p.sum{color:#cbbfae}
+html .ep-num{background:var(--ink);border:0;color:var(--light,#76ddaf);font:700 14px var(--pix)}
+html .pill{border:0;background:var(--amber);color:var(--ink);font-family:var(--pix)}
+html .thumb{box-shadow:0 0 0 3px var(--ink),0 0 0 5px #a49486}
+html a{color:#76ddaf}
+html .ex a{color:var(--teal)}
+html details.ch{border-top:3px solid var(--ink)}
+html .video button.play:after{border-radius:0;background-color:var(--amber);box-shadow:0 0 0 3px var(--ink),5px 5px 0 3px rgba(0,0,0,.4)}
+/* the mascots stand on the desk */
+html .faces{padding:70px 0 0}
+html .faces .wrap{max-width:none;padding:0}
+html .faces .strip{position:relative;z-index:1;margin-bottom:-10px}
+html .faces p{margin:0;padding:34px 20px 30px;background:linear-gradient(#a97163 0 3px,#755052 3px);color:var(--cream)}
+html footer{background:#473441;border-top:3px solid #a16d5e;color:#cbbfae}
+html footer .right a{color:var(--cream)}
+html .lang{background:none;border:0;box-shadow:0 0 0 2px #46585a}
+html .lang button[aria-pressed=true]{background:#76ddaf}
+html .ask-open,html .ask-panel{border:0;background:#2f2a42;box-shadow:0 0 0 3px var(--ink),6px 6px 0 3px rgba(0,0,0,.4)}
+
+/* ---------- vim: the page is the buffer on the CRT. One mono face, line numbers, a status line. ---------- */
