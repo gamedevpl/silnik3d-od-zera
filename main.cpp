@@ -6,6 +6,11 @@
 GLFWwindow* window;
 
 void draw() {
+    double now = glfwGetTime();
+    static double prev = now;
+    double elapsed = now - prev;
+    prev = now;
+    player.update(elapsed);
     frame();
     glfwSwapBuffers(window);
     glfwPollEvents();
