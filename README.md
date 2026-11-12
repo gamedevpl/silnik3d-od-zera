@@ -1,5 +1,13 @@
 # Silnik 3D w C++ od zera
 
+Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+, Ninja i sesji graficznej z OpenGL. Uruchom wybraną komendę w katalogu paczki lub na gałęzi main klonu.
+
+| Odcinek | Long | Short |
+|---|---|---|
+| E00 | `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
+| E01 | `python3 replay 01` | `python3 replay race` |
+| E02 | `python3 replay 02` | `python3 replay edges` |
+
 ## Short E01 · skok przy 15 FPS
 
 W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas pierwszego kontaktu z ziemią przy wybranej liczbie klatek i przy 240 FPS. Próbnik zatrzymuje skok po pierwszym kontakcie wewnątrz kroku fizyki. Dzięki temu wykrywa też lądowanie, po którym postać odbiłaby się przed kolejną klatką. Podany czas oznacza chwilę klatki zawierającej kontakt. Dokładność ogranicza czas jednej klatki.
@@ -23,6 +31,8 @@ Otwórz terminal w sklonowanym repozytorium na gałęzi `main`. Potrzebujesz Git
 | E02 | `python3 replay 02` | Odległość osi po dwóch obrotach kostki przy nachyleniu 90° |
 
 Skrypt pobiera etapy z lokalnej historii Git i buduje je w tymczasowym katalogu. Twój kod zostaje na bieżącej gałęzi. Zmianę warunku zegara możesz prześledzić poleceniem `git diff ep01-single-step ep01 -- clock.hpp`.
+
+For the E01 Short, run `python3 replay race`. It measures the first rendered frame containing a landing at 15 or 30 FPS and at 240 FPS.
 
 ### Reproduce the experiment
 
