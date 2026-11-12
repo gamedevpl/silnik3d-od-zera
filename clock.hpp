@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 
 struct Clock {
     double lag = 0;
@@ -6,7 +7,7 @@ struct Clock {
 
     template<class F>
     void advance(double elapsed, F step) {
-        lag += elapsed;
+        lag += std::min(elapsed, 0.25);
         while (lag >= tick) {
             step(tick);
             lag -= tick;
