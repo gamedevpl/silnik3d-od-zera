@@ -89,13 +89,15 @@ W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas p
 
 Polecenie `python3 replay frame` porównuje jedną klatkę z filmu przed poprawką i po niej. Wystarczą Git, Python 3 i kompilator C++17. Możesz też własnoręcznie zmienić warunek.
 
-Z głównego katalogu klonu na gałęzi main.
+Na gałęzi main otwórz etap z nieudanym testem w osobnym katalogu.
 
     git worktree add --detach ref ep01-matched-tick
-    python3 frame 15 --source ref
-    vim ref/clock.hpp
+    cd ref
+    vim clock.hpp
 
-Zamień `if (lag >= tick)` na `while (lag >= tick)` i zapisz przez `:wq`. Powtórz `python3 frame 15 --source ref`. W tej samej klatce 66,667 ms wykonają się teraz dwa kroki po 33,333 ms. Reszta spadnie z 33,333 ms do zera. Aby porównać także czasy lądowania, uruchom `python3 ../race 15` z katalogu ref.
+W Vimie wpisz `:!python3 ../frame 15` i naciśnij Enter. Próbnik C++ korzysta z clock.hpp z bieżącego katalogu. Po pierwszym przebiegu zostaje 33,333 ms. Naciśnij Enter, by wrócić do edytora. W clock.hpp zmień `if (lag >= tick)` na `while (lag >= tick)`, zapisz przez `:w` i ponów tę samą komendę. W tej samej klatce 66,667 ms zmieszczą się dwa kroki, a reszta wyniesie zero. Wywołanie clock.advance znajdziesz przez `:e ../clock-trace.cpp` i `13G`. Aby porównać również lądowania, wpisz `:!python3 ../race 15`.
+
+From the ref directory, open clock.hpp in Vim and run `:!python3 ../frame 15`. Replace if with while, save with `:w`, and repeat the same command. The remaining time drops from 33.333 ms to zero.
 
 Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
 
