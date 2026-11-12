@@ -14,6 +14,8 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 
 Uruchom `python3 replay steps`. Próbnik kompiluje trzy wersje pętli w draw() i końcowy zegar, po czym liczy rzeczywiste wywołania Jumper.update w ukrytym oknie OpenGL. Po 0,667 s warunek na czas pojedynczej klatki daje 20 kroków przy 30 FPS i zero przy 240 FPS. Zbieranie czasu daje 20 i 33. Pętla rozliczająca każdy pełny krok daje 33 i 33, także po wydzieleniu clock.hpp.
 
+Przy 2,000000 s zapas zapisany w double jest odrobinę mniejszy od kroku 20 ms. Oba liczniki pokazują 99. Cztery ostatnie wiersze próby wypisują zapas z pełną dokładnością oraz kolejną klatkę: przy 30 FPS jest w niej już 101 kroków, przy 240 FPS jest 100.
+
 Aby zmienić warunek samodzielnie, z katalogu zawierającego ten plik wykonaj:
 
     git worktree add --detach ../test-clock ep01-inline-bank
