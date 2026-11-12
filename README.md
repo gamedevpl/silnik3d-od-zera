@@ -2,6 +2,22 @@
 
 Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
 
+## Powtórz próbę z filmu
+
+Otwórz terminal w sklonowanym repozytorium na gałęzi `main`. Potrzebujesz Git, Pythona 3 i kompilatora C++17. E00 i E01 wymagają też CMake, Ninja i sesji graficznej z OpenGL. Wybierz swój odcinek.
+
+| Odcinek | Polecenie | Co obserwować |
+|---|---|---|
+| E00 | `python3 replay 00` | Argument cosinusa i kolor jednego piksela w dwóch chwilach |
+| E01 | `python3 replay 01` | Wysokość skoku i czas lądowania przy 30 i 240 FPS |
+| E02 | `python3 replay 02` | Odległość osi po dwóch obrotach kostki przy nachyleniu 90° |
+
+Skrypt pobiera etapy z lokalnej historii Git i buduje je w tymczasowym katalogu. Twój kod zostaje na bieżącej gałęzi. Zmianę warunku zegara możesz prześledzić poleceniem `git diff ep01-single-step ep01 -- clock.hpp`.
+
+### Reproduce the experiment
+
+From a clone on `main`, run one command from the table above. E00 measures the colour of a pixel over one second. E01 compares jumps at two frame rates. E02 compares yaw and roll after pitching the cube. You need Git, Python 3 and a C++17 compiler. The first two episodes also need CMake 3.20+, Ninja and a graphical OpenGL session. The tests build the tagged sources in temporary directories. Use a Git clone with its tags for these commands.
+
 ## Budowanie
 
 Potrzebujesz kompilatora C++17, CMake 3.20+ i Ninja. GLFW i GLAD znajdują się w katalogu `vendor/` wraz z licencjami. Na macOS potrzebne są Command Line Tools, a na Linuksie także pakiety deweloperskie systemu okienkowego obsługiwanego przez GLFW.
@@ -22,7 +38,8 @@ Zamknij okno, aby zakończyć program. Nagrania powstały z kompilacji natywnej 
 - `ep00-frozen` – kolor utknął. Stąd startuje Short E00.
 - `ep00` – pulsujące tło; dokładnie ten projekt otwiera long E01.
 - `ep01-variable` – kwadrat skacze, wysokość zależy od czasu klatki.
-- `ep01-clock` – zegar jest napisany, ale jeszcze niepodłączony. Stąd startuje Short E01.
+- `ep01-clock` – zegar jest napisany, ale jeszcze niepodłączony.
+- `ep01-single-step` – przy 30 FPS zegar wykonuje tylko jeden zaległy krok. Stąd startuje próba z Shorta E01.
 - `ep01` – kwadrat jest aktualizowany w krokach 20 ms.
 
 Na przykład `git diff ep00-frozen ep00 -- frame.hpp` pokazuje poprawkę zatrzymanej animacji. Polecenia `:Run`, `:TryBuild` i `:Rates` z filmu należą do narzędzi nagraniowych Vima. W powyższym przepisie można uruchomić samodzielnie każdy etap od `ep00-window`.
