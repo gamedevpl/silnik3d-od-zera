@@ -155,3 +155,7 @@ else:
             for angle in (('60','89','90') if tag=='ep02-euler' else ('90',)):
                 print(f'$ ./axes {angle}',flush=True)
                 run([repo/'axes',angle],repo)
+
+    for tag in ('ep02-quat-euler','ep02'):
+        print(f'\n$ python3 steer {tag} --trace',flush=True)
+        run([sys.executable,base/'steer',tag,'--trace'])

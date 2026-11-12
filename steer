@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""Try the E02 controller at 90 degrees. Y adds yaw, Z adds positive roll."""
+import argparse
+import os
+from pathlib import Path
+import subprocess
+from tempfile import TemporaryDirectory
+
+ROOT = Path(__file__).resolve().parent
+STAGES = ('ep02-quat-euler', 'ep02')
+SIZE = (720, 404)
+BACK = '#192832'
+GOLD = '#ffcf56'
+MINT = '#9fe7ce'
+
+class Controller:
+    def __init__(self, binary):
+        self.child = subprocess.Popen([binary], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        self.home = self.read()
+
+    def read(self):
+        row = [float(value) for value in self.child.stdout.readline().split()]
+        if len(row) != 17:
+            raise RuntimeError('Incomplete frame from the C++ controller')
+        return list(zip(row[0:16:2], row[1:16:2])), row[16]
+
+    def advance(self, key):
+        self.child.stdin.write(key)
+        self.child.stdin.flush()
+        return [self.read() for _ in range(1 if key == '0' else 45)]
+
+    def close(self):
+        self.child.stdin.close()
+        try:
+            self.child.wait(timeout=3)
+        finally:
+            if self.child.poll() is None:
+                self.child.kill()
+                self.child.wait()
+            self.child.stdout.close()
+
+def panel(home, frame, pressed, moving, trails):
+    from PIL import Image, ImageDraw, ImageFont
+    im = Image.new('RGB', SIZE, BACK)
+    d = ImageDraw.Draw(im)
+    def label(x, y, word, size, color):
+        d.text((x,y), word, font=ImageFont.load_default(size=size), fill=color)
+    def screen(points):
+        return [(round(362+x*84),round(193-y*84)) for x,y in points]
+    corners = screen(frame[0])
+    anchor = screen(home[0])[6]
+    label(18,10,'steer  /  pitch 90°',24,'#b1c7d1')
+    for i in range(4):
+        j = (i+1)%4
+        for a,b,col in ((i,j,'#7598be'),(i+4,j+4,MINT),(i,i+4,'#a8c8c6')):
+            d.line((corners[a],corners[b]),fill=col,width=4)
+    for key,points in trails:
+        path = screen(points)
+        if len(path) < 2:
+            continue
+        if key == 'y':
+            d.line(path,fill='#c4a66b',width=3)
+        else:
+            for tx,ty in path[::4]:
+                d.ellipse((tx-2,ty-2,tx+2,ty+2),fill='#f3b7cd')
+    x,y = anchor
+    d.ellipse((x-13,y-13,x+13,y+13),fill=BACK,outline='#eceddf',width=3)
+    label(x-24,y+16,'start',18,'#cfdbd9')
+    x,y = corners[6]
+    d.ellipse((x-7,y-7,x+7,y+7),fill=GOLD,outline=BACK,width=2)
+    label(x+13,y-13,'6',22,GOLD)
+    for key,x,name in [('y',132,'Y   yaw +45°'),('z',395,'Z   roll +45°')]:
+        active = key==pressed
+        d.rounded_rectangle((x,350,x+194,392),radius=6,
+                            fill=GOLD if active and moving else '#344b58',
+                            outline=GOLD if active else '#748b97',width=2)
+        label(x+18,357,name,24,BACK if active and moving else '#f1ede2')
+    return im
+
+class Window:
+    def __init__(self, root, controller):
+        import tkinter as tk
+        from PIL import ImageTk
+        self.root = root
+        self.controller = controller
+        self.show_photo = ImageTk.PhotoImage
+        self.busy = False
+        self.trails = []
+        self.label = tk.Label(root, borderwidth=0, highlightthickness=0)
+        self.label.pack()
+        root.title('E02 · Y / Z · 0 reset · Esc quit')
+        root.resizable(False, False)
+        root.bind('<KeyPress>', self.press)
+        self.draw(controller.home, '', False)
+
+    def draw(self, frame, key, moving):
+        if moving and key in ('y','z'):
+            self.trails[-1][1].append(frame[0][6])
+        self.image = panel(self.controller.home,frame,key,moving,self.trails)
+        self.photo = self.show_photo(self.image)
+        self.label.configure(image=self.photo)
+        self.frame = frame
+
+    def press(self, event):
+        key = event.keysym.lower()
+        if key == 'escape':
+            self.root.destroy()
+        elif key in ('0','y','z') and not self.busy:
+            if key == '0':
+                self.trails.clear()
+            else:
+                self.trails.append((key,[self.frame[0][6]]))
+                self.trails = self.trails[-2:]
+            frames = iter(self.controller.advance(key))
+            self.busy = True
+            def step():
+                frame = next(frames,None)
+                if frame is None:
+                    self.busy = False
+                    self.draw(self.frame,key,False)
+                else:
+                    self.draw(frame,key,True)
+                    self.root.after(24,step)
+            step()
+
+def project(stage, temp):
+    if stage not in STAGES:
+        source = Path(stage).resolve()
+        if not (source/'attitude.hpp').is_file():
+            raise SystemExit('Choose ep02-quat-euler, ep02, or a directory containing attitude.hpp')
+        return source
+    source = temp/'engine'
+    bundle = ROOT/'silnik-3d.bundle'
+    subprocess.run(['git','clone','-q','--no-checkout',bundle if bundle.exists() else ROOT,source],check=True)
+    subprocess.run(['git','-C',source,'switch','-q','--detach',stage],check=True)
+    return source
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('stage', help='ep02-quat-euler, ep02, or a source directory')
+    parser.add_argument('--trace', action='store_true', help='print results for Y, Z without opening a window')
+    args = parser.parse_args()
+    with TemporaryDirectory() as tmp:
+        temp = Path(tmp)
+        source = project(args.stage,temp)
+        binary = temp/('steer.exe' if os.name=='nt' else 'steer')
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-I',source,ROOT/'steer.cpp','-o',binary],check=True)
+        controller = Controller(binary)
+        try:
+            if args.trace:
+                for key in ('y','z'):
+                    _,gap = controller.advance(key)[-1]
+                    print(f'{key.upper()}   max corner distance from start = {gap:.6f}')
+            else:
+                import tkinter as tk
+                root = tk.Tk()
+                Window(root,controller)
+                root.mainloop()
+        finally:
+            controller.close()
+
+if __name__=='__main__':
+    main()
