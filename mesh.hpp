@@ -17,4 +17,8 @@ inline void cube(Paper paper) {
         glClearColor(0.7f,1.f,0.86f,1.f);
         paper.line(dots[i+4], dots[next+4]);
     }
+    glClearColor(.11f,.16f,.22f,1.f);
+    paper.dot(dots[6],paper.pen+12);
+    glClearColor(1.f,.83f,.18f,1.f);
+    paper.dot(dots[6],paper.pen+8);
 }
