@@ -9,6 +9,7 @@ void draw() {
     glClearColor(0.8f, 0.30f, 0.08f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
+    glfwPollEvents();
 }
 
 int main() {
@@ -22,7 +23,7 @@ int main() {
     glfwMakeContextCurrent(window);
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }
     glfwSwapInterval(1);
-    draw();
+    while (!glfwWindowShouldClose(window)) draw();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
