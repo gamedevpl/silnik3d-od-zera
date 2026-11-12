@@ -7,29 +7,24 @@ const T = {
     navHow:"Jak to działa", navEps:"Odcinki", navCode:"Kod",
     kicker:"Seria na YouTube · C++ · OpenGL",
     title:"Silnik 3D w C++ <span class=\"tq\">od zera</span>", titleAlt:"C++ 3D Engine From Scratch",
-    lede:"Budujemy własny silnik 3D, zaczynając od pustego katalogu. Bez lektora: prawdziwy Vim, prawdziwe błędy i napisy PL/EN. Każdy odcinek kończy się zadaniem, które sprawdzisz u siebie jedną komendą.",
+    lede:"Od pustego katalogu do własnego silnika. Bez lektora: prawdziwy Vim, prawdziwe błędy, napisy PL/EN i zadanie po każdym odcinku.",
     ctaPlaylist:"Playlista na YouTube", ctaCode:"Kod na GitHubie",
     factSubs:"napisy PL/EN",
     bubble:"12 krawędzi.<br>Czemu jedna<br>po skosie?", bubblePass:"PASS", crumb:"Silnik 3D od zera",
     howTitle:"Jak to działa",
-    howLede:"Oglądasz, jak kod powstaje, a na końcu dostajesz jedną małą rzecz do naprawienia samodzielnie.",
-    s1t:"Oglądasz", s1p:"Od pustego main() do działającego programu. Bez lektora, z napisami po polsku albo angielsku. Rozdziały w opisie pozwalają wrócić do konkretnego miejsca.",
-    s2t:"Klonujesz start", s2p:"Każde zadanie ma gałąź startową. Jedna komenda git clone i masz dokładnie ten kod, który był na ekranie, z jednym zepsutym miejscem.",
-    s3t:"Naprawiasz do PASS", s3p:"python3 check.py najpierw powie RETRY. Poprawiasz jeden plik i uruchamiasz ponownie. Po PASS porównujesz swoją wersję z rozwiązaniem.",
+    
+    s1t:"Oglądasz", s1p:"Kod powstaje na ekranie, linijka po linijce.",
+    s2t:"Klonujesz start", s2p:"Ten sam kod co w filmie, z jednym zepsutym miejscem.",
+    s3t:"Naprawiasz do PASS", s3p:"Poprawiasz jeden plik, aż test przejdzie.",
     termRetry:"tło nie pulsuje",
-    epsTitle:"Odcinki", epsLede:"Trzy odcinki na start. Zacznij od E00 albo wskocz tam, gdzie coś Cię ciekawi: każdy ma własne zadanie.",
+    epsTitle:"Odcinki", 
     premiere:"Premiera", soonNote:"Do tego czasu kod i zadanie już czekają poniżej.",
     open:"Rozwiń", nextUp:"Najbliższa premiera", latest:"Najnowszy", startHere:"Zacznij tutaj", outNow:"Już jest", planned:"W planie", season:"Sezon", watchYT:"Oglądaj na YouTube", shortLink:"Short", chapters:"Rozdziały",
     exLabel:"Twoja kolej", runCmds:"W terminalu uruchom kolejno:",
     afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
     solution:"Rozwiązanie", fullCode:"Pełny kod po odcinku", startBranch:"Gałąź startowa",
     copy:"kopiuj", copied:"skopiowane",
-    reqTitle:"Czego potrzebujesz",
-    req1:"Do zadań: Git, Python 3 i kompilator C++17 (GCC albo Clang).",
-    req2:"Do całego silnika z odcinków: CMake, Ninja, GLFW, GLAD i karta z OpenGL 3.3 core.",
-    req3:"Kod na licencji MIT. Bierz, zmieniaj, buduj swoje.",
-    nextTitle:"Co dalej",
-    nextP:"Odcinek 2 kończy się zapowiedzią trójkątów. Zanim nagram ciąg dalszy, chcę zobaczyć, jak Wam idą zadania. Napisz pod filmem, co zadziałało, a co nie.",
+    need:"Do zadań wystarczą Git, Python 3 i kompilator C++17. Kod na licencji MIT.",
     made:"Made by",
     games:"Gry w przeglądarce",
     askOpen:"Zapytaj o serię", askTitle:"Zapytaj o serię", askHello:"Pytaj o odcinki, zadania i o to, w której minucie coś było.",
@@ -44,29 +39,24 @@ const T = {
     navHow:"How it works", navEps:"Episodes", navCode:"Code",
     kicker:"YouTube series · C++ · OpenGL",
     title:"C++ 3D Engine <span class=\"tq\">From Scratch</span>", titleAlt:"Silnik 3D w C++ od zera",
-    lede:"Building my own 3D engine, starting from an empty folder. No voiceover: real Vim, real errors and subtitles in English and Polish. Every episode ends with an exercise you check on your machine with one command.",
+    lede:"From an empty folder to my own engine. No voiceover: real Vim, real errors, EN/PL subtitles and an exercise after every episode.",
     ctaPlaylist:"YouTube playlist", ctaCode:"Code on GitHub",
     factSubs:"EN/PL subtitles",
     bubble:"12 edges.<br>Why is one<br>diagonal?", bubblePass:"PASS", crumb:"3D Engine From Scratch",
     howTitle:"How it works",
-    howLede:"You watch the code being written, and at the end you get one small thing to fix yourself.",
-    s1t:"Watch", s1p:"From an empty main() to a running program. No voiceover, subtitles in English or Polish. Chapters in the description take you back to any step.",
-    s2t:"Clone the start", s2p:"Every exercise has a start branch. One git clone and you have exactly the code from the screen, with one broken spot.",
-    s3t:"Fix it until PASS", s3p:"python3 check.py first prints RETRY. Change one file and run it again. Once you get PASS, compare your edit with the solution.",
+    
+    s1t:"Watch", s1p:"The code is written on screen, line by line.",
+    s2t:"Clone the start", s2p:"The same code as in the film, with one broken spot.",
+    s3t:"Fix it until PASS", s3p:"Fix one file until the check passes.",
     termRetry:"background does not pulse",
-    epsTitle:"Episodes", epsLede:"Three episodes to start with. Begin at E00 or jump to whatever interests you: each one has its own exercise.",
+    epsTitle:"Episodes", 
     premiere:"Premiere", soonNote:"The code and the exercise are already waiting below.",
     open:"Open", nextUp:"Next premiere", latest:"Latest", startHere:"Start here", outNow:"Out now", planned:"Planned", season:"Season", watchYT:"Watch on YouTube", shortLink:"Short", chapters:"Chapters",
     exLabel:"Your turn", runCmds:"Run these commands in your terminal:",
     afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
     solution:"Solution", fullCode:"Full code after the episode", startBranch:"Start branch",
     copy:"copy", copied:"copied",
-    reqTitle:"What you need",
-    req1:"For the exercises: Git, Python 3 and a C++17 compiler (GCC or Clang).",
-    req2:"For the whole engine from the episodes: CMake, Ninja, GLFW, GLAD and a GPU with OpenGL 3.3 core.",
-    req3:"The code is MIT licensed. Take it, change it, build your own.",
-    nextTitle:"What's next",
-    nextP:"Episode 2 ends with triangles coming up. Before I record more, I want to see how the exercises go for you. Tell me under the video what worked and what didn't.",
+    need:"The exercises need only Git, Python 3 and a C++17 compiler. The code is MIT licensed.",
     made:"Made by",
     games:"Browser games",
     askOpen:"Ask about the series", askTitle:"Ask about the series", askHello:"Ask about episodes, exercises, or the minute something happened.",
@@ -105,7 +95,7 @@ function body(e, L, now){
   const cmds = `git clone -b ${e.slug}-start ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
   const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
   const video = live
-    ? `<div class="video" data-yt="${e.video}"><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
+    ? `<div class="video" data-yt="${e.video}"><canvas class="pix" width="96" height="54" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
     : `<div class="video"><div class="soon"><img class="pix" src="art/room-rear.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtLong(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
@@ -119,7 +109,7 @@ function body(e, L, now){
         <details class="ch"><summary>${L.chapters} (${d.ch.length})</summary><ol>${ch}</ol></details>
       </div>
       <div class="ex">
-        <span class="label">${L.exLabel}</span>
+        <img class="ex-face pix" src="art/m-puzzled.png" alt="" width="82" height="78"><span class="label">${L.exLabel}</span>
         <h4>${esc(d.exT)}</h4>
         <p>${d.exP}</p>
         <p style="margin-bottom:8px">${L.runCmds}</p>
@@ -157,7 +147,7 @@ function renderEpisodes(){
       : `<span class="pill soon-pill">${isF ? L.nextUp + " · " : ""}${fmtShort(e.at, lang)}</span>`;
     const isOpen = first ? isF : open.has(e.slug);
     return `<details class="row${isF ? " featured" : ""}" id="${e.slug}"${isOpen ? " open" : ""}>
-      <summary class="row-head"><span class="ep-num">${code(e)}</span><h3>${esc(d.t)}</h3><span class="ep-meta">${e.len}</span>${pill}<span class="chev" aria-hidden="true"></span></summary>
+      <summary class="row-head"><canvas class="thumb pix" width="48" height="30" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><span class="ep-num">${code(e)}</span><h3>${esc(d.t)}</h3><span class="ep-meta">${e.len}</span>${pill}<span class="chev" aria-hidden="true"></span></summary>
       ${body(e, L, now)}
     </details>`;
   }).join("");
@@ -250,46 +240,64 @@ document.addEventListener("click", ev => {
 /* For assistant.js. */
 window.SILNIK = { T, lang: () => lang, code, isOut, render: renderEpisodes };
 
-/* The CRT shows what episode 2 ends with: 8 corners, 12 edges, corner 6 in yellow.
-   Drawn at the monitor's own 95x60 pixels, like the film. */
-(function cube(){
-  const cv = document.getElementById("cube"), g = cv.getContext("2d");
+/* Small pixel programs, one per episode, drawn at 12 fps like the film: what each one builds.
+   The same cube also runs on the hero's CRT. */
+(function demos(){
   const V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
   const E = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const W = cv.width, H = cv.height, s = 15;
-  function line(x0,y0,x1,y1){
+  function line(g,x0,y0,x1,y1){
     x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
     const dx=Math.abs(x1-x0), dy=-Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1; let e=dx+dy;
     for(;;){ g.fillRect(x0,y0,1,1); if(x0===x1&&y0===y1) break; const e2=2*e; if(e2>=dy){e+=dy;x0+=sx} if(e2<=dx){e+=dx;y0+=sy} }
   }
-  let last = -1;
-  function frame(now){
-    const step = Math.floor(now / 80);           // ~12 fps, stepped like pixel animation
-    if (step !== last){
-      last = step;
-      const t = reduce ? 1.1 : step * 0.08;
-      const yaw = t*0.6, pitch = 0.5 + Math.sin(t*0.37)*0.25;
+  const DRAW = {
+    /* E00: the background goes dark, light, dark. */
+    pulse(g,W,H,t){
+      const k = (1 - Math.cos(t * 2.2)) / 2, c = (lo,hi) => Math.round(lo + (hi - lo) * k);
+      g.fillStyle = `rgb(${c(65,244)},${c(26,137)},${c(16,44)})`; g.fillRect(0,0,W,H);
+    },
+    /* E01: a square that jumps the same at any frame rate. */
+    jump(g,W,H,t){
+      g.fillStyle = "#844021"; g.fillRect(0,0,W,H);
+      const floor = Math.round(H * 0.82), size = Math.max(5, Math.round(H * 0.2)), p = (t * 0.9) % 1;
+      g.fillStyle = "#cc854e"; g.fillRect(Math.round(W*0.08), floor, Math.round(W*0.84), 1);
+      const y = Math.round(4 * p * (1 - p) * H * 0.5);
+      g.fillStyle = "#151423"; g.fillRect(Math.round(W/2 - size/2) - 1, floor - size - y - 1, size + 2, size + 2);
+      g.fillStyle = "#b9ffdc"; g.fillRect(Math.round(W/2 - size/2), floor - size - y, size, size);
+    },
+    /* E02: 8 corners, 12 edges, corner 6 in yellow. */
+    cube(g,W,H,t){
+      const s = H * 0.25, yaw = t*0.6, pitch = 0.5 + Math.sin(t*0.37)*0.25;
       const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
       const P = V.map(([x,y,z]) => {
         const X = x*cy + z*sy, Z0 = -x*sy + z*cy, Y = y*cp - Z0*sp, Z = y*sp + Z0*cp, k = 4.5/(4.5+Z);
         return [W/2 + X*s*k, H/2 + Y*s*k, Z];
       });
       g.fillStyle = "#151423"; g.fillRect(0,0,W,H);
-      for (const [a,b] of E){
-        g.fillStyle = (P[a][2]+P[b][2])/2 > 0.3 ? "#8e7e79" : "#ffe1a2";
-        line(P[a][0],P[a][1],P[b][0],P[b][1]);
-      }
+      for (const [a,b] of E){ g.fillStyle = (P[a][2]+P[b][2])/2 > 0.3 ? "#8e7e79" : "#ffe1a2"; line(g,P[a][0],P[a][1],P[b][0],P[b][1]); }
+      const big = W > 60;
       P.forEach(([x,y],i) => {
         x=Math.round(x); y=Math.round(y);
-        if (i === 6){ g.fillStyle = "#eea75e"; g.fillRect(x-2,y-2,5,5); g.fillStyle="#ffe1a2"; g.fillRect(x-1,y-1,3,3); }
-        else { g.fillStyle = "#76ddaf"; g.fillRect(x-1,y-1,3,3); }
+        if (i === 6){ g.fillStyle = "#eea75e"; big ? g.fillRect(x-2,y-2,5,5) : g.fillRect(x-1,y-1,3,3); }
+        else if (big){ g.fillStyle = "#76ddaf"; g.fillRect(x-1,y-1,3,3); }
       });
-      g.fillStyle = "#76ddaf"; g.fillRect(2,H-4,(step>>3)%2?3:0,2); // cursor blink
+    },
+  };
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let last = -1;
+  function frame(now){
+    const step = Math.floor(now / 83);
+    if (step !== last){
+      last = step;
+      for (const cv of document.querySelectorAll("canvas[data-demo]")){
+        if (!cv.offsetParent) continue;
+        (DRAW[cv.dataset.demo] || DRAW.cube)(cv.getContext("2d"), cv.width, cv.height, still ? 1.1 : step * 0.083);
+      }
     }
-    if (!reduce) requestAnimationFrame(frame);
+    if (!still) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  if (still) document.addEventListener("silnik:lang", () => { last = -1; requestAnimationFrame(frame); });
 })();
 
 })();
