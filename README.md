@@ -66,3 +66,7 @@ From work/engine, run `python3 ../../probe-swaps .` to measure the source you ju
 Na początku `python3 replay 01` odtwarza cztery wersje rysowania kwadratu. W kolumnach bg_test i box_test jest faktyczny wynik glIsEnabled(GL_SCISSOR_TEST) przy czyszczeniu tła i kwadratu. Po 30 klatkach porównaj kolory środka i rogu. Próbnik czyta ten sam tylny bufor przed prezentacją, ze stałym zegarem 30 Hz. W katalogu work/engine polecenie `python3 ../../probe-scissor .` mierzy zapisany kod.
 
 The first part of `python3 replay 01` runs four versions of the square. bg_test and box_test report glIsEnabled(GL_SCISSOR_TEST) at the background and box clears. Compare the centre and corner colours 30 frames apart. The diagnostic samples the same back buffer before presentation using a fixed 30 Hz clock. From work/engine run `python3 ../../probe-scissor .` to measure your own saved code.
+
+W pionowym E02 uruchom `python3 replay edges`. Program kompiluje mesh.hpp z trzech etapów i zapisuje końce odcinków przekazanych do paper.line. Dwie ramki mają osiem odcinków. W obu kolejnych wersjach jest dwanaście. W ep02-crossed-sides wśród par jest 1→6, w ep02-wire jest 2→6. Wymagane Git, Python 3 i kompilator C++17.
+
+For the vertical E02 experiment run `python3 replay edges`. This compiles mesh.hpp at three checkpoints and records the endpoints sent to paper.line. The two loops contain eight edges. Both later versions contain twelve. The crossed build includes 1→6, the repaired build includes 2→6. Requires Git, Python 3 and a C++17 compiler.

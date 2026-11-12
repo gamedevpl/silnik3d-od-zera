@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02'))
+parser.add_argument('episode',choices=('00','01','02','edges'))
 ep=parser.parse_args().episode
 
 def run(args,cwd=None):
@@ -45,6 +45,18 @@ if ep in ('00','01'):
                 print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
                 run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
                 run([work/'trace'])
+elif ep=='edges':
+    with TemporaryDirectory(prefix='cube-edges-') as scratch:
+        work=Path(scratch)
+        tree=work/'engine'
+        origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').exists() else base
+        run(['git','clone','-q','--no-checkout',origin,tree])
+        for tag in ('ep02-marked-rings','ep02-crossed-sides','ep02-wire'):
+            run(['git','-C',tree,'switch','-q','--detach',tag])
+            print(tag,flush=True)
+            run(['c++','-std=c++17','-I',tree,base/'edge-pairs.cpp','-o',work/'edges'])
+            run([work/'edges'])
+
 else:
     with TemporaryDirectory(prefix='silnik-test-') as work:
         repo=Path(work)/'silnik'
