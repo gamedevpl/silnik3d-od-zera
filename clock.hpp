@@ -8,7 +8,7 @@ struct Clock {
     void advance(double elapsed, F step) {
         lag += elapsed;
         while (lag >= tick) {
-            player.update(tick);
+            step(tick);
             lag -= tick;
         }
     }
