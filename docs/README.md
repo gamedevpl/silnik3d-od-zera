@@ -9,3 +9,5 @@ Statyczna strona dla GitHub Pages (`main` / `/docs`): https://gamedevpl.github.i
 - `vendor/genaicode-browser.js`: `npx esbuild <genaicode>/src/browser.ts --bundle --format=esm --minify --target=es2022`.
 
 Podgląd lokalnie: `python3 -m http.server -d docs 8000`.
+
+Grafiki w `art/` pochodzą z renderera filmu w repo ops (`tools/media/essay/productions/cpp-3d-engine/montaz/e02/`, sprite'y w `room_art/brand/`, gotowe miny w `maskotka/`). Arkusze mają klatki 320×180 obok siebie, 12 kl./s; opis w `art/frames.json`.
