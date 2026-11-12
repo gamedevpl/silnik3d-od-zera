@@ -12,7 +12,7 @@ void draw() {
     prev = now;
     static double lag = 0;
     lag += elapsed;
-    if (lag >= 0.02) {
+    while (lag >= 0.02) {
         player.update(0.02);
         lag -= 0.02;
     }
