@@ -8,7 +8,7 @@ struct Clock {
     template<class F>
     void advance(double elapsed, F step) {
         lag += std::min(elapsed, 0.25);
-        if (lag >= tick) {
+        while (lag >= tick) {
             step(tick);
             lag -= tick;
         }
