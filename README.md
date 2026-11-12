@@ -73,6 +73,18 @@ Na macOS lub Linuksie do próby z początku filmu wystarczą Vim i kompilator C+
 
 Wpisz `int main() {}` i zapisz przez `:w`. Wykonaj `:!c++ main.cpp -o hello`, wróć do edytora klawiszem Enter, a potem uruchom `:!./hello; echo $?`. Zobaczysz jedynie kod wyjścia 0. Dopisz `#include <cstdio>` nad main i `std::puts("engine online");` w jego ciele, po czym zapisz plik. Ponownie uruchom hello. Stary program wciąż nic nie wypisuje. Polecenie `:!ls -1t main.cpp hello` pokaże nowszy main.cpp na górze. Powtórz kompilację, a potem uruchomienie. Tym razem zobaczysz „engine online” i zero.
 
+## E00 · Co właściwie zbudował Ninja?
+
+Kontynuuj w swoim nowym katalogu `work/engine`, w którym `main.cpp` wypisuje „engine online”. Do tego kroku potrzebujesz też CMake 3.20 lub nowszego oraz programu Ninja w PATH. W Vimie otwórz `:e CMakeLists.txt`, wpisz poniższe trzy wiersze i zapisz przez `:w`.
+
+    cmake_minimum_required(VERSION 3.20)
+    project(Engine LANGUAGES C CXX)
+    set(CMAKE_CXX_STANDARD 17)
+
+Uruchom `:!cmake -S . -B build -G Ninja`, naciśnij Enter, aby wrócić do Vima, i spróbuj `:!cmake --build build && ./build/engine`. CMake wygenerował reguły w `build/build.ninja`. Ninja zgłasza `no work to do`, a powłoka nie znajduje pliku `build/engine`.
+
+Wróć klawiszem Enter. W trybie normalnym naciśnij `G`, następnie `o` i dopisz `add_executable(engine main.cpp)`. Naciśnij Esc, zapisz przez `:w` i wykonaj `:!!`. To samo polecenie przebuduje projekt i uruchomi program. Tym razem po kompilacji i linkowaniu pojawi się „engine online”.
+
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
 Uruchom `python3 replay setup` w sesji graficznej. Pierwsze dwie kompilacje zatrzymują się na brakujących nagłówkach GLAD i GLFW. Trzecia uruchamia GLFW. Kolejne dwie tworzą okno 640 × 360 i odczytują wersję kontekstu, najpierw domyślną, potem po zażądaniu OpenGL 3.3 core. Na Macu użytym w filmie były to 2.1 i 4.1. Wynik na Twoim komputerze zależy od sterownika. Dwie ostatnie próby ładują funkcje OpenGL przed uaktywnieniem kontekstu i po nim. Tę jedną zmianę możesz porównać w klonie.
