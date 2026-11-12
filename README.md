@@ -5,10 +5,22 @@ Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+
 | Odcinek | Long | Short |
 |---|---|---|
 | E00 | `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
-| E01 | `python3 replay 01` · `python3 replay landing` | `python3 replay race` |
+| E01 | `python3 replay 01` · `python3 replay landing` · `python3 replay steps` | `python3 replay race` |
 | E02 | Cały long: `python3 replay 02`. Same punkty z pierwszej minuty: `python3 replay corners`. | `python3 replay edges` |
 
 
+
+## E01 · dlaczego kwadrat stanął przy 240 FPS?
+
+Uruchom `python3 replay steps`. Próbnik kompiluje trzy wersje pętli w draw() i końcowy zegar, po czym liczy rzeczywiste wywołania Jumper.update w ukrytym oknie OpenGL. Po 0,667 s warunek na czas pojedynczej klatki daje 20 kroków przy 30 FPS i zero przy 240 FPS. Zbieranie czasu daje 20 i 33. Pętla rozliczająca każdy pełny krok daje 33 i 33, także po wydzieleniu clock.hpp.
+
+Aby zmienić warunek samodzielnie, z katalogu zawierającego ten plik wykonaj:
+
+    git worktree add --detach ../test-clock ep01-inline-bank
+
+W `../test-clock/main.cpp` zamień `if (lag >= 0.02)` na `while (lag >= 0.02)`, zapisz i uruchom:
+
+    python3 replay steps --source ../test-clock
 
 ## E01 · lądowanie na podłodze
 

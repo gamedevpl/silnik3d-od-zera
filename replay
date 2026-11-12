@@ -10,12 +10,12 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing'))
-parser.add_argument('--source',type=Path,help='For landing: compile the jumper from this edited engine directory.')
+parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing','steps'))
+parser.add_argument('--source',type=Path,help='For landing or steps: compile the jumper from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
-if args.source and ep!='landing':
-    parser.error('--source is available for the landing exercise.')
+if args.source and ep not in ('steps','landing'):
+    parser.error('--source is available for the landing and steps exercises.')
 
 def run(args,cwd=None):
     subprocess.run(args,cwd=cwd,check=True)
@@ -50,6 +50,12 @@ if ep in ('00','01'):
                 print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
                 run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
                 run([work/'trace'])
+elif ep=='steps':
+    tags=['.'] if args.source else ['ep01-inline-guard','ep01-inline-bank','ep01-inline-loop','ep01']
+    for tag in tags:
+        print(tag,flush=True)
+        for hz in ('30','240'):
+            run([sys.executable,base/'probe',tag,hz,'--count-steps'],cwd=args.source)
 elif ep=='landing':
     origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base
     with TemporaryDirectory(prefix='jump-floor-') as scratch:

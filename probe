@@ -10,6 +10,7 @@ parser.add_argument('--frames',type=Path,help='write 192x108 RGB frames to this 
 parser.add_argument('--start-time', type=float, default=0, help='deterministic GLFW clock at the first frame, in seconds')
 parser.add_argument('--frame-count', type=int, help='number of RGB frames to capture')
 parser.add_argument('--hold-first-landing', action='store_true', help='hold the E01 jumper after its first physics contact, even if more steps fit in that frame')
+parser.add_argument('--count-steps',action='store_true',help='Count actual calls to Jumper.update at the selected frame rate.')
 args=parser.parse_args()
 if not math.isfinite(args.start_time) or args.start_time < 0: parser.error('Use a finite nonnegative clock.')
 if args.frame_count is not None and (not args.frames or args.frame_count < 1): parser.error('--frame-count needs --frames and a positive count.')
@@ -36,6 +37,14 @@ with tempfile.TemporaryDirectory(prefix='cpp-engine-probe-') as tmp:
     driver=tmp/'driver';driver.mkdir()
     shutil.copy(base/'sampler.cpp',driver)
     text=(src/'frame.hpp').read_text()
+    if args.count_steps:
+        if pixel or args.hold_first_landing:
+            parser.error('--count-steps needs a numerical frame rate and an unconstrained simulation.')
+        signature='void update(double dt) {'
+        if text.count(signature)!=1:
+            parser.error('Expected Jumper.update in frame.hpp.')
+        shutil.copy(src/'main.cpp',driver/'main.cpp')
+        (driver/'frame.hpp').write_text(text.replace(signature,signature+' ++stepCount;'))
     if args.hold_first_landing:
         if pixel:parser.error('--hold-first-landing requires numeric FPS.')
         main=(src/'main.cpp').read_text()
@@ -54,6 +63,7 @@ with tempfile.TemporaryDirectory(prefix='cpp-engine-probe-') as tmp:
         shutil.copy(src/'main.cpp',driver)
         (driver/'frame.hpp').write_text(wrapped)
     defs='HAS_PLAYER HAS_PEAK' if 'double peak' in text else ('HAS_PLAYER' if 'struct Jumper' in text else '')
+    if args.count_steps:defs+=' COUNT_STEPS'
     (driver/'CMakeLists.txt').write_text('''cmake_minimum_required(VERSION 3.20)
 project(FilmProbe LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)

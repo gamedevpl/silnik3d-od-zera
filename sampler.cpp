@@ -9,6 +9,9 @@ static int n=0, hz=60, limit=1;
 static FILE* sink=nullptr;
 static double measured=0, previousY=0, landing=-1;
 static bool sampleColor=false;
+#ifdef COUNT_STEPS
+static int stepCount=0;
+#endif
 static double originSeconds=0;
 static double movieTime(){return originSeconds+double(n)/hz;}
 static double probeArgument(double value) {
@@ -53,6 +56,11 @@ static void present(GLFWwindow* w){
             small[(y*192+x)*3+c]=rgb[((height-1-y*height/108)*width+x*width/192)*4+c];
         if(std::fwrite(small.data(),1,small.size(),sink)!=small.size())std::exit(4);
     }
+#ifdef COUNT_STEPS
+    if(n==1 || n==2 || n==hz/3 || n==2*hz/3) {
+        std::printf("%3d FPS   %6.3f s   %3d steps   height %6.2f\n",hz,movieTime(),stepCount,player.height);
+    }
+#endif
     ++n;
 }
 int main(int argc,char** argv){
