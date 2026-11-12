@@ -1,5 +1,15 @@
 # Silnik 3D w C++ od zera
 
+## Short E01 · skok przy 15 FPS
+
+W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas pierwszego kontaktu z ziemią przy wybranej liczbie klatek i przy 240 FPS. Próbnik zatrzymuje skok po pierwszym kontakcie wewnątrz kroku fizyki. Dzięki temu wykrywa też lądowanie, po którym postać odbiłaby się przed kolejną klatką. Podany czas oznacza chwilę klatki zawierającej kontakt. Dokładność ogranicza czas jednej klatki.
+
+Aby samemu sprawdzić poprawkę, pracuj na etapie ep01-matched-tick. Z katalogu ref uruchom `python3 ../race 15`, zamień if na while w clock.hpp, zapisz i ponów to samo polecenie. Komenda :Race 15 z filmu odpowiada temu testowi z terminala.
+
+    git worktree add --detach ref ep01-matched-tick
+    cd ref
+    python3 ../race 15
+
 Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
 
 ## Powtórz próbę z filmu

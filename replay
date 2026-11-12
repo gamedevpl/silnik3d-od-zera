@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock'))
+parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race'))
 ep=parser.parse_args().episode
 
 def run(args,cwd=None):
@@ -45,6 +45,12 @@ if ep in ('00','01'):
                 print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
                 run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
                 run([work/'trace'])
+elif ep=='race':
+    trials=[('ep01-single-step',30),('ep01-matched-tick',30),('ep01-matched-tick',15),
+            ('ep01-loop-30hz',15),('ep01',15)]
+    for checkpoint,fps in trials:
+        print(f'\n{checkpoint} | {fps} vs 240 FPS',flush=True)
+        run([sys.executable,base/'race',str(fps),'--version',checkpoint])
 elif ep in ('pulse','clock'):
     tags=['ep00-frozen','ep00-fast']
     if ep=='clock':tags.append('ep00-static-elapsed')

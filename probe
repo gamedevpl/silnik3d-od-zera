@@ -9,6 +9,7 @@ parser.add_argument('rate',help='FPS, pixel for RGB, or arg for the angle passed
 parser.add_argument('--frames',type=Path,help='write 192x108 RGB frames to this file')
 parser.add_argument('--start-time', type=float, default=0, help='deterministic GLFW clock at the first frame, in seconds')
 parser.add_argument('--frame-count', type=int, help='number of RGB frames to capture')
+parser.add_argument('--hold-first-landing', action='store_true', help='hold the E01 jumper after its first physics contact, even if more steps fit in that frame')
 args=parser.parse_args()
 if not math.isfinite(args.start_time) or args.start_time < 0: parser.error('Use a finite nonnegative clock.')
 if args.frame_count is not None and (not args.frames or args.frame_count < 1): parser.error('--frame-count needs --frames and a positive count.')
@@ -35,6 +36,17 @@ with tempfile.TemporaryDirectory(prefix='cpp-engine-probe-') as tmp:
     driver=tmp/'driver';driver.mkdir()
     shutil.copy(base/'sampler.cpp',driver)
     text=(src/'frame.hpp').read_text()
+    if args.hold_first_landing:
+        if pixel:parser.error('--hold-first-landing requires numeric FPS.')
+        main=(src/'main.cpp').read_text()
+        step='player.update(dt);'
+        if main.count(step)!=1 or 'struct Jumper' not in text:parser.error('Expected the E01 clock calling player.update(dt).')
+        held='''if (landing < 0) {
+            const double oldHeight = player.height;
+            player.update(dt);
+            if (oldHeight > 0 && player.height == 0) landing = movieTime();
+        }'''
+        (driver/'main.cpp').write_text(main.replace(step,held))
     if angle:
         import re
         wrapped,count=re.subn(r'std::cos\(([^()]*)\)',r'std::cos(probeArgument(\1))',text)
