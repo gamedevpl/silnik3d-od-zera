@@ -11,11 +11,11 @@ The two experiments work from the repository root on `main` or beside `replay` i
 From a GitHub clone use `git clone -b ep02-marked-rings . ref` for the first line. To watch the jump in a window, run `cmake -S . -B build -G Ninja` once in `ref`. In stock Vim the film’s `:Run` is equivalent for the viewer to `:!cmake --build build && ./build/engine`. Close the game window to return to Vim.
 
 1. Type `:18` and press Enter. Type `yy` to copy the back edge and `p` to paste it. Save with `:w` and run. The two loops look the same. To check without graphics, run `:!python3 ../replay edges --source .` in Vim. There are 12 calls, with an empty list of side connections.
-2. On line 19, type `0f+`, then `2x` and `:w`. The probe now includes `1->6` among its side pairs. The call count is still 12.
+2. On line 19, type `0f+`, then `2x` and `:w`. Run the probe command again. The output now includes `1->6` among its side pairs. The call count is still 12.
 3. Open `:e corners.hpp`. Of the front corners, only 1 and 2 match the x coordinate of six. Only two also matches y. Return with `:b#`. Type `/next` and press Enter. The cursor lands on `next` in the second argument.
 4. Type `ciw`, then `i`, Esc and `:w`. Use `:!!` to repeat the last shell command. If the last command ran the game, enter the full probe command again. The sides are now `0->4 1->5 2->6 3->7`. Run the game to see the jumping cube.
 
-To start with the crossed sides in step 3 use `ep02-crossed-sides`. The fixed tag is `ep02-wire`. From the kit directory `python3 replay edges` compares the three saved checkpoints.
+To start with crossed sides, use `ep02-crossed-sides`. After opening mesh.hpp, enter `:19` and press Enter before step 3. The fixed tag is `ep02-wire`. From the kit directory `python3 replay edges` compares the three saved checkpoints.
 
 ## E02 · where the minus on roll comes from
 

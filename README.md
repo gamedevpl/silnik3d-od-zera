@@ -46,11 +46,11 @@ W katalogu rozpakowanego zestawu, obok pliku `replay`, przygotuj początek sesji
 W klonie z GitHuba użyj `git clone -b ep02-marked-rings . ref` w pierwszym wierszu. Jeśli chcesz zobaczyć skok w oknie, w katalogu `ref` wykonaj jednorazowo `cmake -S . -B build -G Ninja`. W zwykłym Vimie odpowiednikiem filmowego `:Run` jest `:!cmake --build build && ./build/engine`. Zamknij okno gry, żeby wrócić do edycji.
 
 1. Wpisz `:18` i Enter. `yy` kopiuje tylną krawędź, `p` wkleja kopię. Zapisz `:w` i uruchom próbę. Nadal widać dwie ramki. Z Vima możesz to sprawdzić także bez grafiki poleceniem `:!python3 ../replay edges --source .`. Są już 12 wywołań, a lista bocznych połączeń jest pusta.
-2. W kopii, w wierszu 19, wpisz `0f+`, potem `2x` i `:w`. Próbnik pokazuje m.in. `1->6`. Liczba wywołań nadal wynosi 12.
+2. W kopii, w wierszu 19, wpisz `0f+`, potem `2x` i `:w`. Powtórz polecenie próbnika. Pokazuje m.in. `1->6`. Liczba wywołań nadal wynosi 12.
 3. Wpisz `:e corners.hpp`. Spośród przednich rogów tylko 1 i 2 mają takie samo x jak szóstka. Jedynie dwójka ma również to samo y. Wróć przez `:b#`. Wpisz `/next`, Enter. Kursor stoi na słowie `next` w drugim argumencie.
 4. Wpisz `ciw`, potem literę `i`, Esc i `:w`. `:!!` powtarza poprzednią komendę powłoki. Jeśli ostatnio uruchamiałeś grę, ponownie wpisz pełne polecenie próbnika. Tym razem dostaniesz `0->4 1->5 2->6 3->7`. Ponownie uruchom grę, aby zobaczyć poprawioną kostkę podczas skoku.
 
-Tag `ep02-crossed-sides` pozwala zacząć od pomyłki w kroku 3, a `ep02-wire` zawiera poprawkę. Polecenie `python3 replay edges` z katalogu zestawu porównuje trzy zapisane etapy.
+Tag `ep02-crossed-sides` pozwala zacząć od pomyłki. Po otwarciu mesh.hpp wpisz `:19` i Enter przed krokiem 3. Tag `ep02-wire` zawiera poprawkę. Polecenie `python3 replay edges` z katalogu zestawu porównuje trzy zapisane etapy.
 
 ## E02 · skąd minus przy roll?
 
