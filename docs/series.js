@@ -6,7 +6,8 @@ window.SERIES = {
   repo: "https://github.com/gamedevpl/silnik3d-od-zera",
   playlist: "https://www.youtube.com/playlist?list=PLFf6J3zhiCW4",
   seasons: [
-    { n:1, pl:{ t:"Sezon 1" }, en:{ t:"Season 1" }, episodes: [
+    { n:1, pl:{ t:"Sezon 1", d:"Od pustego katalogu do sceny z kamerą, światłem i kilkoma obiektami." },
+           en:{ t:"Season 1", d:"From an empty folder to a scene with a camera, light and a few objects." }, episodes: [
   { n:0, slug:"e00", demo:"pulse", ep:"ep00", file:"frame.hpp", video:"kxuIFEB8rKk", short:"be0Yl4Wor2Y",
     at:"2026-12-02T17:00:00Z", shortAt:"2026-12-03T17:00:00Z", len:"19:20",
     pl:{ t:"Pierwsze okno", sum:"Puste main(), CMake i Ninja, GLFW i GLAD, okno OpenGL 3.3 core i tło, które pulsuje kolorem.",
@@ -31,6 +32,22 @@ window.SERIES = {
     en:{ t:"A Cube, Rotations and Gimbal Lock", sum:"The jumping square gets depth. Eight corners, twelve edges, degrees vs radians, yaw/pitch/roll controls, the 90° case where two different turns give the same result, and why quaternions built from the same three angles don't fix it.",
          exT:"Straighten the side edges of the cube", exP:"In <code>mesh.hpp</code>, straighten the four sides between the two face loops. Keep all 12 edges. The yellow corner 6 should connect to corner 2.",
          ch:[["0:00","From square to cube"],["0:42","Plotting the corners"],["5:51","Rotating the points"],["7:51","Edges between the faces"],["9:19","Degrees vs radians"],["10:39","Yaw, pitch and roll controls"],["15:09","Gimbal lock at 90°"],["17:44","Quaternions from the same angles"],["19:58","One orientation, local axes"],["22:55","Next: triangles"],["23:00","Your turn"]] } }
+    ],
+    /* Planned episodes of this season: a title and one question each, no dates. */
+    next:[
+      { n:3, demo:"tri",   pl:{ t:"Pierwsza pełna ściana", q:"Jak wypełnić pierwszą ścianę?" }, en:{ t:"The First Solid Face", q:"How do you fill the first face?" } },
+      { n:4, demo:"depth", pl:{ t:"Kamera i głębia", q:"Która ściana jest bliżej?" }, en:{ t:"Camera and Depth", q:"Which face is closer?" } },
+      { n:5, demo:"tex",   pl:{ t:"Tekstura w ruchu", q:"Dlaczego podłoga miga?" }, en:{ t:"Texture in Motion", q:"Why does the floor flicker?" } },
+      { n:6, demo:"light", pl:{ t:"Światło i materiał", q:"Co robi chropowatość?" }, en:{ t:"Light and Material", q:"What does roughness do?" } },
+      { n:7, demo:"mesh",  pl:{ t:"Siatka jako zasób", q:"Dlaczego ten sam model wczytuje się dwa razy?" }, en:{ t:"Mesh as a Resource", q:"Why does the same model load twice?" } },
+      { n:8, demo:"scene", pl:{ t:"Scena, która pamięta swoje obiekty", q:"Dlaczego przesunął się inny obiekt?" }, en:{ t:"A Scene That Remembers Its Objects", q:"Why did a different object move?" } }
     ] }
+  ],
+  /* Seasons after the current one: only a name and one line, no episodes. */
+  upcoming:[
+    { n:2, demo:"robot",  pl:{ t:"Nocna zmiana", d:"Na tym silniku powstaje mała gra. Robot, ogniwo, ciemny warsztat i winda, która nie chce ruszyć." },
+                          en:{ t:"Night Shift", d:"A small game on this engine. A robot, a power cell, a dark workshop and a lift that will not move." } },
+    { n:3, demo:"editor", pl:{ t:"Drugie piętro", d:"Do gry dochodzi edytor. Układasz własny poziom i dajesz go komuś do przejścia." },
+                          en:{ t:"The Second Floor", d:"The game gets an editor. You build your own level and hand it to someone to play." } }
   ]
 };
