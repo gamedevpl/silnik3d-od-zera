@@ -43,3 +43,45 @@ html .lang button[aria-pressed=true]{background:#76ddaf}
 html .ask-open,html .ask-panel{border:0;background:#2f2a42;box-shadow:0 0 0 3px var(--ink),6px 6px 0 3px rgba(0,0,0,.4)}
 
 /* ---------- vim: the page is the buffer on the CRT. One mono face, line numbers, a status line. ---------- */
+
+/* Reader progress */
+.ticks{display:inline-flex;gap:4px;margin-left:auto}
+.ticks+.ep-meta{margin-left:10px}
+.ticks i{width:12px;height:12px;background:var(--ink);box-shadow:inset 0 0 0 2px #4a445c}
+.ticks i.on{background:var(--turquoise);box-shadow:none}
+.checks{grid-column:1/-1;min-width:0;display:flex;flex-wrap:wrap;gap:12px 22px}
+.check{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:4px 0;color:var(--cream);font:700 15px var(--pix);cursor:pointer}
+.check i{width:22px;height:22px;background:var(--ink);box-shadow:inset 0 0 0 3px var(--seam);position:relative}
+.check[aria-pressed=true] i{background:var(--turquoise);box-shadow:inset 0 0 0 3px var(--ink)}
+.check[aria-pressed=true] i:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:11px;border:solid var(--ink);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.check:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.faces .strip img{opacity:.28;filter:grayscale(1);transition:opacity .3s,filter .3s}
+.faces .strip img.lit{opacity:1;filter:none}
+.faces p b{display:block;font:700 17px var(--pix);margin-bottom:6px}
+@media (max-width:560px){.ticks{margin-left:0}}
+
+/* Episode note: a paper page */
+.note{grid-column:1/-1;min-width:0;background:var(--paper);color:var(--paper-ink);box-shadow:0 0 0 3px var(--ink),6px 6px 0 3px rgba(0,0,0,.35)}
+.note summary{display:flex;align-items:center;gap:12px;padding:12px 18px;cursor:pointer;list-style:none}
+.note summary::-webkit-details-marker{display:none}
+.note summary .label{font:700 12px var(--pix);letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.note summary b{font:700 18px var(--pix);flex:1;min-width:0}
+.note summary small{font:700 12px var(--pix);color:#7a6a55;white-space:nowrap}
+.note summary:after{content:"+";font:700 22px var(--pix)}
+.note[open] summary:after{content:"–"}
+.note article{padding:4px 22px 22px;max-width:760px;font-size:16.5px;line-height:1.6}
+.note article p{margin:14px 0 0}
+.note article p b{font:700 .95em var(--pix)}
+.note article code{font:700 .88em var(--mono);background:rgba(41,55,66,.1);padding:1px 5px}
+.note article pre.cmd{margin:12px 0 0;overflow-x:auto;font-size:13px}
+.note article pre.cmd code{background:none}
+.note a.ts{font:700 .82em var(--pix);color:var(--paper);background:var(--teal);padding:1px 6px;text-decoration:none;white-space:nowrap}
+.note a.ts:before{content:"▶ "}
+.note .flow{list-style:none;margin:18px 0 4px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:f}
+.note .flow li{counter-increment:f;position:relative;background:#fff3d6;box-shadow:0 0 0 3px var(--ink);padding:14px 12px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.note .flow li:before{content:counter(f);position:absolute;left:-3px;top:-14px;background:var(--amber);box-shadow:0 0 0 3px var(--ink);font:700 13px var(--pix);padding:1px 7px}
+.note .flow li:not(:last-child):after{content:"";position:absolute;right:-19px;top:50%;border:7px solid transparent;border-left-color:var(--ink);margin-top:-7px}
+.note .flow b{font:700 16px var(--pix)}
+.note .flow code{font-size:12px;overflow-wrap:anywhere;align-self:flex-start}
+.note .flow span{font-size:14px;line-height:1.4}
+@media (max-width:640px){.note .flow{grid-template-columns:1fr;gap:20px}.note .flow li:not(:last-child):after{right:auto;left:50%;top:auto;bottom:-19px;margin:0 0 0 -7px;border:7px solid transparent;border-top-color:var(--ink)}.note summary small{display:none}}
