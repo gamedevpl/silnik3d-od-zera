@@ -137,7 +137,7 @@ Wróć klawiszem Enter. W trybie normalnym naciśnij `G`, następnie `o` i dopis
 
 ## E00 · Od pierwszego include do uruchomienia GLAD
 
-Przed ćwiczeniem sprawdź w terminalu `cmake --version` i `ninja --version`. Oba narzędzia muszą być w PATH także w Vimie. Jeśli są w jednym katalogu bin, dodaj go przez `export PATH="/ścieżka/do/bin:$PATH"`. Na Macu nagraniowym jest to `/opt/homebrew/share/android-commandlinetools/cmake/3.22.1/bin`. Próba GLFW wymaga sesji graficznej.
+Przed ćwiczeniem sprawdź w terminalu `cmake --version` i `ninja --version`. Oba narzędzia muszą być w PATH także w Vimie. Jeśli są w jednym katalogu bin, dodaj go przez `export PATH="/ścieżka/do/bin:$PATH"`. Próba GLFW wymaga sesji graficznej.
 
 W filmie oba opisy bibliotek trafiają do projektu jednym zaznaczeniem sześciu wierszy. Możesz zacząć dokładnie przed naprawą drugiego błędu. Z katalogu rozpakowanej paczki wykonaj `git clone -b ep00-unlinked-glfw silnik-3d.bundle proba-glfw`. Z klonu Git użyj `git clone -b ep00-unlinked-glfw . proba-glfw`. Następnie:
 
