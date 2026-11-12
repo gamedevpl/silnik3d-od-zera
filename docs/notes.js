@@ -42,5 +42,75 @@ glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);</pre>
 if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }</pre>
 <p><b>The guard.</b> I print the loader result first, then turn it into a check that stops startup [[11:54]]. Without it, the first OpenGL call would go through a null pointer.</p>`
     }
+  },
+  e01: {
+    pl: {
+      t: "Dlaczego if nie wystarcza",
+      min: "2 min czytania",
+      html: `
+<p>Skok ma wyglądać tak samo przy 30 i przy 240 klatkach na sekundę. Pierwszy pomysł, czyli dać fizyce równe 20 ms na każdą narysowaną klatkę, psuje to od razu: przy 240 FPS skoczek już wylądował, gdy ten drugi jeszcze leci [[9:19]].</p>
+<ol class="flow">
+  <li><b>Zbieraj</b><code>lag += elapsed</code><span>Czas każdej klatki trafia do skarbonki.</span></li>
+  <li><b>Krocz</b><code>while (lag >= tick)</code><span>Jeden krok to zawsze 20 ms.</span></li>
+  <li><b>Zostaw resztę</b><code>lag -= tick</code><span>Reszta czeka na następną klatkę.</span></li>
+</ol>
+<p><b>Skarbonka.</b> Przy 240 FPS klatka trwa 4,2 ms. Jeśli czekam na pełne 20 ms w jednej klatce, kwadrat nie ruszy się nigdy [[10:01]]. Dlatego czas między wywołaniami <code>draw()</code> odkładam, a krok robię, gdy uzbiera się 20 ms.</p>
+<p><b>Pętla.</b> Z samym <code>if</code> wolniejsze okno zostaje w tyle. W drugiej klatce przy 30 FPS mam 46,7 ms. Jeden krok zostawia 26,7 ms, czyli starczy jeszcze na drugi [[11:09]]. Stąd <code>while</code>.</p>
+<pre class="cmd">lag += elapsed;
+while (lag >= tick) {
+    step(tick);
+    lag -= tick;
+}</pre>
+<p><b>Wynik.</b> Po 0,67 s oba liczniki pokazują 33 kroki [[11:30]]. Liczba klatek jest inna, liczba kroków fizyki ta sama.</p>`
+    },
+    en: {
+      t: "Why an if is not enough",
+      min: "2 min read",
+      html: `
+<p>The jump should look the same at 30 and at 240 frames per second. The first idea, giving physics a flat 20 ms per rendered frame, breaks at once: at 240 FPS the jumper has landed while the other one is still in the air [[9:19]].</p>
+<ol class="flow">
+  <li><b>Collect</b><code>lag += elapsed</code><span>Every frame's time goes into the jar.</span></li>
+  <li><b>Step</b><code>while (lag >= tick)</code><span>One step is always 20 ms.</span></li>
+  <li><b>Keep the rest</b><code>lag -= tick</code><span>The leftover waits for the next frame.</span></li>
+</ol>
+<p><b>The jar.</b> At 240 FPS a frame lasts 4.2 ms. If I wait for a full 20 ms inside one frame, the square never moves [[10:01]]. So I save the time between calls to <code>draw()</code> and take a step once 20 ms has piled up.</p>
+<p><b>The loop.</b> With a plain <code>if</code> the slower window falls behind. In the second frame at 30 FPS I have 46.7 ms. One step leaves 26.7 ms, which buys a second one [[11:09]]. Hence <code>while</code>.</p>
+<pre class="cmd">lag += elapsed;
+while (lag >= tick) {
+    step(tick);
+    lag -= tick;
+}</pre>
+<p><b>The result.</b> At 0.67 s both counters show 33 steps [[11:30]]. The frame counts differ, the physics step count does not.</p>`
+    }
+  },
+  e02: {
+    pl: {
+      t: "Gimbal lock w trzech pomiarach",
+      min: "2 min czytania",
+      html: `
+<p>Kostką sterują trzy kąty. Sprawdzam, czy obrót klawiszem Y i obrót klawiszem Z to wciąż dwa różne ruchy, i mierzę odległość między końcówkami osi +Z po każdym z nich.</p>
+<ol class="flow">
+  <li><b>60°</b><code>0.383</code><span>Dwa klawisze, dwa różne położenia.</span></li>
+  <li><b>89°</b><code>0.013</code><span>Znaczniki prawie się pokrywają.</span></li>
+  <li><b>90°</b><code>0.000</code><span>Jeden ruch pod dwoma klawiszami.</span></li>
+</ol>
+<p><b>Co się stało.</b> Przy pochyleniu 90° oś −Z pokrywa się z Y [[17:41]]. Dwa sterowania kręcą wtedy wokół tej samej osi i jeden stopień swobody znika. Przy 60° różnica wynosi 0,383 [[15:35]], przy 89° już tylko 0,013 [[17:25]].</p>
+<p><b>Kwaterniony same nie pomagają.</b> Zapisuję te same trzy obroty jako kwaterniony i powtarzam test: dalej 0,000 [[19:46]]. Składam te same trzy kąty w tej samej kolejności, więc wynik jest ten sam.</p>
+<p><b>Co pomaga.</b> Przestaję trzymać trzy kąty. Trzymam jedną orientację i każdy obrót składam z nią wokół lokalnej osi kostki [[21:26]]. Przy tych samych 90° odstęp wynosi 1,000 [[22:04]].</p>`
+    },
+    en: {
+      t: "Gimbal lock in three measurements",
+      min: "2 min read",
+      html: `
+<p>Three angles steer the cube. I check whether a turn with the Y key and a turn with the Z key are still two different moves, and measure the distance between the +Z tips after each.</p>
+<ol class="flow">
+  <li><b>60°</b><code>0.383</code><span>Two keys, two different positions.</span></li>
+  <li><b>89°</b><code>0.013</code><span>The marks nearly overlap.</span></li>
+  <li><b>90°</b><code>0.000</code><span>One move under two keys.</span></li>
+</ol>
+<p><b>What happened.</b> At 90° of pitch, −Z lines up with Y [[17:41]]. Both controls now turn around the same axis and one degree of freedom is gone. At 60° the gap is 0.383 [[15:35]], at 89° only 0.013 [[17:25]].</p>
+<p><b>Quaternions alone do not help.</b> I write the same three rotations as quaternions and repeat the test: still 0.000 [[19:46]]. I am composing the same three angles in the same order, so the result is the same.</p>
+<p><b>What helps.</b> I stop storing three angles. I keep one orientation and compose each turn with it around a local cube axis [[21:26]]. At the same 90° the gap is 1.000 [[22:04]].</p>`
+    }
   }
 };
