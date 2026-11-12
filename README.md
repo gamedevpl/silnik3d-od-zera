@@ -62,3 +62,7 @@ At the end of `python3 replay 01`, compare two frames at 30 FPS. On frame two th
 
 W E00 polecenie `python3 replay 00` najpierw liczy prezentacje bufora. Próbnik prosi okno o zamknięcie przy ósmej prezentacji. W ep00-one-frame program sam kończy się po jednej, w ep00-draw-loop dochodzi do ośmiu. Po przeniesieniu rysowania do frame.hpp (ep00-window) ponownie otrzymujemy osiem. Każdy wiersz RGB pochodzi z odczytu piksela przed zamianą buforów.
 From work/engine, run `python3 ../../probe-swaps .` to measure the source you just saved. In stock Vim type `:!python3 ../../probe-swaps .`. This is the terminal equivalent of the filmed :Swaps shortcut.
+
+Na początku `python3 replay 01` odtwarza cztery wersje rysowania kwadratu. W kolumnach bg_test i box_test jest faktyczny wynik glIsEnabled(GL_SCISSOR_TEST) przy czyszczeniu tła i kwadratu. Po 30 klatkach porównaj kolory środka i rogu. Próbnik czyta ten sam tylny bufor przed prezentacją, ze stałym zegarem 30 Hz. W katalogu work/engine polecenie `python3 ../../probe-scissor .` mierzy zapisany kod.
+
+The first part of `python3 replay 01` runs four versions of the square. bg_test and box_test report glIsEnabled(GL_SCISSOR_TEST) at the background and box clears. Compare the centre and corner colours 30 frames apart. The diagnostic samples the same back buffer before presentation using a fixed 30 Hz clock. From work/engine run `python3 ../../probe-scissor .` to measure your own saved code.

@@ -22,6 +22,8 @@ if ep in ('00','01'):
     installed=Path('/opt/homebrew/share/android-commandlinetools/cmake/3.22.1/bin')
     if configured or ((not shutil.which('cmake') or not shutil.which('ninja')) and (installed/'cmake').exists() and (installed/'ninja').exists()):
         build_env['PATH']=str(configured or installed)+os.pathsep+build_env.get('PATH','')
+    if ep=='01':
+        subprocess.run([sys.executable,base/'probe-scissor'],env=build_env,check=True)
     if ep=='00':
         subprocess.run([sys.executable,base/'probe-swaps'],env=build_env,check=True)
     trials=([(tag,'arg') for tag in ('ep00-frozen','ep00-fast','ep00')] if ep=='00' else

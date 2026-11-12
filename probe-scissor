@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Measure the scissor state and render-target colours of E01 in a native context."""
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import sys, subprocess as sp, shutil, os
+
+base=Path(__file__).resolve().parent
+origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').exists() else base
+args=sys.argv[1:]
+if args not in ([],['.']):
+    raise SystemExit('Usage: python3 probe-scissor [.]')
+configured=os.environ.get('CMAKE_BIN_DIR')
+installed=Path('/opt/homebrew/share/android-commandlinetools/cmake/3.22.1/bin')
+if configured or (not all(shutil.which(x) for x in ('cmake','ninja')) and all((installed/x).exists() for x in ('cmake','ninja'))):
+    os.environ['PATH']=str(configured or installed)+os.pathsep+os.environ['PATH']
+def run(cmd,**kw):
+    return sp.run(cmd,check=True,**kw)
+with TemporaryDirectory(prefix='scissor-probe-') as tmp:
+    root=Path(tmp);tree=root/'engine';driver=root/'driver'
+    driver.mkdir();shutil.copy2(base/'scissor-probe.cpp',driver)
+    (driver/'CMakeLists.txt').write_text('''cmake_minimum_required(VERSION 3.20)
+project(ScissorProbe LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
+add_subdirectory("${ENGINE}/vendor/glfw" glfw)
+add_executable(measure scissor-probe.cpp "${ENGINE}/vendor/glad/src/gl.c")
+target_include_directories(measure PRIVATE "${ENGINE}" "${ENGINE}/vendor/glad/include")
+target_link_libraries(measure PRIVATE glfw)
+''')
+    tags=['ep00','ep01-scissor-box','ep01-scissor-on','ep01-scissor-scoped']
+    if args:
+        tree=Path.cwd();tags=['current']
+    else:
+        run(['git','clone','-q','--no-checkout',origin,tree])
+    for tag in tags:
+        if not args:run(['git','-C',tree,'switch','-q','--detach',tag])
+        build=root/tag
+        run(['cmake','-S',driver,'-B',build,'-G','Ninja','-DENGINE='+str(tree)],stdout=sp.DEVNULL)
+        run(['cmake','--build',build],stdout=sp.DEVNULL)
+        print(tag,flush=True);print('frame bg_test box_test bg_RGB box_RGB',flush=True)
+        run([build/'measure'],timeout=15)
