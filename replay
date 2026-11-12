@@ -11,11 +11,11 @@ from tempfile import TemporaryDirectory
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('episode',choices=('00','01','02','setup','edges','turns','pulse','clock','race','frame','corners','landing','steps'))
-parser.add_argument('--source',type=Path,help='For landing, steps, turns or pulse: compile the code from this edited engine directory.')
+parser.add_argument('--source',type=Path,help='For landing, steps, turns, edges or pulse: compile the code from this edited engine directory.')
 args=parser.parse_args()
 ep=args.episode
-if args.source and ep not in ('steps','landing','pulse','turns'):
-    parser.error('--source is available for landing, steps and pulse.')
+if args.source and ep not in ('steps','landing','pulse','turns','edges'):
+    parser.error('--source is available for landing, steps, turns, edges and pulse.')
 
 def run(args,cwd=None):
     subprocess.run(args,cwd=cwd,check=True)

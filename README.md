@@ -16,6 +16,20 @@ Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka z
 
 
 
+## E02 Short · skąd się wzięła przekątna
+
+Do próby wystarczą Git, Python 3 i kompilator C++17. W rozpakowanym zestawie, w katalogu z plikiem `replay`, utwórz roboczą kopię początkowej pomyłki:
+
+    git clone -b ep02-crossed-sides silnik-3d.bundle ref
+    cd ref
+    vim mesh.hpp
+
+W pełnym klonie z GitHuba, obok pliku `replay`, w pierwszym poleceniu użyj `git clone -b ep02-crossed-sides . ref`. Z Vima uruchom `:!python3 ../replay edges --source .`. Próbnik kompiluje zapisany `mesh.hpp` i wypisuje końce odcinków rzeczywiście podanych do `paper.line`. Jedna z czterech par to `1->6`.
+
+Wpisz `:e corners.hpp` i znajdź róg, który ma takie same x i y jak szóstka. Wróć przez `:b#`. Przy wywołaniu `paper.line(dots[i], dots[next+4]);` ustaw kursor na słowie `next`. Wpisz `ciwi`, naciśnij Esc i zapisz plik przez `:w`. Polecenie `:!!` powtarza poprzedni test powłoki. Nadal są 12 krawędzi. Boki to teraz `0->4 1->5 2->6 3->7`. Polecenie `python3 replay edges` z katalogu paczki powtarza trzy zapisane etapy.
+
+Aby odtworzyć także początek filmu, w pierwszym poleceniu wybierz tag `ep02-marked-rings`. W `mesh.hpp` ustaw kursor na wierszu 18. Naciśnij `yy`, następnie `p`. Na kopii ustaw kursor na pierwszym znaku `+`, usuń `+4` klawiszami `2x` i zapisz przez `:w`. Teraz możesz wykonać tę samą próbę dla skrzyżowanych boków.
+
 ## E02 · czy inna oś cofnie obrót?
 
 W terminalu, obok `replay`, uruchom `python3 steer ep02-euler`. Biały pierścień zaznacza start żółtego narożnika 6. Naciśnij Y, poczekaj na koniec obrotu, a potem naciśnij Z. Y dodaje 45° yaw, Z dodaje 45° roll. Przy pochyleniu 90° narożnik wraca do pierścienia. Zamknij próbnik klawiszem Esc, uruchom `python3 steer ep02` i powtórz te same ruchy. Tym razem narożnik mija start. Zerem przywrócisz pozycję początkową. Pośredni etap z filmu, który składa kwaterniony z trzech kątów, możesz sprawdzić przez `python3 steer ep02-quat-euler`. Także tutaj po Z szóstka wraca do pierścienia.
