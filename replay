@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 base=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners'))
+parser.add_argument('episode',choices=('00','01','02','edges','pulse','clock','race','corners','landing'))
 ep=parser.parse_args().episode
 
 def run(args,cwd=None):
@@ -29,6 +29,7 @@ if ep in ('00','01'):
     trials=([(tag,'arg') for tag in ('ep00-frozen','ep00-fast','ep00')] if ep=='00' else
             [(tag,rate) for tag in ('ep01-variable','ep01-per-frame','ep01-single-step','ep01') for rate in ('30','240')])
     if ep=='01':
+        run([sys.executable,__file__,'landing'])
         print('FPS   peak height   first landing (−1 = none)',flush=True)
         trials=[('ep01-no-update','30'),('ep01-launch','30'),*trials]
     for tag,arg in trials:
@@ -45,6 +46,18 @@ if ep in ('00','01'):
                 print('frame  carried_ms  before_step_ms  steps  remaining_ms',flush=True)
                 run(['c++','-std=c++17','-I',tree,base/'clock-trace.cpp','-o',work/'trace'])
                 run([work/'trace'])
+elif ep=='landing':
+    origin=base/'silnik-3d.bundle' if (base/'silnik-3d.bundle').is_file() else base
+    with TemporaryDirectory(prefix='jump-floor-') as scratch:
+        work=Path(scratch)
+        repo=work/'ref'
+        run(['git','clone','-q','--no-checkout',origin,repo])
+        for tag in ('ep01-fall','ep01-clamp','ep01-bounce'):
+            run(['git','-C',repo,'switch','-q','--detach',tag])
+            print(tag+'\nframe    height     speed',flush=True)
+            run(['c++','-std=c++17','-I',repo,'-I',repo/'vendor/glad/include',
+                 '-I',repo/'vendor/glfw/include',base/'landing-trace.cpp','-o',work/'landing'])
+            run([work/'landing'])
 elif ep=='race':
     trials=[('ep01-single-step',30),('ep01-matched-tick',30),('ep01-matched-tick',15),
             ('ep01-loop-30hz',15),('ep01',15)]

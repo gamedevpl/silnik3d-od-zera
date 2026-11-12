@@ -128,3 +128,5 @@ W katalogu głównym klonu dodaj osobny katalog na ćwiczenie:
     python3 ../probe . arg --start-time 0.2
 
 Przed edycją oba argumenty wynoszą zero. W ref/frame.hpp usuń tylko static z deklaracji elapsed. Powtórz ostatnie polecenie. Drugi argument wzrośnie do 1,800. Obie zapisane wersje porównasz przez git diff ep00-static-elapsed ep00 -- frame.hpp w ref.
+
+Grawitacja i drugie odbicie. Uruchom `python3 replay landing`. W klatce 20 przy 30 FPS porównaj `ep01-fall`, `ep01-clamp` i `ep01-bounce`. Po samym ustawieniu wysokości na zero prędkość wynosi −263,3. Po przywróceniu +270 kwadrat w klatce 21 znów znajduje się nad podłogą. Każdy etap możesz też samodzielnie skompilować i otworzyć jego okno.
