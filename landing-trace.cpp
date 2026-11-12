@@ -1,7 +1,7 @@
 #define GLFW_INCLUDE_NONE
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "frame.hpp"
+#include <frame.hpp>
 #include <cstdio>
 
 int main() {
