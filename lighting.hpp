@@ -83,7 +83,7 @@ inline void drawLit(const Mesh& mesh, Vec3 center, float radius,
     light.gpu.upload(&mesh.vertices.front().x, mesh.vertices.size()*sizeof(Vertex));
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,mesh.indices.size()*sizeof(std::uint32_t),
                  mesh.indices.data(),GL_STREAM_DRAW);
-    glUniform1f(light.roughness, 0.25f);
+    glUniform1f(light.roughness, material.roughness);
     glUniform1f(light.metallic, material.metallic);
     glUniform3f(light.center,center.x,center.y,center.z);
     glUniform1f(light.scale,radius);
