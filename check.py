@@ -1,18 +1,15 @@
-"""Build the episode exercise and sample its framebuffer."""
+"""Compile the episode exercise in a temporary directory; a GL window is unnecessary."""
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
-
-root = Path(__file__).resolve().parent
+project=Path(__file__).resolve().parent
 with tempfile.TemporaryDirectory() as tmp:
-    subprocess.run(["cmake", "-S", str(root), "-B", tmp,
-                    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"], check=True)
-    subprocess.run(["cmake", "--build", tmp, "--config", "Release",
-                    "--target", "exercise", "--parallel", "4"], check=True)
-    name = "exercise.exe" if os.name == "nt" else "exercise"
-    exe = next(Path(tmp).rglob(name))
-    rc = subprocess.run([exe]).returncode
-    print({0: "PASS", 1: "RETRY"}.get(rc, "OpenGL context or runtime error"))
-    sys.exit(rc)
+    exe=Path(tmp)/("exercise.exe" if os.name=="nt" else "exercise")
+    cxx=os.environ.get("CXX","c++")
+    subprocess.run([cxx,"-std=c++17",f'-DENGINE_ASSET_DIR="{(project/"assets").as_posix()}"',
+                    str(project/"exercise.cpp"),"-o",str(exe)], check=True)
+    result=subprocess.run([exe]).returncode
+    print({0:"PASS",1:"RETRY"}.get(result,"ERROR"))
+    sys.exit(result)

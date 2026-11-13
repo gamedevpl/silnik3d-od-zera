@@ -2,7 +2,7 @@
 #include "depth.hpp"
 #include "face.hpp"
 #include "floor.hpp"
-#include "lighting.hpp"
+#include "instances.hpp"
 #include <cmath>
 
 struct Jumper {
@@ -44,8 +44,11 @@ inline void frame() {
         drawCube(aspect, player.height / 100.0 - .25);
         return;
     }
-    static const Mesh sphere = makeSphere();
-    const bool metal = glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_M)==GLFW_PRESS;
-    drawLit(sphere,{-1.05,0,0},.85f,{.15f,0},elapsed,aspect);
-    drawLit(sphere,{1.05,0,0},.85f,{.92f,metal?1.f:0.f},elapsed,aspect);
+    static MeshLibrary meshes;
+    static Instance left = sphereAt(meshes,-1.05f,{.15f,0});
+    static Instance right = sphereAt(meshes,1.05f,{.92f,0});
+    right.material.metallic = glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_M)==GLFW_PRESS ? 1.f : 0.f;
+    right.position.y=.15+.15*std::sin(elapsed);
+    drawInstance(left,elapsed,aspect);
+    drawInstance(right,elapsed,aspect);
 }

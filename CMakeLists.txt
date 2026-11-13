@@ -13,3 +13,8 @@ target_link_libraries(engine PRIVATE glfw glad)
 
 add_executable(exercise exercise.cpp)
 target_link_libraries(exercise PRIVATE glfw glad)
+
+add_executable(bake bake.cpp)
+foreach(target engine exercise)
+    target_compile_definitions(${target} PRIVATE ENGINE_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+endforeach()
