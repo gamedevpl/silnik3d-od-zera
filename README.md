@@ -2,7 +2,13 @@
 
 ## Ćwiczenia po odcinku
 
-Wybierz gałąź startową swojego odcinka. W jej README znajdziesz zadanie i instrukcje PL/EN. Do próby wystarczą Git, Python 3 i kompilator C++17.
+Wybierz gałąź startową swojego odcinka. W jej README znajdziesz zadanie i instrukcje PL/EN. Podstawowe próby E00–E02 wymagają Git, Pythona 3 i kompilatora C++17.
+
+W E03–E06 polecenie `python3 check.py` buduje dołączoną bibliotekę GLFW. Potrzebne są także CMake 3.20+ i sesja graficzna z OpenGL 3.3. Na Linuksie domyślna konfiguracja GLFW buduje obsługę zarówno X11, jak i Waylanda. Na Debianie i Ubuntu doinstaluj nagłówki obu systemów przed uruchomieniem próby.
+
+```sh
+sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev
+```
 
 | Odcinek | Zadanie | Start | Rozwiązanie ćwiczenia | Tag końca odcinka |
 | --- | --- | --- | --- | --- |
