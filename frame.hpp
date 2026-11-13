@@ -1,5 +1,6 @@
 #pragma once
 #include "mesh.hpp"
+#include "face.hpp"
 #include <cmath>
 
 struct Jumper {
@@ -31,6 +32,7 @@ inline void frame() {
     glfwGetFramebufferSize(glfwGetCurrentContext(), &w, &h);
     int y = int(h * .28 + player.height * h / 150.0);
     Paper paper{w/2,y,h/7,std::max(1,h/185)};
+    drawFace(paper, w, h);
     glEnable(GL_SCISSOR_TEST);
     glClearColor(0.72f, 1.f, 0.86f, 1.f);
     cube(paper);

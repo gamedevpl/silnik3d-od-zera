@@ -10,3 +10,6 @@ add_subdirectory(vendor/glfw)
 add_library(glad STATIC vendor/glad/src/gl.c)
 target_include_directories(glad PUBLIC vendor/glad/include)
 target_link_libraries(engine PRIVATE glfw glad)
+
+add_executable(exercise exercise.cpp)
+target_link_libraries(exercise PRIVATE glfw glad)
