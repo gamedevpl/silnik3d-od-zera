@@ -112,7 +112,7 @@ function episodeNote(e, L, live){
 
 function body(e, L, now){
   const d = e[lang], live = isOut(e, now), shortLive = e.short && now >= Date.parse(e.shortAt);
-  const cmds = `git clone -b ${e.slug}-start ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
+  const cmds = `git clone -b ${e.start || e.slug + "-start"} ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
   const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
   const video = live
     ? `<div class="video" data-yt="${e.video}"><canvas class="pix" width="96" height="54" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
@@ -138,7 +138,7 @@ function body(e, L, now){
         <p class="after">${L.afterPass.replace("{f}", `<code>${e.file}</code>`)}</p>
         <div class="cw" style="margin-top:8px"><pre class="cmd"><span class="p">$ </span>${esc(diff)}</pre><button class="copy" type="button" data-copy="${esc(diff)}">${L.copy}</button></div>
         <div class="sol">
-          <a href="${REPO}/tree/${e.slug}-start">${L.startBranch}</a>
+          <a href="${REPO}/tree/${e.start || e.slug + "-start"}">${L.startBranch}</a>
           <a href="${REPO}/tree/${e.slug}-solution">${L.solution}</a>
           <a href="${REPO}/tree/${e.ep}">${L.fullCode}</a>
         </div>
@@ -188,7 +188,7 @@ function renderEpisodes(){
   }).join("");
   const next = s.next || [], ready = s.episodes.filter(e => e.video).length;
   document.getElementById("seasonIntro").innerHTML = `<b>${esc(s[lang].t)}</b><span>${esc(s[lang].d || "")}</span><small>${L.seasonCount.replace("{a}", ready).replace("{b}", s.episodes.length + next.length)}</small>`;
-  const tile = (num, x, d, big) => `<li${big ? ' class="big"' : ""}><canvas class="pix" width="${big ? 96 : 48}" height="${big ? 54 : 30}" data-demo="${x.demo}" aria-hidden="true"></canvas><div><span class="ep-num">${num}</span><span class="pill">${L.planned}</span><h3>${esc(x[lang].t)}</h3><p>${esc(d)}</p></div>${x.slug ? `<div class="preview-material"><a href="${REPO}/tree/${x.slug}-start">${L.startBranch}</a>${episodeNote(x, L, false)}</div>` : ""}</li>`;
+  const tile = (num, x, d, big) => `<li${big ? ' class="big"' : ""}><canvas class="pix" width="${big ? 96 : 48}" height="${big ? 54 : 30}" data-demo="${x.demo}" aria-hidden="true"></canvas><div><span class="ep-num">${num}</span><span class="pill">${L.planned}</span><h3>${esc(x[lang].t)}</h3><p>${esc(d)}</p></div>${x.slug ? `<div class="preview-material"><a href="${REPO}/tree/${x.start || x.slug + "-start"}">${L.startBranch}</a>${episodeNote(x, L, false)}</div>` : ""}</li>`;
   document.getElementById("teasers").innerHTML =
     (next.length ? `<h3 class="sub">${L.nextEps}</h3><ul class="tiles">${next.map(x => tile(code(x), x, x[lang].q)).join("")}</ul>` : "")
     + (UPCOMING.length ? `<h3 class="sub">${L.nextSeasons}</h3><ul class="tiles two">${UPCOMING.map(x => tile(`${L.season} ${x.n}`, x, x[lang].d, true)).join("")}</ul>` : "");
