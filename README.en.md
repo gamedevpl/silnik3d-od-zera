@@ -2,7 +2,13 @@
 
 ## Try the episode exercises
 
-Choose the start branch for your episode. Its README has the task and instructions in Polish and English. The check needs Git, Python 3 and a C++17 compiler.
+Choose the start branch for your episode. Its README has the task and instructions in Polish and English. The basic E00–E02 checks need Git, Python 3 and a C++17 compiler.
+
+For E03–E06, `python3 check.py` builds the bundled GLFW library. You also need CMake 3.20+ and a graphical session with OpenGL 3.3. The default Linux build enables both X11 and Wayland. On Debian and Ubuntu install their development headers before running the check.
+
+```sh
+sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev
+```
 
 | Episode | Task | Start | Exercise solution | End-of-episode tag |
 | --- | --- | --- | --- | --- |

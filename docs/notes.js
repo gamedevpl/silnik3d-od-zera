@@ -113,6 +113,22 @@ while (lag >= tick) {
 <p><b>What helps.</b> I stop storing three angles. I keep one orientation and compose each turn with it around a local cube axis [[21:26]]. At the same 90° the gap is 1.000 [[22:04]].</p>`
     }
   },
+  e03: {
+    pl: { t: "Gdzie zniknęła przekątna?", min: "1 min czytania", html: `
+<p>Połącz rogi 4 i 6. GPU potrafi narysować ten odcinek z dwóch wierzchołków. Co zobaczysz, jeśli w tym samym wywołaniu zmienisz tryb na <code>GL_TRIANGLES</code>? Znika nawet przekątna. W buforze są trzy rogi, ale ostatni argument <code>glDrawArrays</code> wciąż każe pobrać tylko dwa.</p>
+<p>Na gałęzi <code>e03-start</code> uruchom <code>python3 check.py</code>. Test pobiera kolor wewnątrz spodziewanego trójkąta i obok niego. W <code>face.hpp</code> zmień liczbę pobieranych wierzchołków i powtórz pomiar. Wewnętrzny piksel powinien stać się miętowy, a zewnętrzny pozostać czarny. Aby wypełnić resztę ściany, drugi trójkąt może użyć tej samej przekątnej i rogu 7.</p>` },
+    en: { t: "Where did the diagonal go?", min: "1 min read", html: `
+<p>Connect corners 4 and 6. Two vertices are enough for the GPU to draw that line. What happens if you switch the same draw call to <code>GL_TRIANGLES</code>? Even the diagonal disappears. The buffer holds three corners, but the last argument to <code>glDrawArrays</code> still asks for only two.</p>
+<p>On <code>e03-start</code>, run <code>python3 check.py</code>. It samples a pixel inside the expected triangle and another outside it. Change the vertex count in <code>face.hpp</code> and repeat the measurement. The inside pixel should turn mint while the outside pixel stays black. A second triangle can use the same diagonal and corner 7 to fill the rest of the face.</p>` }
+  },
+  e04: {
+    pl: { t: "Dwie ściany w jednym pikselu", min: "1 min czytania", html: `
+<p>Narysuj miętową ścianę przed koralową, a potem odwróć kolejność wywołań. Kamera stoi w miejscu. Jeśli środkowy piksel zmienia kolor, wygrała ściana narysowana jako ostatnia. Na <code>e04-start</code> polecenie <code>python3 check.py</code> podaje kolor po każdej z tych prób. W <code>depth.hpp</code> bufor głębi jest już czyszczony przed klatką. Która operacja porówna głębokości podczas rysowania?</p>
+<p>Perspektywę możesz sprawdzić osobno. W <code>camera.hpp</code> odległość od kamery trafia do <code>w</code>. Weź punkt, którego współrzędna <code>x</code> przed dzieleniem wynosi 1. Przy <code>w = 2</code> znajdzie się na ekranie w <code>x = 0,5</code>, a przy <code>w = 4</code> w <code>x = 0,25</code>. Punkt zbliża się do środka ekranu, gdy kamera się oddala.</p>` },
+    en: { t: "Two walls in one pixel", min: "1 min read", html: `
+<p>Draw the mint wall in front of the coral one, then reverse the draw order. Keep the camera still. If the centre pixel changes colour, the last wall drawn has won. On <code>e04-start</code>, <code>python3 check.py</code> prints the colour after each run. In <code>depth.hpp</code> the depth buffer is already cleared at the beginning of the frame. Which operation compares depths while drawing?</p>
+<p>Try perspective separately. In <code>camera.hpp</code> the distance from the camera is stored in <code>w</code>. Take a point whose <code>x</code> before division is 1. With <code>w = 2</code> it lands at <code>x = 0.5</code> on screen. With <code>w = 4</code> it lands at <code>x = 0.25</code>. The point moves towards the centre as the camera pulls away.</p>` }
+  },
   e05: {
     pl: { t: "Który poziom tekstury trafia do piksela?", min: "1 min czytania", html: `
 <p>Ustaw kamerę tak, żeby było widać podłogę aż po horyzont. Na dole jeden piksel obejmuje kawałek kratki. W oddali w tym samym pikselu mieści się już kilka kratek. Podczas jazdy zmienia się to, które z nich trafią do próbki [[1:45]].</p>
