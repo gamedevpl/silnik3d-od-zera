@@ -18,5 +18,5 @@ inline void drawFace(Paper paper, int w, int h) {
         points[n++] = 2.f * dot.y / h - 1;
     }
     gpu.upload(points, sizeof(points));
-    glDrawArrays(GL_TRIANGLES, 0, 2);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
