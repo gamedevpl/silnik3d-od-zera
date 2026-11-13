@@ -2,6 +2,7 @@
 #include "depth.hpp"
 #include "face.hpp"
 #include "floor.hpp"
+#include "lighting.hpp"
 #include <cmath>
 
 struct Jumper {
@@ -39,5 +40,12 @@ inline void frame() {
         return;
     }
     drawFloor(aspect);
-    drawCube(aspect, player.height / 100.0 - .25);
+    if (glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_C)==GLFW_PRESS) {
+        drawCube(aspect, player.height / 100.0 - .25);
+        return;
+    }
+    static const Mesh sphere = makeSphere();
+    const bool metal = glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_M)==GLFW_PRESS;
+    drawLit(sphere,{-1.05,0,0},.85f,{.15f,0},elapsed,aspect);
+    drawLit(sphere,{1.05,0,0},.85f,{.92f,metal?1.f:0.f},elapsed,aspect);
 }
