@@ -24,7 +24,7 @@ public:
     bool valid(Handle handle) const {
         if (handle.index >= slots.size()) return false;
         const Slot& slot = slots[handle.index];
-        return slot.alive;
+        return slot.alive && slot.generation == handle.generation;
     }
 
     Handle create(T object) {
