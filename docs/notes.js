@@ -112,5 +112,37 @@ while (lag >= tick) {
 <p><b>Quaternions alone do not help.</b> I write the same three rotations as quaternions and repeat the test: still 0.000 [[19:46]]. I am composing the same three angles in the same order, so the result is the same.</p>
 <p><b>What helps.</b> I stop storing three angles. I keep one orientation and compose each turn with it around a local cube axis [[21:26]]. At the same 90° the gap is 1.000 [[22:04]].</p>`
     }
+  },
+  e05: {
+    pl: { t: "Który poziom tekstury trafia do piksela?", min: "1 min czytania", html: `
+<p>Ustaw kamerę tak, żeby było widać podłogę aż po horyzont. Na dole jeden piksel obejmuje kawałek kratki. W oddali w tym samym pikselu mieści się już kilka kratek. Podczas jazdy zmienia się to, które z nich trafią do próbki [[2:08]].</p>
+<p>Mipmapy są już wygenerowane, od 128 × 128 aż do 1 × 1. W <code>texture.hpp</code> sprawdź wartość <code>GL_TEXTURE_MIN_FILTER</code>. Filtr trójliniowy bierze próbki z dwóch sąsiednich poziomów i miesza wyniki. Porównaj daleki pas podłogi podczas powtórki tej samej trasy [[3:09]].</p>` },
+    en: { t: "Which texture level reaches the pixel?", min: "1 min read", html: `
+<p>Look towards the horizon. Close to the camera, one pixel covers part of a tile. Further out, several tiles fit inside it. As the camera moves, different squares end up under the same sample [[2:08]].</p>
+<p>The texture already has levels ranging from 128 × 128 to 1 × 1. Check <code>GL_TEXTURE_MIN_FILTER</code> in <code>texture.hpp</code>. A trilinear filter samples two neighbouring levels and blends the results. Watch the same strip of distant floor on the return run [[3:09]].</p>` }
+  },
+  e06: {
+    pl: { t: "Dwa materiały, jeden odblask", min: "1 min czytania", html: `
+<p>Kule mają chropowatość 0,15 i 0,92. Zatrzymaj lampę w tym samym miejscu i porównaj odblaski. W pierwszej próbie oba mają po 84 jasne piksele [[1:45]]. Co dostał shader?</p>
+<p>Między opisem materiału a wywołaniem rysującym w <code>lighting.hpp</code> wkrała się stała 0,25. Gdy przy każdym rysowaniu do shadera trafia chropowatość bieżącego materiału, ta sama próba daje 81 i 443 jasne piksele [[2:31]].</p>` },
+    en: { t: "Two materials, one highlight", min: "1 min read", html: `
+<p>The spheres request roughness 0.15 and 0.92. Hold the lamp still and compare the highlights. On the first pass, each has 84 bright pixels [[1:45]]. Which value actually reached the shader?</p>
+<p>Follow the material into the draw call in <code>lighting.hpp</code>. Both draws upload the constant 0.25. Send the current material’s roughness on each draw and the same test measures 81 and 443 bright pixels [[2:31]].</p>` }
+  },
+  e07: {
+    pl: { t: "Czy druga kula potrzebuje drugiej siatki?", min: "1 min czytania", html: `
+<p>Po spakowaniu siatka zajmuje 36 780 bajtów. Wersja tekstowa zajmowała 75 878 bajtów. W obu plikach jest tych samych 693 wierzchołków i 3648 indeksów [[2:15]].</p>
+<p>Obie kule proszą o ten sam plik. Odczytaj licznik po dodaniu drugiej [[2:40]]. W <code>asset_cache.hpp</code> poszukaj modelu pod jego kluczem przed otwarciem pliku. Po poprawce obie instancje odwołują się do tej samej siatki. Nadal możesz przesunąć jedną z nich osobno [[3:39]].</p>` },
+    en: { t: "Does a second sphere need a second mesh?", min: "1 min read", html: `
+<p>The packed mesh takes 36,780 bytes. The text version took 75,878 bytes. Both store the same 693 vertices and 3,648 indices [[2:15]].</p>
+<p>Both spheres ask for the same file. Check the read counter when the second one arrives [[2:40]]. In <code>asset_cache.hpp</code>, look up the model key before opening the file. With the lookup fixed, both instances point to one mesh. Moving one sphere still leaves the other in place [[3:39]].</p>` }
+  },
+  e08: {
+    pl: { t: "Ten sam indeks po usunięciu obiektu", min: "1 min czytania", html: `
+<p>Zapamiętaj uchwyt A: <code>1:1</code>. Usuń A i utwórz B. Kiedy wolne miejsce wraca do puli, B otrzymuje <code>1:2</code> [[1:26]]. Stare zaznaczenie nadal pamięta indeks 1. Spróbuj przesunąć obiekt tym uchwytem.</p>
+<p>W <code>scene.hpp</code> sprawdź, czy pokolenie żywego obiektu zgadza się z pokoleniem uchwytu. Po poprawce B zachowuje położenie. Można je przesunąć świeżym uchwytem, podczas gdy sąsiednie kule pozostają na swoich miejscach [[2:50]].</p>` },
+    en: { t: "The same index after deleting an object", min: "1 min read", html: `
+<p>Keep A’s handle, <code>1:1</code>. Delete A and create B. Once the slot goes back into the free pool, B gets <code>1:2</code> [[1:26]]. The old selection still remembers index 1. Try moving the object through that handle.</p>
+<p>In <code>scene.hpp</code>, compare the live slot’s generation with the one in the handle. After the fix B stays put. Its fresh handle can still move it while the neighbouring spheres stay where they were [[2:50]].</p>` }
   }
 };

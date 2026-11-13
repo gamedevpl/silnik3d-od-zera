@@ -37,10 +37,10 @@ window.SERIES = {
     next:[
       { n:3, demo:"tri",   pl:{ t:"Pierwsza pełna ściana", q:"Jak wypełnić pierwszą ścianę?" }, en:{ t:"The First Solid Face", q:"How do you fill the first face?" } },
       { n:4, demo:"depth", pl:{ t:"Kamera i głębia", q:"Która ściana jest bliżej?" }, en:{ t:"Camera and Depth", q:"Which face is closer?" } },
-      { n:5, demo:"tex",   pl:{ t:"Tekstura w ruchu", q:"Dlaczego podłoga miga?" }, en:{ t:"Texture in Motion", q:"Why does the floor flicker?" } },
-      { n:6, demo:"light", pl:{ t:"Światło i materiał", q:"Co robi chropowatość?" }, en:{ t:"Light and Material", q:"What does roughness do?" } },
-      { n:7, demo:"mesh",  pl:{ t:"Siatka jako zasób", q:"Dlaczego ten sam model wczytuje się dwa razy?" }, en:{ t:"Mesh as a Resource", q:"Why does the same model load twice?" } },
-      { n:8, demo:"scene", pl:{ t:"Scena, która pamięta swoje obiekty", q:"Dlaczego przesunął się inny obiekt?" }, en:{ t:"A Scene That Remembers Its Objects", q:"Why did a different object move?" } }
+      { n:5, slug:"e05", demo:"tex",   pl:{ t:"Tekstura w ruchu", q:"Dlaczego podłoga miga?" }, en:{ t:"Texture in Motion", q:"Why does the floor flicker?" } },
+      { n:6, slug:"e06", demo:"light", pl:{ t:"Światło i materiał", q:"Co robi chropowatość?" }, en:{ t:"Light and Material", q:"What does roughness do?" } },
+      { n:7, slug:"e07", demo:"mesh",  pl:{ t:"Siatka jako zasób", q:"Dlaczego ten sam model wczytuje się dwa razy?" }, en:{ t:"Mesh as a Resource", q:"Why does the same model load twice?" } },
+      { n:8, slug:"e08", demo:"scene", pl:{ t:"Scena, która pamięta swoje obiekty", q:"Dlaczego przesunął się inny obiekt?" }, en:{ t:"A Scene That Remembers Its Objects", q:"Why did a different object move?" } }
     ] }
   ],
   /* Seasons after the current one: only a name and one line, no episodes. */
