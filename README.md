@@ -1,14 +1,14 @@
-# E07 · Jedna siatka, dwa obiekty / One mesh, two instances
+# E08 · Kto dostał stare zaznaczenie? / Who got the old selection?
 
-PL. Na ekranie są dwie kule z jednego pliku. Czy wczytaliśmy siatkę dwa razy? Uruchom próbę, znajdź wyszukiwanie klucza w asset_cache.hpp, popraw je i powtórz. Porównaj liczbę odczytów i tożsamość siatki. Każda instancja ma własne położenie i materiał.
+PL. Zaznaczamy A, usuwamy je i dodajemy B. B otrzymuje wolny indeks. Sprawdź, czy przesunięcie przez stare zaznaczenie zmienia B. W scene.hpp dopisz sprawdzenie pokolenia uchwytu w valid(). Powtórz próbę. Stary uchwyt ma być odrzucony, a nowy nadal przesuwa B.
 
-EN. Two spheres come from the same file. Did we read the mesh twice? Run the test, find the lookup in asset_cache.hpp, fix it and rerun. Compare the read count and the mesh identities. Each instance has its own pose and material.
+EN. Select A, remove it and add B in the same slot. Check whether moving the old selection moves B. In scene.hpp make valid() compare the handle's generation, then repeat the test. The old handle should be rejected while the new one still moves B.
 
 ```sh
-git clone -b e07-start https://github.com/gamedevpl/silnik3d-od-zera.git
+git clone -b e08-start https://github.com/gamedevpl/silnik3d-od-zera.git
 cd silnik3d-od-zera
 python3 check.py
-git diff origin/e07-solution -- asset_cache.hpp
+git diff origin/e08-solution -- scene.hpp
 ```
 
-The test requires Python 3 and a C++17 compiler. For the desktop scene use CMake and the project's GLFW prerequisites. Build target bake to convert assets/sphere.mesh into binary form and verify all attributes and triangle indices survive the round trip. The full checkpoint is ep07.
+The exercise needs Python 3 and a C++17 compiler. Build the desktop engine with CMake and the project's GLFW prerequisites. Tab cycles selection; X deletes; N creates an object in the middle. Creation deliberately keeps the previous selection so the old-handle experiment can be repeated. A/D and W/S move the selected object horizontally and vertically. Arrow keys orbit and dolly the camera. The window title shows the selected handle and whether it is live. The full season checkpoint is ep08.

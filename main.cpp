@@ -6,6 +6,27 @@
 
 GLFWwindow* window;
 
+void sceneKey(GLFWwindow* window,int key,int,int action,int) {
+    if (action != GLFW_PRESS && action != GLFW_REPEAT) return;
+    auto& view=gallery();
+    switch (key) {
+    case GLFW_KEY_TAB: if(action==GLFW_PRESS) view.next(); break;
+    case GLFW_KEY_X: if(action==GLFW_PRESS) view.eraseSelection(); break;
+    case GLFW_KEY_N: if(action==GLFW_PRESS) view.add(); break;
+    case GLFW_KEY_A: view.move(-.25,0); break;
+    case GLFW_KEY_D: view.move(.25,0); break;
+    case GLFW_KEY_W: view.move(0,.25); break;
+    case GLFW_KEY_S: view.move(0,-.25); break;
+    default: return;
+    }
+    std::string title="Scene | Tab X N | WASD";
+    if (view.selected) {
+        title+=" | "+std::to_string(view.selected->index)+":"+std::to_string(view.selected->generation);
+        title+=view.objects.valid(*view.selected)?" live":" stale";
+    }
+    glfwSetWindowTitle(window,title.c_str());
+}
+
 void draw() {
     double now = glfwGetTime();
     static double prev = now;
@@ -40,6 +61,8 @@ int main() {
     if (!window) { glfwTerminate(); return 1; }
     glfwMakeContextCurrent(window);
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }
+    glfwSetKeyCallback(window,sceneKey);
+    glfwSetWindowTitle(window,"Scene | Tab selects | X deletes | N creates | WASD moves");
     glfwSwapInterval(1);
     while (!glfwWindowShouldClose(window)) draw();
     glfwDestroyWindow(window);

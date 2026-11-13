@@ -2,7 +2,9 @@
 #include "depth.hpp"
 #include "face.hpp"
 #include "floor.hpp"
-#include "instances.hpp"
+#include "gallery.hpp"
+
+inline Gallery& gallery() { static Gallery view; return view; }
 #include <cmath>
 
 struct Jumper {
@@ -44,11 +46,12 @@ inline void frame() {
         drawCube(aspect, player.height / 100.0 - .25);
         return;
     }
-    static MeshLibrary meshes;
-    static Instance left = sphereAt(meshes,-1.05f,{.15f,0});
-    static Instance right = sphereAt(meshes,1.05f,{.92f,0});
-    right.material.metallic = glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_M)==GLFW_PRESS ? 1.f : 0.f;
-    right.position.y=.15+.15*std::sin(elapsed);
-    drawInstance(left,elapsed,aspect);
-    drawInstance(right,elapsed,aspect);
+    auto& scene = gallery();
+    scene.objects.each([&](Handle handle,const Instance& item){
+        Instance painted=item;
+        const bool selected = scene.selected && scene.objects.valid(*scene.selected) &&
+                              scene.selected->index==handle.index;
+        if (selected) painted.material.metallic=1;
+        drawInstance(painted,elapsed,aspect);
+    });
 }
