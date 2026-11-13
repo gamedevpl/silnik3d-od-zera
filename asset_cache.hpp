@@ -10,7 +10,7 @@ class MeshLibrary {
     unsigned reads = 0;
 public:
     MeshRef load(const std::filesystem::path& file) {
-        auto key = std::filesystem::weakly_canonical(file);
+        auto key = file;
         auto found = cache.find(key);
         if (found != cache.end()) return found->second;
         auto mesh = std::make_shared<Mesh>(readMesh(key));
