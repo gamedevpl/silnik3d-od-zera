@@ -1,14 +1,14 @@
-# E04 · Kamera i głębia / Camera and Depth
+# E05 · Tekstura w ruchu / Texture in motion
 
-PL. Dwie ściany nakładają się w środku kadru. Miętowa jest bliżej. Uruchom próbę w obu kolejnościach rysowania. W depth.hpp znajdź beginFrame(). Bufor głębi jest dostępny i czyszczony. Włącz porównywanie głębi, zapisz plik i powtórz próbę. W obu przypadkach środkowy piksel powinien być miętowy.
+PL. Przytrzymaj U, aby obejrzeć cztery oznaczone narożniki tekstury, lub puść U i obejrzyj podłogę w perspektywie. Użyj strzałek jak w E04. Podczas ruchu odległa szachownica migocze. W texture.hpp sprawdź, który filtr pomniejszania wybiera silnik. Poziomy od 128 × 128 do 1 × 1 już istnieją. Wybierz filtr trójliniowy i uruchom próbę ponownie.
 
-EN. Two panels overlap at the centre. The mint one is closer. Run both drawing orders. In depth.hpp find beginFrame(). The depth buffer exists and is cleared. Enable depth comparisons, save, and run the test again. The central pixel should be mint in both orders.
+EN. Hold U to inspect the four marked corners, or release U and use the E04 arrow keys to move the camera over the tiled floor. The distant checks shimmer. In texture.hpp inspect the minification filter. Levels from 128 × 128 down to 1 × 1 already exist. Select trilinear filtering and repeat the test.
 
 ```sh
-git clone -b e04-start https://github.com/gamedevpl/silnik3d-od-zera.git
+git clone -b e05-start https://github.com/gamedevpl/silnik3d-od-zera.git
 cd silnik3d-od-zera
 python3 check.py
-git diff origin/e04-solution -- depth.hpp
+git diff origin/e05-solution -- texture.hpp
 ```
 
-Git, Python 3, CMake 3.20+, a C++17 compiler, GLFW development prerequisites and a desktop OpenGL 3.3 context are required. The full engine at tag ep04 uses Left/Right to orbit and Up/Down to move in/out. Space pauses or resumes the cube simulation. Camera controls remain active while paused.
+Git, Python 3, CMake 3.20+, a C++17 compiler, GLFW development prerequisites and OpenGL 3.3 are required. The complete episode checkpoint is ep05.

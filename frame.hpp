@@ -1,6 +1,7 @@
 #pragma once
 #include "depth.hpp"
 #include "face.hpp"
+#include "floor.hpp"
 #include <cmath>
 
 struct Jumper {
@@ -32,5 +33,11 @@ inline void frame() {
     if (w <= 0 || h <= 0) return;
     glViewport(0, 0, w, h);
     beginFrame();
-    drawCube(double(w)/h, player.height / 100.0 - .25);
+    const double aspect = double(w)/h;
+    if (glfwGetKey(glfwGetCurrentContext(),GLFW_KEY_U)==GLFW_PRESS) {
+        drawUVCard(aspect);
+        return;
+    }
+    drawFloor(aspect);
+    drawCube(aspect, player.height / 100.0 - .25);
 }
