@@ -40,7 +40,7 @@ struct Pipeline {
         glBindVertexArray(vao);
         glGenBuffers(1, &buffer);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(0);
     }
 

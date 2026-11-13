@@ -1,16 +1,14 @@
-# E03 · Pierwsza pełna ściana / The First Solid Face
+# E04 · Kamera i głębia / Camera and Depth
 
-PL. W buforze są trzy narożniki. W trybie trójkątów wnętrze ściany nadal ma kolor tła. Uruchom `python3 check.py`, odszukaj wywołanie rysowania w `face.hpp` i zmień liczbę pobieranych wierzchołków. Powtórz próbę. Zielony kanał piksela wewnątrz trójkąta powinien wzrosnąć, a piksel poza nim ma pozostać czarny.
+PL. Dwie ściany nakładają się w środku kadru. Miętowa jest bliżej. Uruchom próbę w obu kolejnościach rysowania. W depth.hpp znajdź beginFrame(). Bufor głębi jest dostępny i czyszczony. Włącz porównywanie głębi, zapisz plik i powtórz próbę. W obu przypadkach środkowy piksel powinien być miętowy.
 
-EN. The buffer holds three corners. In triangle mode the interior still has the background colour. Run `python3 check.py`, find the draw call in `face.hpp`, and change the number of vertices it consumes. Repeat the test. The inside pixel should gain green while the outside pixel stays black.
-
-Requires Git, Python 3, CMake 3.20+, a C++17 toolchain and a desktop OpenGL 3.3 context. Linux also needs the development packages for the bundled GLFW window backend.
+EN. Two panels overlap at the centre. The mint one is closer. Run both drawing orders. In depth.hpp find beginFrame(). The depth buffer exists and is cleared. Enable depth comparisons, save, and run the test again. The central pixel should be mint in both orders.
 
 ```sh
-git clone -b e03-start https://github.com/gamedevpl/silnik3d-od-zera.git
+git clone -b e04-start https://github.com/gamedevpl/silnik3d-od-zera.git
 cd silnik3d-od-zera
 python3 check.py
-git diff origin/e03-solution -- face.hpp
+git diff origin/e04-solution -- depth.hpp
 ```
 
-Starting exercise: `e03-start`. Solved exercise: `e03-solution`. Complete episode: `ep03`.
+Git, Python 3, CMake 3.20+, a C++17 compiler, GLFW development prerequisites and a desktop OpenGL 3.3 context are required. The full engine at tag ep04 uses Left/Right to orbit and Up/Down to move in/out. Space pauses or resumes the cube simulation. Camera controls remain active while paused.

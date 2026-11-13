@@ -1,27 +1,24 @@
 #pragma once
-#include "pipeline.hpp"
-#include "shaders.hpp"
+#include "camera.hpp"
 #include "controls.hpp"
 #include "corners.hpp"
-#include "wire.hpp"
 
-inline void drawFace(Paper paper, int w, int h) {
-    static Pipeline gpu(vertex, fragment);
-
-    constexpr int order[] = {
-        0,1,2, 0,2,3,  0,4,7, 0,7,3,
-        1,5,6, 1,6,2,  0,1,5, 0,5,4,
-        3,2,6, 3,6,7,  4,6,5, 4,7,6
+inline void drawCube(double aspect, double lift) {
+    constexpr int faces[6][4] = {
+        {0,1,2,3}, {0,4,7,3}, {1,5,6,2},
+        {0,1,5,4}, {3,2,6,7}, {4,5,6,7}
     };
-    float points[2 * (sizeof(order) / sizeof(int))];
-    int n = 0;
-    for (int i : order) {
-        Vec3 p = orientation.apply(corners[i]);
-        p = aboutX(aboutY(p, 0.56), -0.32);
-        Pixel dot = paper.project(p);
-        points[n++] = 2.f * dot.x / w - 1;
-        points[n++] = 2.f * dot.y / h - 1;
+    constexpr Tint colors[] = {
+        coral, {.27f,.40f,.67f}, {.90f,.68f,.39f},
+        {.37f,.32f,.55f}, {.69f,.85f,.76f}, mint
+    };
+    for (int face=0; face<6; ++face) {
+        std::array<ClipPoint,4> projected;
+        for (int j=0; j<4; ++j) {
+            Vec3 p = orientation.apply(corners[faces[face][j]]);
+            p.y += lift;
+            projected[j] = camera.project(p, aspect);
+        }
+        quad(projected, colors[face]);
     }
-    gpu.upload(points, sizeof(points));
-    glDrawArrays(GL_TRIANGLES, 0, n / 2);
 }

@@ -1,11 +1,12 @@
 #define GLFW_INCLUDE_NONE
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "face.hpp"
+#include "depth.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 
-// Sample the interior and exterior of the first triangle with a fixed pose.
 int main() {
     if (!glfwInit()) return 2;
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -13,32 +14,28 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    auto window = glfwCreateWindow(480, 270, "E03", nullptr, nullptr);
-    if (!window) { glfwTerminate(); return 2; }
-    glfwMakeContextCurrent(window);
+    glfwWindowHint(GLFW_DEPTH_BITS, 24);
+    auto win = glfwCreateWindow(240,180,"Depth test",nullptr,nullptr);
+    if (!win) { glfwTerminate(); return 2; }
+    glfwMakeContextCurrent(win);
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 2; }
-    int w, h;
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    Paper paper{w/2, h/2, h/4, 1};
-    orientation.reset(28);
-    glClearColor(0,0,0,1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    drawFace(paper, w, h);
-    int x=0, y=0;
-    for (int i : {4,6,5}) {
-        Vec3 p = orientation.apply(corners[i]);
-        auto point = paper.project(aboutX(aboutY(p,.56),-.32));
-        x += point.x;
-        y += point.y;
+    int w,h,bits;
+    glfwGetFramebufferSize(win,&w,&h);
+    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH, GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &bits);
+    if (!bits) { glfwTerminate(); return 2; }
+    glViewport(0,0,w,h);
+    bool ok=true;
+    for (bool nearFirst : {true,false}) {
+        glClearColor(0,0,0,1);
+        beginFrame();
+        overlap(nearFirst);
+        std::array<unsigned char,4> p{};
+        glReadPixels(w/2,h/2,1,1,GL_RGBA,GL_UNSIGNED_BYTE,p.data());
+        std::printf("%s: RGB(%d,%d,%d)\n",nearFirst?"near first":"far first",p[0],p[1],p[2]);
+        for (int i=0;i<3;++i)
+            ok &= std::abs(int(p[i])-std::lround(mint[i]*255))<=1;
+        ok &= glGetError()==GL_NO_ERROR;
     }
-    std::array<unsigned char,4> inside{}, outside{};
-    glReadPixels(x/3, y/3, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, inside.data());
-    glReadPixels(1, 1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, outside.data());
-    std::printf("inside %u %u %u | outside %u %u %u\n",
-        inside[0], inside[1], inside[2], outside[0], outside[1], outside[2]);
-    bool valid = glGetError() == GL_NO_ERROR && inside[1] > 100 && outside[1] == 0;
-    glfwDestroyWindow(window);
     glfwTerminate();
-    return valid ? 0 : 1;
+    return ok ? 0 : 1;
 }

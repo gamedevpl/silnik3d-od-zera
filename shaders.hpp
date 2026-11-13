@@ -1,16 +1,16 @@
 #pragma once
 inline constexpr char vertex[] = R"(
 #version 330 core
-layout(location=0) in vec2 position;
+layout(location=0) in vec4 position;
 void main() {
-    gl_Position = vec4(position, 0, 1);
+    gl_Position = position;
 }
 )";
-
 inline constexpr char fragment[] = R"(
 #version 330 core
+uniform vec3 ink;
 out vec4 color;
 void main() {
-    color = vec4(0.27, 0.68, 0.57, 1);
+    color = vec4(ink, 1);
 }
 )";

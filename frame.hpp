@@ -1,5 +1,5 @@
 #pragma once
-#include "mesh.hpp"
+#include "depth.hpp"
 #include "face.hpp"
 #include <cmath>
 
@@ -27,14 +27,10 @@ inline void frame() {
     glClearColor(0.25f + 0.65f * pulse,
                  0.09f + 0.31f * pulse,
                  0.06f + 0.04f * pulse, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT);
     int w, h;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &w, &h);
-    int y = int(h * .28 + player.height * h / 150.0);
-    Paper paper{w/2,y,h/7,std::max(1,h/185)};
-    drawFace(paper, w, h);
-    glEnable(GL_SCISSOR_TEST);
-    glClearColor(0.72f, 1.f, 0.86f, 1.f);
-    cube(paper);
-    glDisable(GL_SCISSOR_TEST);
+    if (w <= 0 || h <= 0) return;
+    glViewport(0, 0, w, h);
+    beginFrame();
+    drawCube(double(w)/h, player.height / 100.0 - .25);
 }
