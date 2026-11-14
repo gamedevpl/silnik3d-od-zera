@@ -1,43 +1,25 @@
-#include "workshop.hpp"
+#include "route_check.hpp"
+#include <cmath>
 #include <cstdio>
 
-void step(Workshop& game, bool use = false, bool forward = false) {
-    game.advance(Clock::tick,forward,false,false,false,use);
-}
-
 int main() {
-    Workshop game;
-    auto& robot = *game.objects.get(game.robot);
-    robot = {2.60,0,-1.82};
-    step(game,true);
-    bool pickup = game.sounds.pickup;
-    step(game,true);
-    if (!pickup || game.sounds.pickup) return 1;
-    robot = {0,0,1.20-Cell::dropOffsetZ};
-    step(game);
-    step(game,true);
-    int latch = game.sounds.latch;
-    for (int i = 1; i < 50; ++i) {
-        step(game);
-        latch += game.sounds.latch;
-    }
-    robot = {0,0,-1.8};
-    int motor = 0;
-    for (int i = 0; i < 50; ++i) {
-        step(game,false,true);
-        motor += game.sounds.lift;
-    }
-    std::printf("Pickup: %d\nLatch / 1 s: %d\nLift: %d\n",int(pickup),latch,motor);
-    if (latch != 1 || motor != 1) return 1;
-    robot = {0,0,.60};
-    step(game,true);
-    if (game.powered || game.sounds.latch || !game.sounds.pickup) return 1;
-    step(game);
-    step(game,true);
-    if (!game.sounds.latch || game.sounds.pickup) return 1;
-    step(game);
-    if (game.sounds.latch) return 1;
-    robot = {2,0,-2.49};
-    step(game,false,true);
-    return game.sounds.lift ? 1 : 0;
+    Shift shift;
+    auto step = [](char) {};
+    runRoute(shift, false, step);
+    std::printf("Trip 1: %u | deck %.2f\n", shift.trips, shift.lift.height);
+    if (shift.trips != 1 || !shift.lift.atTop()) return 1;
+    shift.restart();
+    for (int i = 0; i < 50; ++i) shift.advance(Clock::tick, false, false, false, false);
+    std::printf("Reset: shelf %s | light %s\n", shift.workshop.cell.inReach({2.60,0,-1.8}) ? "yes" : "no",
+                shift.workshop.powered ? "ON" : "OFF");
+    std::printf("Empty deck after 1 s: %.2f\n", shift.lift.height);
+    bool clean = !shift.workshop.powered && !shift.workshop.cell.carried &&
+                 shift.lift.height == 0 && shift.trips == 1;
+    runRoute(shift, true, step);
+    std::printf("Trip 2: %u | deck %.2f\n", shift.trips, shift.lift.height);
+    if (!clean || shift.trips != 2 || !shift.lift.atTop()) return 1;
+    shift.restart();
+    for (int i=0; i<170; ++i) shift.advance(Clock::tick,true,false,false,false);
+    if (shift.workshop.powered || shift.lift.height != 0 || shift.trips != 2) return 1;
+    return 0;
 }

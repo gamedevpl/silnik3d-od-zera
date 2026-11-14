@@ -27,7 +27,7 @@ struct WorkshopView {
         side(1,5,7,3,.77f);
     }
 
-    void draw(Vec3 p, const Cell& cell, bool powered, double aspect) {
+    void draw(Vec3 p, const Cell& cell, bool powered, double aspect, double liftHeight = 0) {
         glClearColor(powered ? .17f : .07f, powered ? .20f : .10f, powered ? .20f : .14f, 1.f);
         beginFrame();
         auto block = [&](Vec3 anchor, Vec3 size, Tint color) {
@@ -63,6 +63,16 @@ struct WorkshopView {
         // Lift doorway and its two workshop lamps share the circuit state.
         const Tint frame{.38f,.44f,.47f}, panel{.32f,.48f,.52f};
         double left = liftGate.x0, right = liftGate.x1, front = liftGate.z1;
+        // The cabin rides inside two fixed guides, behind the ground-floor gate.
+        const double back = liftGate.z0 - 1.26;
+        const Tint rails{.31f,.39f,.42f}, deck{.86f,.66f,.31f};
+        for (double x : {left, right-.08}) {
+            block({x,0,back}, {.08,3.05,.09}, rails);
+            for (int level=0; level<3; ++level)
+                block({x-.02,.18+level*.68,back+.1}, {.14,.04,.035}, deck);
+        }
+        block({left,liftHeight+.02,back}, {right-left,.12,1.43}, deck);
+        block({left,liftHeight+.14,back}, {right-left,.35,.07}, panel);
         block({left-.14,0,front-.16}, {right-left+.28,.06,1.0}, frame);
         for (double x : {left-.14,right})
             block({x,0,liftGate.z0}, {.14,1.90,.18}, frame);

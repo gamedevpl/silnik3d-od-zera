@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "workshop_view.hpp"
 #include "audio.hpp"
+#include "shift.hpp"
 
 int main() {
     if (!glfwInit()) return 1;
@@ -18,7 +19,8 @@ int main() {
     glfwSwapInterval(1);
 
     AudioSink audio;
-    Workshop workshop;
+    Shift shift;
+    auto& workshop = shift.workshop;
     WorkshopView view;
     double previous = glfwGetTime();
     bool resetDown = false, boxesDown = false;
@@ -29,7 +31,7 @@ int main() {
         };
         if (held(GLFW_KEY_ESCAPE)) break;
         if (held(GLFW_KEY_R) && !resetDown) {
-            workshop = Workshop{};
+            shift.restart();
             view = WorkshopView{};
         }
         resetDown = held(GLFW_KEY_R);
@@ -40,16 +42,20 @@ int main() {
         double now = glfwGetTime();
         double elapsed = now - previous;
         previous = now;
-        workshop.advance(elapsed,
+        shift.advance(elapsed,
                          held(GLFW_KEY_W), held(GLFW_KEY_A),
                          held(GLFW_KEY_S), held(GLFW_KEY_D), held(GLFW_KEY_E));
 
         audio.play(workshop.sounds);
+        if (shift.lift.atTop())
+            glfwSetWindowTitle(window, "Night Shift | Upper floor | R: next shift");
+        else if (resetDown)
+            glfwSetWindowTitle(window, "Night Shift | WASD | E cell | R reset");
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         if (width > 0 && height > 0) {
             glViewport(0, 0, width, height);
-            view.draw(*workshop.objects.get(workshop.robot), workshop.cell, workshop.powered, double(width) / height);
+            view.draw(*workshop.objects.get(workshop.robot), workshop.cell, workshop.powered, double(width) / height, shift.lift.height);
             glfwSwapBuffers(window);
         }
     }
