@@ -24,6 +24,6 @@ inline bool blocked(Vec3 p) {
 }
 
 inline void moveRobot(Vec3& p, double dx, double dz) {
-    Vec3 next{p.x + dx, p.y, p.z + dz};
-    if (!blocked(next)) p = next;
+    if (!blocked({p.x + dx, p.y, p.z})) p.x += dx;
+    if (!blocked({p.x, p.y, p.z + dz})) p.z += dz;
 }
