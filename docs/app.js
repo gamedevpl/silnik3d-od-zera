@@ -119,7 +119,7 @@ function body(e, L, now){
     : `<div class="video"><div class="soon"><img class="pix" src="art/room-rear.png" alt=""><div class="bubble"><b>${L.premiere}</b>${fmtLong(e.at, lang)}</div><small>${L.soonNote}</small></div></div>`;
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "")
-    + `<a href="play/?ep=${e.ep}" target="_blank" rel="noopener">${L.playWeb}</a>`;
+    + `<a href="play/?ep=${e.ep}&lang=${lang}" target="_blank" rel="noopener">${L.playWeb}</a>`;
   const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${esc(n)}</a>` : esc(n)}</li>`).join("");
   const check = k => `<button type="button" class="check" data-check="${k}" data-slug="${e.slug}" aria-pressed="${done(e.slug, k)}"><i aria-hidden="true"></i>${k === "w" ? L.doneW : L.doneP}</button>`;
   return `
