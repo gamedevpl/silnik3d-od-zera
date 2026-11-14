@@ -9,8 +9,9 @@ struct Socket {
     bool accepts(const Cell& cell) const {
         Vec3 p = cell.resting;
         if (cell.carried || p.y != Cell::floorHeight) return false;
-        double cx = (opening.x0 + opening.x1) / 2;
-        double cz = (opening.z0 + opening.z1) / 2;
-        return std::hypot(p.x - cx, p.z - cz) <= Cell::pickupRadius;
+        return p.x - Cell::halfWidth >= opening.x0
+            && p.x + Cell::halfWidth <= opening.x1
+            && p.z - Cell::halfDepth >= opening.z0
+            && p.z + Cell::halfDepth <= opening.z1;
     }
 };
