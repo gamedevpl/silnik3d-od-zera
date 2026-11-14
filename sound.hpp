@@ -10,7 +10,7 @@ inline SoundEvents listen(bool wasCarried, bool carried,
                           bool wasPowered, bool powered, bool enteredLift) {
     SoundEvents sounds;
     sounds.pickup = carried && !wasCarried;
-    sounds.latch = powered;
+    sounds.latch = powered && !wasPowered;
     sounds.lift = powered && enteredLift;
     return sounds;
 }
