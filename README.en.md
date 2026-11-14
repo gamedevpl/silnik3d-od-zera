@@ -1,13 +1,11 @@
-# E11 · Pick up the cell
+# E12 · Power the workshop
 
-Drive to the right shelf using WASD. When the E sign appears above the cell, hold the key. The robot keeps picking up and dropping the cell. Edit `Cell::update` in `cell.hpp` so one press produces one action. Release E, drive away and press it again to set the cell down.
+Take the cell from the right shelf and put it beside the yellow socket in front of the lift. The starter powers the circuit even when the contacts miss. Edit `Socket::accepts` in `socket.hpp` using the footprint of the cell and the inside edges of the rim.
 
-    git clone -b e11-start https://github.com/gamedevpl/silnik3d-od-zera.git
+    git clone -b e12-start https://github.com/gamedevpl/silnik3d-od-zera.git
     cd silnik3d-od-zera
     python3 check.py
 
-The check needs Python 3 and a C++17 compiler. It tests one second of holding E over 50 input samples, release, a fresh press, range, transport and a short tap between movement ticks. Aim for one change during the first second and a drop on the second press. Compare with `e11-solution`. The complete episode is tagged `ep11`.
+Dropping beside the socket should leave the lamps dark and the lift locked. A cell seated in the opening should light both lamps and open the path to the lift. Removing the cell should break the circuit. The check also covers all four boundaries, height, repeat updates, and driving through the doorway.
 
-The optional OpenGL 3.3 window needs CMake 3.20 and the GLFW dependencies (Debian/Ubuntu: pkg-config xorg-dev libwayland-dev libxkbcommon-dev). Run `cmake -S . -B build`, then `cmake --build build`, and launch engine. WASD drives, E handles the cell, B toggles footprints, R resets and Esc quits.
-
-[Polski](README.md)
+The check requires Python 3 and a C++17 compiler. The OpenGL 3.3 window needs CMake 3.20 and GLFW dependencies (Debian/Ubuntu: pkg-config xorg-dev libwayland-dev libxkbcommon-dev). Build with `cmake -S . -B build` and `cmake --build build`. WASD drives, E picks up and drops, B toggles outlines, and R resets the room. Compare with `e12-solution`; the full episode is tagged `ep12`.

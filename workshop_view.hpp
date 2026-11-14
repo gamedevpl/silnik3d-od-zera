@@ -27,14 +27,15 @@ struct WorkshopView {
         side(1,5,7,3,.77f);
     }
 
-    void draw(Vec3 p, const Cell& cell, double aspect) {
-        glClearColor(.07f, .10f, .14f, 1.f);
+    void draw(Vec3 p, const Cell& cell, bool powered, double aspect) {
+        glClearColor(powered ? .17f : .07f, powered ? .20f : .10f, powered ? .20f : .14f, 1.f);
         beginFrame();
         auto block = [&](Vec3 anchor, Vec3 size, Tint color) {
             drawBlock(anchor, size, color, aspect);
         };
         const Tint grid{.44f,.51f,.49f}, timber{.56f,.40f,.25f}, steel{.53f,.59f,.61f};
-        block({-6,-.25,-5}, {12,.25,10}, {.27f,.34f,.36f});
+        const Tint floor = powered ? Tint{.44f,.45f,.36f} : Tint{.22f,.29f,.32f};
+        block({-6,-.25,-5}, {12,.25,10}, floor);
         for (int i = -4; i <= 4; ++i) {
             block({-5,.003,double(i)}, {10,.003,.018}, grid);
             block({double(i),.003,-4}, {.018,.003,8}, grid);
@@ -49,6 +50,34 @@ struct WorkshopView {
             const Tint crates[] = {{.27f,.44f,.48f},{.80f,.54f,.29f},{.27f,.44f,.48f}};
             for (int i = 0; i < 3; ++i)
                 block({shelf + .10 + i * .50,.75,-2.72}, {.43,.28,.41}, crates[i]);
+        }
+        const Box rim = Socket::opening;
+        const double lip = .08;
+        const Tint ceramic{.29f,.40f,.44f}, rimColor{.95f,.77f,.26f};
+        block({rim.x0-lip,.008,rim.z0-lip}, {rim.x1-rim.x0+2*lip,.008,rim.z1-rim.z0+2*lip}, ceramic);
+        for (double x : {rim.x0-lip, rim.x1})
+            block({x,.018,rim.z0-lip}, {lip,.08,rim.z1-rim.z0+2*lip}, rimColor);
+        for (double z : {rim.z0-lip, rim.z1})
+            block({rim.x0,.018,z}, {rim.x1-rim.x0,.08,lip}, rimColor);
+
+        // Lift doorway and its two workshop lamps share the circuit state.
+        const Tint frame{.38f,.44f,.47f}, panel{.32f,.48f,.52f};
+        double left = liftGate.x0, right = liftGate.x1, front = liftGate.z1;
+        block({left-.14,0,front-.16}, {right-left+.28,.06,1.0}, frame);
+        for (double x : {left-.14,right})
+            block({x,0,liftGate.z0}, {.14,1.90,.18}, frame);
+        block({left-.14,1.83,liftGate.z0}, {right-left+.28,.14,.24}, frame);
+        const double doorWidth = (right-left)/2;
+        for (int side = 0; side != 2; ++side) {
+            double x = left + side*doorWidth;
+            if (powered) x += (side ? 1 : -1) * doorWidth;
+            block({x,.065,liftGate.z0}, {doorWidth,1.73,front-liftGate.z0}, panel);
+            block({x+.04,.81,front}, {doorWidth-.08,.10,.025}, {.83f,.63f,.28f});
+        }
+        for (double x : {-1.38,1.05}) {
+            block({x,1.93,liftGate.z0}, {.36,.22,.18}, frame);
+            const Tint bulb = powered ? Tint{1.f,.94f,.60f} : Tint{.30f,.26f,.19f};
+            block({x+.03,1.96,front+.07}, {.30,.15,.04}, bulb);
         }
         if (trail.empty() || std::hypot(p.x-trail.back().x, p.z-trail.back().z) >= .15) {
             trail.push_back(p);
@@ -71,9 +100,9 @@ struct WorkshopView {
         part({.096,.73,-.13}, {.075,.05,.07}, {1.f,.60f,.27f});
         Vec3 c = cell.position(p);
         const Tint enamel{.15f,.83f,.71f}, brass{1.f,.78f,.22f};
-        block({c.x-.18,c.y,c.z-.13}, {.36,.09,.26}, brass);
+        block({c.x-Cell::halfWidth,c.y,c.z-Cell::halfDepth}, {2*Cell::halfWidth,.09,2*Cell::halfDepth}, brass);
         block({c.x-.15,c.y+.09,c.z-.12}, {.30,.39,.24}, enamel);
-        block({c.x-.18,c.y+.48,c.z-.13}, {.36,.07,.26}, brass);
+        block({c.x-Cell::halfWidth,c.y+.48,c.z-Cell::halfDepth}, {2*Cell::halfWidth,.07,2*Cell::halfDepth}, brass);
         block({c.x-.06,c.y+.55,c.z-.07}, {.12,.06,.14}, brass);
         block({c.x-.08,c.y+.20,c.z+.122}, {.16,.07,.012}, {.86f,1.f,.62f});
         if (cell.carried || cell.inReach(p)) {

@@ -46,7 +46,7 @@ int main() {
         glfwGetFramebufferSize(window, &width, &height);
         if (width > 0 && height > 0) {
             glViewport(0, 0, width, height);
-            view.draw(*workshop.objects.get(workshop.robot), workshop.cell, double(width) / height);
+            view.draw(*workshop.objects.get(workshop.robot), workshop.cell, workshop.powered, double(width) / height);
             glfwSwapBuffers(window);
         }
     }

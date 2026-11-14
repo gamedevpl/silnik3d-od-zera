@@ -1,47 +1,44 @@
 #include "workshop.hpp"
-#include <cmath>
 #include <cstdio>
 
-int main() {
+Workshop dropAt(double x) {
     Workshop game;
     auto& robot = *game.objects.get(game.robot);
-    robot = {2.60, 0, -1.82};
-    auto press = [&](double dt, bool down) {
-        game.advance(dt, false, false, false, false, down);
-    };
-    int changes = 0;
-    for (int i = 0; i < 50; ++i) {
-        bool before = game.cell.carried;
-        press(Clock::tick, true);
-        if (game.cell.carried != before) ++changes;
-    }
-    bool held = game.cell.carried;
-    std::printf("E held: 1.00 s\nState changes: %d\nCarrying: %s\n", changes, held ? "yes" : "no");
-    press(Clock::tick, false);
-    bool releaseKeptState = game.cell.carried == held;
-    press(Clock::tick, true);
-    bool dropped = !game.cell.carried;
-    std::printf("Next press: %s\n", dropped ? "drop" : "pick up");
-    if (changes != 1 || !held || !releaseKeptState || !dropped) return 1;
+    robot = {x,0,1.20-Cell::dropOffsetZ};
+    game.cell.carried = true;
+    game.advance(Clock::tick,false,false,false,false,true);
+    return game;
+}
 
-    game = Workshop{};
-    auto& p = *game.objects.get(game.robot);
-    press(0, true);
-    if (game.cell.carried) return 1;
-    p = {2.60,0,-1.82};
-    press(Clock::tick, true);
-    if (game.cell.carried) return 1;
-    press(.003, false);
-    press(.003, true);
-    if (!game.cell.carried) return 1;
-    for (int i = 0; i < 30; ++i)
-        game.advance(Clock::tick, false, false, true, false, true);
-    Vec3 mounted = game.cell.position(p);
-    if (std::abs(mounted.z-p.z) > .001) return 1;
-    press(.003, false);
-    press(.003, true);
-    Vec3 atRest = game.cell.position(p);
-    if (game.cell.carried || atRest.y > .03 || !game.cell.inReach(p)) return 1;
-    game.advance(.08, false, false, true, false, false);
-    return std::abs(game.cell.position(p).z-atRest.z) > .001;
+void report(const char* label, const Workshop& game) {
+    std::printf("%s: light %s / lift %s\n", label, game.powered ? "ON" : "OFF",
+                game.powered ? "OPEN" : "LOCKED");
+}
+
+int main() {
+    Workshop beside = dropAt(.60), inside = dropAt(0);
+    report("Beside", beside);
+    report("Seated", inside);
+    std::printf("Power changes: %u / %u\n", beside.powerChanges, inside.powerChanges);
+    if (beside.powered || !inside.powered || inside.powerChanges != 1) return 1;
+    for (int i = 0; i < 50; ++i) inside.advance(Clock::tick,false,false,false,false,false);
+    if (inside.powerChanges != 1) return 1;
+    Workshop clear = inside;
+    inside.advance(Clock::tick,false,false,false,false,true);
+    if (inside.powered || !inside.cell.carried || inside.powerChanges != 2) return 1;
+    for (Workshop* game : {&beside,&clear}) {
+        auto& robot = *game->objects.get(game->robot);
+        robot = {0,0,-1.8};
+        for (int i = 0; i < 50; ++i)
+            game->advance(Clock::tick,true,false,false,false,false);
+        if ((robot.z < liftGate.z0) != game->powered) return 1;
+    }
+    Cell probe;
+    for (auto position : {Vec3{.20,Cell::floorHeight,1.20}, Vec3{-.20,Cell::floorHeight,1.20},
+                          Vec3{0,Cell::floorHeight,.95}, Vec3{0,Cell::floorHeight,1.45},
+                          Vec3{0,Cell::carryHeight,1.20}}) {
+        probe.resting = position;
+        if (Socket{}.accepts(probe)) return 1;
+    }
+    return 0;
 }

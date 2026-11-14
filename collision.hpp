@@ -17,13 +17,14 @@ inline bool overlaps(Box a, Box b) {
         && a.z0 < b.z1 && a.z1 > b.z0;
 }
 
-inline bool blocked(Vec3 p) {
+inline bool blocked(Vec3 p, const Box* closedGate = nullptr) {
+    if (closedGate && overlaps(robotBox(p), *closedGate)) return true;
     for (Box shelf : shelves)
         if (overlaps(robotBox(p), shelf)) return true;
     return false;
 }
 
-inline void moveRobot(Vec3& p, double dx, double dz) {
-    if (!blocked({p.x + dx, p.y, p.z})) p.x += dx;
-    if (!blocked({p.x, p.y, p.z + dz})) p.z += dz;
+inline void moveRobot(Vec3& p, double dx, double dz, const Box* closedGate = nullptr) {
+    if (!blocked({p.x + dx, p.y, p.z}, closedGate)) p.x += dx;
+    if (!blocked({p.x, p.y, p.z + dz}, closedGate)) p.z += dz;
 }
