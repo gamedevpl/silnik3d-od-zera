@@ -87,7 +87,13 @@ window.SERIES = {
       episodes:[], next:[
         { n:9, slug:"e09", demo:"robot",
           pl:{ t:"Pierwsza jazda robota", q:"Dlaczego robot w sekundę jedzie dalej po skosie?" },
-          en:{ t:"The Robot’s First Drive", q:"Why does the robot go farther in one second on a diagonal?" } }
+          en:{ t:"The Robot’s First Drive", q:"Why does the robot go farther in one second on a diagonal?" } },
+        { n:10, slug:"e10", demo:"robot",
+          pl:{ t:"Ściana", q:"Co zatrzymać, żeby robot mógł sunąć wzdłuż regału?" },
+          en:{ t:"The Wall", q:"What should stop when a robot brushes against a shelf?" } },
+        { n:11, slug:"e11", demo:"robot",
+          pl:{ t:"Podnieś ogniwo", q:"Dlaczego przytrzymanie E od razu odkłada ogniwo?" },
+          en:{ t:"Pick Up the Cell", q:"Why does holding E immediately drop the cell again?" } }
     ] }
   ],
   /* Seasons after the current one: only a name and one line, no episodes. */
