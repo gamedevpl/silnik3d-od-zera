@@ -8,6 +8,8 @@ Kod odcinków zostaje bez zmian. Różnice między OpenGL 3.3 core a WebGL 2 za�
 - `glfwSwapBuffers` oddaje sterowanie przeglądarce raz na klatkę (`-sASYNCIFY`), więc pętla `while` w `main` może zostać,
 - tytuł okna trafia na pasek pod obrazem.
 
+Od E13 WebAudio odtwarza próbki wygenerowane w C++ przez OpenAL. Kliknij obraz gry, a potem podnieś ogniwo klawiszem E.
+
 Po dodaniu nowego tagu:
 
 ```sh
