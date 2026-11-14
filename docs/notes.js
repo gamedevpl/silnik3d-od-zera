@@ -190,5 +190,13 @@ while (lag >= tick) {
 <p>Drive up to the right shelf with WASD. An E sign appears over the cell once the robot gets close enough. Press E to mount the cell, drive away, release E and press it again. The cell stays on the floor.</p>
 <p>On <code>e11-start</code>, the controls check E on every input sample. Holding it for a second changes the cell state 50 times in our test. In <code>cell.hpp</code>, remember the previous key state and try again. One hold should produce one action. Run <code>python3 check.py</code> to check range, release and the next press too.</p>
 <p><a href="play/?ep=ep11">Carry the cell in your browser</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start">Starter branch</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution">Solution</a></p>` }
+  },
+  e12: {
+    pl:{ t:"Ogniwo jest blisko. Czy mieści się w gnieździe?", min:"1 min czytania", html:`<p>Jedź po ogniwo na prawy regał, wróć przed drzwi windy i ustaw robota za żółtą ramką. E odkłada ogniwo o 0,60 jednostki wzdłuż dodatniej osi Z. Sprawdź dwa miejsca — obok ramki i w jej środku. Po odjechaniu widać, czy podstawa ogniwa mieści się między krawędziami.</p>
+<p>Na gałęzi <code>e12-start</code> obie próby włączają prąd. Popraw <code>Socket::accepts</code> w <code>socket.hpp</code>. Użyj obrysu całej podstawy i otworu rysowanego na podłodze. Przez zamknięte drzwi robot nie przejedzie. Wyjęcie ogniwa ma znów odciąć zasilanie. Uruchom <code>python3 check.py</code> i powtórz oba odłożenia.</p>
+<p><a href="play/?ep=ep12">Przetestuj warsztat w przeglądarce</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-start">Gałąź startowa</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-solution">Rozwiązanie</a></p>` },
+    en:{ t:"Close to the socket. Does the cell fit?", min:"1 min read", html:`<p>Pick up the cell at the right shelf. Drive back to the lift and line up behind the yellow rim. E drops the cell 0.60 units along positive Z. Try dropping beside the socket and then inside it. Drive aside to see where the base of the cell rests.</p>
+<p>The <code>e12-start</code> circuit switches on for both drops. Edit <code>Socket::accepts</code> in <code>socket.hpp</code>. Compare the footprint of the whole cell with the opening you see on the floor. When closed, the gate stops the robot. Removing the cell should break the circuit again. Run <code>python3 check.py</code> and repeat the drops.</p>
+<p><a href="play/?ep=ep12">Play the workshop</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-start">Starter branch</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-solution">Solution</a></p>` }
   }
 };

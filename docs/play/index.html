@@ -13,7 +13,7 @@ canvas{width:min(100vw,calc((100vh - 40px)*16/9));aspect-ratio:16/9;height:auto;
 const ep = (new URLSearchParams(location.search).get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
 const bar = document.getElementById("bar"), canvas = document.getElementById("canvas");
 window.addEventListener("keydown", e => { if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Tab"].includes(e.key)) e.preventDefault(); });
-if (ep === "ep11") {
+if (ep === "ep11" || ep === "ep12") {
   bar.textContent = navigator.language.startsWith("pl")
     ? "WASD · jazda   E · podnieś / odłóż   B · obrysy   R · od nowa"
     : "WASD · drive   E · pick up / drop   B · outlines   R · reset";

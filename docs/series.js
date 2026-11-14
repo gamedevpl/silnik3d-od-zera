@@ -93,7 +93,10 @@ window.SERIES = {
           en:{ t:"The Wall", q:"What should stop when a robot brushes against a shelf?" } },
         { n:11, slug:"e11", demo:"robot",
           pl:{ t:"Podnieś ogniwo", q:"Dlaczego przytrzymanie E od razu odkłada ogniwo?" },
-          en:{ t:"Pick Up the Cell", q:"Why does holding E immediately drop the cell again?" } }
+          en:{ t:"Pick Up the Cell", q:"Why does holding E immediately drop the cell again?" } },
+        { n:12, slug:"e12", demo:"robot",
+          pl:{ t:"Gniazdo zasila warsztat", q:"Czemu lampy zapaliły się, gdy ogniwo leży obok styków?" },
+          en:{ t:"Power the Workshop", q:"Why are the lamps on when the cell is beside the contacts?" } }
     ] }
   ],
   /* Seasons after the current one: only a name and one line, no episodes. */
