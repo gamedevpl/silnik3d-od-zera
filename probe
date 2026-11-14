@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+cd "$(dirname "$0")"
+"${CXX:-c++}" -std=c++17 -I. bench/listen_probe.cpp -o "$scratch/listen_probe"
+"$scratch/listen_probe"
