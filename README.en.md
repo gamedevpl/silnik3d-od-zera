@@ -9,3 +9,5 @@ Leave the cell in the socket for a second. How many times should the latch click
 In sound.hpp compare the current and previous power states. The latch should click once per insertion, including when you remove the cell and put it back. Verify the call counts after one second. Compare your code with e13-solution. The episode snapshot is ep13.
 
 The check needs Python 3 and a C++17 compiler. The game also needs OpenGL 3.3, CMake 3.20+, OpenAL and the GLFW platform headers. On Debian/Ubuntu install libopenal-dev, pkg-config, xorg-dev, libwayland-dev and libxkbcommon-dev. macOS includes OpenAL. Build with cmake -S . -B build and cmake --build build. Use WASD to drive, E to pick up or drop, and R to reset.
+
+On macOS or Linux run `./probe` to try the sound function by itself. It samples one second with power off, then one second with power on. Edit the latch condition and repeat without opening a window or connecting an audio device.

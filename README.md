@@ -11,3 +11,5 @@ W sound.hpp porównaj bieżące zasilanie z poprzednim. Zatrzask ma odezwać si�
 Test wymaga Pythona 3 i kompilatora C++17. Do gry potrzebujesz OpenGL 3.3, CMake 3.20+, OpenAL i zależności GLFW. Na Debianie/Ubuntu zainstaluj libopenal-dev, pkg-config, xorg-dev, libwayland-dev i libxkbcommon-dev. W macOS OpenAL jest częścią systemu. Zbuduj za pomocą cmake -S . -B build i cmake --build build. WASD porusza, E podnosi i odkłada ogniwo, R przywraca początek.
 
 [English](README.en.md)
+
+Na macOS i Linuksie uruchom też `./probe`. Pierwsza sekunda próbuje funkcję przy wyłączonym zasilaniu, druga przy włączonym. Możesz zmieniać warunek i powtarzać oba pomiary bez okna ani urządzenia dźwiękowego.
