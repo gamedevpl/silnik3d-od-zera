@@ -4,6 +4,7 @@
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 out=${1:-$root/docs/play}; shift || true
+mkdir -p "$out"; out=$(cd "$out" && pwd)
 tags=${*:-$(git -C "$root" tag -l 'ep[0-9][0-9]' | sort)}
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 for tag in $tags; do
