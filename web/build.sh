@@ -9,7 +9,7 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 for tag in $tags; do
   src=$tmp/$tag; mkdir -p "$src" "$out/$tag"
   git -C "$root" archive "$tag" -- . ':!vendor' ':!docs' | tar -x -C "$src"
-  assets=(); [ -d "$src/assets" ] && assets=(--preload-file "$src/assets@/assets")
+  assets=(); [ -d "$src/assets" ] && assets=(--embed-file "$src/assets@/assets")
   (cd "$src" && em++ main.cpp -std=c++17 -O2 -fexceptions -I "$root/web/shim" \
     -DENGINE_ASSET_DIR='"/assets"' \
     -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASYNCIFY \
