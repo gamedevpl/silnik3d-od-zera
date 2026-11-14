@@ -17,6 +17,7 @@ sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev
 | E02 | Wyprostuj boczne krawędzie kostki. | [e02-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [e02-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | `ep02` |
 | E09 · Nocna zmiana | Wyrównaj prędkość robota po skosie w `drive.hpp`. | [e09-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-start) | [e09-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution) | [`ep09`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09) |
 | E10 · Ściana | Poprowadź robota wzdłuż regału w `collision.hpp`. | [e10-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-start) | [e10-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution) | [`ep10`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep10) |
+| E11 · Podnieś ogniwo | W `cell.hpp` rozpoznaj pojedyncze naciśnięcie E. | [e11-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start) | [e11-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution) | [`ep11`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep11) |
 
 ```sh
 git clone -b e00-start https://github.com/gamedevpl/silnik3d-od-zera.git

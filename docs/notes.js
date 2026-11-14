@@ -180,5 +180,15 @@ while (lag >= tick) {
 <p>Hold W and D. Each step moves the robot a little to the right and a little deeper into the workshop. At the shelf only the second part of that movement causes a collision. Rejecting the whole step also cancels the move to the right.</p>
 <p>Run <code>python3 check.py</code> on <code>e10-start</code>. The robot holds both keys for 1.5 seconds. The footprints stay apart, yet it travels 0.00 along the shelf in the final second. In <code>moveRobot</code> in <code>collision.hpp</code>, test each axis separately. Use the position after the first test when you check the second axis. Run the test again. The robot travels 1.41 along the shelf, leaving a gap of 0.006.</p>
 <p><a href="play/?ep=ep10">Drive the robot in your browser</a>. B toggles the outlines, R resets. <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution">Exercise solution</a>.</p>` }
+  },
+  e11: {
+    pl: { t: "Jedno E, jedno podniesienie", min: "1 min czytania", html: `
+<p>Podjedź klawiszami WASD do prawego regału. Nad ogniwem pojawi się znak E, kiedy koła robota dojadą wystarczająco blisko. Jednym naciśnięciem zamocuj ogniwo na robocie, odjedź, puść klawisz i naciśnij go ponownie. Ogniwo zostaje na podłodze.</p>
+<p>Na <code>e11-start</code> sterowanie sprawdza E przy każdym odczycie. Przez sekundę próby zmienia stan ogniwa aż 50 razy. W <code>cell.hpp</code> zapamiętaj poprzedni stan klawisza i spróbuj ponownie. Jedno przytrzymanie powinno dać jedną akcję. Uruchom <code>python3 check.py</code>, żeby sprawdzić też próbę spoza zasięgu i ponowne naciśnięcie po puszczeniu.</p>
+<p><a href="play/?ep=ep11">Przewieź ogniwo w przeglądarce</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start">Gałąź startowa</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution">Rozwiązanie</a></p>` },
+    en: { t: "One press, one pickup", min: "1 min read", html: `
+<p>Drive up to the right shelf with WASD. An E sign appears over the cell once the robot gets close enough. Press E to mount the cell, drive away, release E and press it again. The cell stays on the floor.</p>
+<p>On <code>e11-start</code>, the controls check E on every input sample. Holding it for a second changes the cell state 50 times in our test. In <code>cell.hpp</code>, remember the previous key state and try again. One hold should produce one action. Run <code>python3 check.py</code> to check range, release and the next press too.</p>
+<p><a href="play/?ep=ep11">Carry the cell in your browser</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start">Starter branch</a> · <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution">Solution</a></p>` }
   }
 };
