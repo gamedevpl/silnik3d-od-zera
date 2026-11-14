@@ -9,7 +9,13 @@ int main() {
     writeScene(copy, original);
     auto restored = readScene(copy);
     if (restored.size() != original.size()) return 1;
-    bool same = true;
+    // Independent XYZ input keeps matching mistakes in the writer and reader visible.
+    std::istringstream fixture("scene 1\nsculpture 1.25 0.58 -0.75\n");
+    const auto reference = readScene(fixture);
+    bool same = reference.size() == 1 && reference[0].model == "sculpture"
+             && reference[0].position.x == 1.25 && reference[0].position.y == .58
+             && reference[0].position.z == -.75;
+    if (!same) std::cerr << "Known XYZ input read incorrectly\n";
     for (unsigned i = 0; i < restored.size(); ++i) {
         const auto& got = restored[i];
         const auto& want = original[i];
