@@ -1,13 +1,7 @@
-# E14 · Jeszcze jedna próba
+# E15 · Pierwszy plik sceny
 
-Przejedź od regału do windy. Odłóż ogniwo w gnieździe i wjedź do kabiny. Na piętrze naciśnij R. Na początku następnej zmiany ogniwo wraca na regał, a pusta kabina powinna pozostać na dole. Na starcie ćwiczenia kabina rusza sama.
+Uruchom `python3 check.py`. Test zapisuje dwa obiekty do strumienia tekstowego i odczytuje je tak samo jak plik. W kopii oczekuje regału w (−3,70, 0, −2,87) i rzeźby w (1,25, 0,58, −0,75). Na gałęzi e15-start zapis zamienia dwie współrzędne. Obejrzyj wynik, popraw writeScene w layout.hpp i ponów próbę. Rozwiązanie jest na e15-solution.
 
-    git clone -b e14-start https://github.com/gamedevpl/silnik3d-od-zera.git
-    cd silnik3d-od-zera
-    python3 check.py
+Zbuduj `cmake -S . -B build` i `cmake --build build --target scene-view`. Uruchom `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). Potrzebujesz CMake, kompilatora C++17, OpenGL 3.3 oraz bibliotek wymaganych przez GLFW i OpenAL. Na Linuksie do kompilacji GLFW potrzebne są nagłówki deweloperskie X11.
 
-Popraw restart w shift.hpp. Po sekundzie bez wejścia wysokość pustej kabiny ma wynosić zero. Ukończ oba kursy w tym samym procesie. Po drugim licznik ma pokazać 2. Porównaj własną zmianę z e14-solution, a pełny projekt z tagiem ep14.
-
-Do testu wystarczają Python 3 i kompilator C++17. Do gry potrzebujesz OpenGL 3.3, CMake 3.20+, OpenAL i zależności GLFW. W systemie Debian/Ubuntu zainstaluj libopenal-dev, pkg-config, xorg-dev, libwayland-dev i libxkbcommon-dev. Na Macu OpenAL dostarcza system. Zbuduj przez cmake -S . -B build i cmake --build build. WASD porusza, E podnosi i odkłada, B pokazuje obrysy, R rozpoczyna nową zmianę.
-
-[English](README.en.md)
+1 otwiera warsztat, 2 galerię. Edytuj assets/scenes/gallery.scene, zapisz i naciśnij R w oknie, aby ponownie wczytać aktywny dokument. S zapisuje kopię do copy.scene w katalogu roboczym i otwiera ją. Plik zaczyna się od scene 1. Każdy kolejny obiekt podaje nazwę modelu i jego X Y Z. Możesz też przekazać własny plik jako argument. Modele składają się z prostopadłościanów. Cel engine nadal uruchamia grę z E14.

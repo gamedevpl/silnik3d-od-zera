@@ -20,3 +20,7 @@ add_executable(bake bake.cpp)
 foreach(target engine exercise)
     target_compile_definitions(${target} PRIVATE ENGINE_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 endforeach()
+
+add_executable(scene-view scene_view.cpp)
+target_link_libraries(scene-view PRIVATE glfw glad)
+target_compile_definitions(scene-view PRIVATE ENGINE_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
