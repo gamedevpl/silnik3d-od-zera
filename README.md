@@ -5,6 +5,8 @@
 Wybierz gałąź startową swojego odcinka. W jej README znajdziesz zadanie i instrukcje PL/EN. Podstawowe próby E00–E02 wymagają Git, Pythona 3 i kompilatora C++17.
 
 W E03–E06 polecenie `python3 check.py` buduje dołączoną bibliotekę GLFW. Potrzebne są także CMake 3.20+ i sesja graficzna z OpenGL 3.3. Na Linuksie domyślna konfiguracja GLFW buduje obsługę zarówno X11, jak i Waylanda. Na Debianie i Ubuntu doinstaluj nagłówki obu systemów przed uruchomieniem próby.
+| E13 · Słychać, że działa | Odtwórz kliknięcie zatrzasku raz, gdy ogniwo zasila warsztat. | [e13-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-start) | [e13-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-solution) | [ep13](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep13) |
+| E14 · Jeszcze jedna próba | Przywróć stan warsztatu i ukończ dwie jazdy windą w jednym uruchomieniu. | [e14-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-start) | [e14-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-solution) | [ep14](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep14) |
 
 ```sh
 sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev

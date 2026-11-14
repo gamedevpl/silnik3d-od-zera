@@ -13,13 +13,25 @@ canvas{width:min(100vw,calc((100vh - 40px)*16/9));aspect-ratio:16/9;height:auto;
 const ep = (new URLSearchParams(location.search).get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
 const bar = document.getElementById("bar"), canvas = document.getElementById("canvas");
 window.addEventListener("keydown", e => { if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Tab"].includes(e.key)) e.preventDefault(); });
-if (ep === "ep11" || ep === "ep12") {
-  bar.textContent = navigator.language.startsWith("pl")
-    ? "WASD · jazda   E · podnieś / odłóż   B · obrysy   R · od nowa"
-    : "WASD · drive   E · pick up / drop   B · outlines   R · reset";
+let language = navigator.language.startsWith("pl") ? "pl" : "en";
+try {
+  const selected = localStorage.getItem("lang");
+  if (selected === "pl" || selected === "en") language = selected;
+} catch (_) {}
+document.documentElement.lang = language;
+const pl = language === "pl";
+const controls = pl
+  ? "WASD · jazda   E · podnieś / odłóż   B · obrysy   R · od nowa"
+  : "WASD · drive   E · pick up / drop   B · outlines   R · reset";
+if (["ep11","ep12","ep13","ep14"].includes(ep)) bar.textContent = controls;
+function gameTitle(title) {
+  if (ep === "ep14" && title === "Night Shift | Upper floor | R: next shift")
+    return pl ? "Górne piętro · R rozpoczyna następną zmianę" : "Upper floor · R starts the next shift";
+  if (ep === "ep14" && title === "Night Shift | WASD | E cell | R reset") return controls;
+  return title;
 }
 const s = document.createElement("script"); s.src = ep + "/engine.js";
-s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = t,
+s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = gameTitle(t),
   printErr: t => console.error(t) }).then(() => canvas.focus()).catch(e => bar.textContent = String(e));
 s.onerror = () => bar.textContent = "Brak wersji " + ep;
 document.body.appendChild(s);

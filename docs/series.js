@@ -96,7 +96,13 @@ window.SERIES = {
           en:{ t:"Pick Up the Cell", q:"Why does holding E immediately drop the cell again?" } },
         { n:12, slug:"e12", demo:"robot",
           pl:{ t:"Gniazdo zasila warsztat", q:"Czemu lampy zapaliły się, gdy ogniwo leży obok styków?" },
-          en:{ t:"Power the Workshop", q:"Why are the lamps on when the cell is beside the contacts?" } }
+          en:{ t:"Power the Workshop", q:"Why are the lamps on when the cell is beside the contacts?" } },
+        { n:13, slug:"e13", demo:"robot",
+          pl:{ t:"Słychać, że działa", q:"Ogniwo już siedzi w gnieździe. Dlaczego zatrzask dalej klika?" },
+          en:{ t:"One Click Is Enough", q:"The cell has clicked into place. Why does the latch keep clicking?" } },
+        { n:14, slug:"e14", demo:"robot",
+          pl:{ t:"Jeszcze jedna próba", q:"Po restarcie ogniwo jest na regale. Dlaczego pusta winda rusza?" },
+          en:{ t:"One More Run", q:"The cell is back on the shelf. Why is the empty lift moving?" } }
     ] }
   ],
   /* Seasons after the current one: only a name and one line, no episodes. */
