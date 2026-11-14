@@ -36,7 +36,7 @@ inline void writeScene(std::ostream& out, const Layout& objects) {
     for (const auto& node : objects) {
         const auto& p = node.position;
         out << node.model << ' ' << p.x << ' '
-            << p.y << ' ' << p.z << '\n';
+            << p.z << ' ' << p.y << '\n';
     }
     if (!out) throw std::runtime_error("Scene write failed");
 }
