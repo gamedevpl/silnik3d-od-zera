@@ -1,14 +1,37 @@
-# E08 · Kto dostał stare zaznaczenie? / Who got the old selection?
+# E09 · Nocna zmiana. Robot w warsztacie
 
-PL. Zaznaczamy A, usuwamy je i dodajemy B. B otrzymuje wolny indeks. Sprawdź, czy przesunięcie przez stare zaznaczenie zmienia B. W scene.hpp dopisz sprawdzenie pokolenia uchwytu w valid(). Powtórz próbę. Stary uchwyt ma być odrzucony, a nowy nadal przesuwa B.
+[English](README.en.md)
 
-EN. Select A, remove it and add B in the same slot. Check whether moving the old selection moves B. In scene.hpp make valid() compare the handle's generation, then repeat the test. The old handle should be rejected while the new one still moves B.
+Na scenie z E08 stoi mały robot. Przytrzymaj W przez sekundę, wróć na początek klawiszem R i spróbuj W+D. W obu próbach silnik daje robotowi ten sam czas. Czy powinien pokonać tę samą drogę?
+
+## Twoje zadanie
 
 ```sh
-git clone -b e08-start https://github.com/gamedevpl/silnik3d-od-zera.git
+git clone -b e09-start https://github.com/gamedevpl/silnik3d-od-zera.git
 cd silnik3d-od-zera
 python3 check.py
-git diff origin/e08-solution -- scene.hpp
 ```
 
-The exercise needs Python 3 and a C++17 compiler. Build the desktop engine with CMake and the project's GLFW prerequisites. Tab cycles selection; X deletes; N creates an object in the middle. Creation deliberately keeps the previous selection so the old-handle experiment can be repeated. A/D and W/S move the selected object horizontally and vertically. Arrow keys orbit and dolly the camera. The window title shows the selected handle and whether it is live. The full season checkpoint is ep08.
+Na Windowsie uruchom `py -3 check.py` z Developer Command Prompt, jeśli korzystasz z kompilatora Visual Studio. Test wymaga Pythona 3 i kompilatora C++17. Uruchamia ten sam kod ruchu co gra, po 50 kroków po 20 ms dla każdego zestawu klawiszy.
+
+Na starcie dostaniesz `W 2.00   W+D 2.83` i `RETRY`. Otwórz [drive.hpp](drive.hpp) i zmień funkcję `direction`. Zachowaj kierunek wybrany przez gracza. Każda jazda przez sekundę, także po skosie, ma dać dwie jednostki drogi. Przeciwne klawisze na tej samej osi mają się znosić, a puszczenie klawiszy zatrzymywać robota.
+
+Uruchom próbę ponownie. Po wyniku `W 2.00   W+D 2.00` i `PASS` możesz porównać swój plik z [rozwiązaniem](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution).
+
+```sh
+git diff origin/e09-solution -- drive.hpp
+```
+
+## Uruchom warsztat
+
+Potrzebujesz CMake 3.20+, kompilatora C++17 i sesji graficznej z OpenGL 3.3 core. Repo zawiera GLFW i GLAD. Na Debianie lub Ubuntu domyślna konfiguracja GLFW potrzebuje pakietów `pkg-config xorg-dev libwayland-dev libxkbcommon-dev`.
+
+```sh
+cmake -S . -B build
+cmake --build build --config Release --target engine
+./build/engine
+```
+
+W konfiguracji Visual Studio ostatnie polecenie to `.\build\Release\engine.exe`. WASD prowadzi robota, R ustawia go z powrotem na początku i czyści ślad, Esc zamyka okno. W tym odcinku robot jeździ swobodnie, także przez regały. Kod ruchu znajdziesz w [workshop.hpp](workshop.hpp), odczyt klawiatury w [main.cpp](main.cpp), a rysowanie w [workshop_view.hpp](workshop_view.hpp).
+
+[Stan silnika po E08](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep08) · [Stan gry po E09](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09)
