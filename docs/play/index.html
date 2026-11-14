@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Silnik 3D w C++ od zera</title>
+<style>
+html,body{margin:0;height:100%;background:#0f1418;color:#e9e4d4;font:14px/1.4 "Courier New",monospace}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+canvas{width:min(100vw,calc((100vh - 40px)*16/9));aspect-ratio:16/9;height:auto;background:#000;image-rendering:pixelated;outline:none}
+#bar{min-height:20px;padding:0 8px;text-align:center;color:#00e4ac}
+</style></head><body>
+<canvas id="canvas" width="640" height="360" tabindex="0"></canvas>
+<div id="bar"></div>
+<script>
+const ep = (new URLSearchParams(location.search).get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
+const bar = document.getElementById("bar"), canvas = document.getElementById("canvas");
+window.addEventListener("keydown", e => { if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Tab"].includes(e.key)) e.preventDefault(); });
+const s = document.createElement("script"); s.src = ep + "/engine.js";
+s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = t,
+  printErr: t => console.error(t) }).then(() => canvas.focus()).catch(e => bar.textContent = String(e));
+s.onerror = () => bar.textContent = "Brak wersji " + ep;
+document.body.appendChild(s);
+</script></body></html>
