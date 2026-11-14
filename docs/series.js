@@ -41,12 +41,17 @@ window.SERIES = {
       { n:6, slug:"e06", demo:"light", pl:{ t:"Światło i materiał", q:"Co robi chropowatość?" }, en:{ t:"Light and Material", q:"What does roughness do?" } },
       { n:7, slug:"e07", start:"e07-path-start", demo:"mesh",  pl:{ t:"Siatka jako zasób", q:"Dlaczego ten sam model wczytuje się dwa razy?" }, en:{ t:"Mesh as a Resource", q:"Why does the same model load twice?" } },
       { n:8, slug:"e08", demo:"scene", pl:{ t:"Scena, która pamięta swoje obiekty", q:"Dlaczego przesunął się inny obiekt?" }, en:{ t:"A Scene That Remembers Its Objects", q:"Why did a different object move?" } }
+    ] },
+    { n:2, pl:{ t:"Sezon 2 · Nocna zmiana", d:"Robot, ogniwo i winda, która nie chce ruszyć. W warsztacie powstaje pierwsza gra na naszym silniku." },
+           en:{ t:"Season 2 · Night Shift", d:"A robot, a power cell and a lift that will not move. Inside the workshop we build our first game on the engine." },
+      episodes:[], next:[
+        { n:9, slug:"e09", demo:"robot",
+          pl:{ t:"Pierwsza jazda robota", q:"Dlaczego robot w sekundę jedzie dalej po skosie?" },
+          en:{ t:"The Robot’s First Drive", q:"Why does the robot go farther in one second on a diagonal?" } }
     ] }
   ],
   /* Seasons after the current one: only a name and one line, no episodes. */
   upcoming:[
-    { n:2, demo:"robot",  pl:{ t:"Nocna zmiana", d:"Na tym silniku powstaje mała gra. Robot, ogniwo, ciemny warsztat i winda, która nie chce ruszyć." },
-                          en:{ t:"Night Shift", d:"A small game on this engine. A robot, a power cell, a dark workshop and a lift that will not move." } },
     { n:3, demo:"editor", pl:{ t:"Drugie piętro", d:"Do gry dochodzi edytor. Układasz własny poziom i dajesz go komuś do przejścia." },
                           en:{ t:"The Second Floor", d:"The game gets an editor. You build your own level and hand it to someone to play." } }
   ]

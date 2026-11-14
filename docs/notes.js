@@ -160,5 +160,15 @@ while (lag >= tick) {
     en: { t: "The same index after deleting an object", min: "1 min read", html: `
 <p>At first <code>create</code> only appends. Erase A and the replacement lands in 2:1. The old handle expires, but the slot stays empty [[7:52]]. Implement a free list and B reuses 1:2. The next test shows A’s old handle moving the new object [[11:49]].</p>
 <p>On <code>e08-start</code>, compare the handle’s generation with the slot’s generation. After the fix, try the scene. X erases the selected object, N adds an object, Tab selects a live handle, and W and D move the selected sphere [[13:11]].</p>` }
+  },
+  e09: {
+    pl: { t: "Co mierzą dwa klawisze?", min: "1 min czytania", html: `
+<p>Stań robotem na skrzyżowaniu linii. Wybierz W i jedź przez sekundę. Wróć klawiszem R, a potem przytrzymaj W i D. Żeby nie mierzyć sekundy stoperem, uruchom <code>python3 check.py</code> na gałęzi <code>e09-start</code>. W obydwu przejazdach zegar wykona 50 kroków po 20 ms.</p>
+<p>W pierwszej próbie jazda prosto ma długość 2,00. Po skosie robot przesuwa się o 2 w prawo i o 2 w głąb [[10:30]]. Droga ma długość przekątnej: √(2² + 2²) ≈ 2,83. W <code>drive.hpp</code> zachowaj kierunek ruchu, ograniczając długość wektora wejścia. Sprawdź też W+S i puszczenie wszystkich klawiszy.</p>
+<p>Po poprawce oba przejazdy mają po 2,00 jednostki [[12:06]]. Porównaj swoją zmianę z <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution">rozwiązaniem E09</a>. Możesz też uruchomić <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09">pełny warsztat</a> i spróbować dojechać do półki [[12:19]].</p>` },
+    en: { t: "What do two keys measure?", min: "1 min read", html: `
+<p>Park the robot where two grid lines cross. Hold W for a second. Press R to return to the start, then drive with W and D. To time both runs precisely, run <code>python3 check.py</code> on the <code>e09-start</code> branch. The clock advances 50 steps of 20 ms each time.</p>
+<p>The straight trip covers 2.00 units. On the diagonal the robot goes 2 units right and 2 units into the room [[10:30]]. The distance travelled is the diagonal of that square: √(2² + 2²) ≈ 2.83. In <code>drive.hpp</code>, keep the direction while limiting the length of the input vector. Try W+S and releasing all the keys, too.</p>
+<p>After the fix both trips cover 2.00 units [[12:06]]. Compare your change with the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution">E09 solution</a>, then open the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09">full workshop</a> and drive up to a shelf [[12:19]].</p>` }
   }
 };
