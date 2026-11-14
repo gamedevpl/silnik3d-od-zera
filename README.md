@@ -1,13 +1,13 @@
-# E12 · Gniazdo zasila warsztat
+# E13 · Słychać, że działa
 
-Zabierz ogniwo z prawego regału i odłóż obok żółtej ramki przed windą. Starter włącza prąd, mimo że styki są obok siebie. Napraw kontrolę dopasowania w `Socket::accepts` w pliku `socket.hpp`. Oprzyj ją na obrysie podstawy ogniwa i wewnętrznych krawędziach ramki.
+Odłóż ogniwo w gnieździe i zostaw je tam przez sekundę. Ile razy powinien odezwać się zatrzask? W silniku są trzy krótkie dźwięki. Podniesienie ogniwa daje narastający ton, styk gniazda metaliczny klik, a wjazd do zasilonej windy niski dźwięk silnika.
 
-    git clone -b e12-start https://github.com/gamedevpl/silnik3d-od-zera.git
+    git clone -b e13-start https://github.com/gamedevpl/silnik3d-od-zera.git
     cd silnik3d-od-zera
     python3 check.py
 
-Obok ramki lampy mają zostać ciemne, a drzwi windy zamknięte. Ogniwo mieszczące się w otworze ma włączyć lampy i odblokować przejście. Gdy wyjmiesz ogniwo, obwód powinien się rozłączyć. Próba sprawdza również każdy brzeg, kluczowe wysokości, zachowanie przy bezruchu i możliwość wjechania do windy.
+W sound.hpp porównaj bieżące zasilanie z poprzednim. Zatrzask ma odezwać się dokładnie raz, również przy ponownym osadzeniu po wyjęciu ogniwa. Sprawdź oba zdarzenia i licznik po sekundzie. Rozwiązanie: e13-solution. Pełny stan: ep13.
 
-Test wymaga Pythona 3 i kompilatora C++17. Do wersji okienkowej z OpenGL 3.3 potrzebne są CMake 3.20 i zależności GLFW (Debian/Ubuntu: pkg-config xorg-dev libwayland-dev libxkbcommon-dev). Zbuduj program przez `cmake -S . -B build` i `cmake --build build`. WASD porusza robotem, E podnosi i odkłada, B pokazuje obrysy, R wraca na początek. Rozwiązanie jest na `e12-solution`, a stan odcinka na `ep12`.
+Test wymaga Pythona 3 i kompilatora C++17. Do gry potrzebujesz OpenGL 3.3, CMake 3.20+, OpenAL i zależności GLFW. Na Debianie/Ubuntu zainstaluj libopenal-dev, pkg-config, xorg-dev, libwayland-dev i libxkbcommon-dev. W macOS OpenAL jest częścią systemu. Zbuduj za pomocą cmake -S . -B build i cmake --build build. WASD porusza, E podnosi i odkłada ogniwo, R przywraca początek.
 
 [English](README.en.md)

@@ -1,44 +1,43 @@
 #include "workshop.hpp"
 #include <cstdio>
 
-Workshop dropAt(double x) {
-    Workshop game;
-    auto& robot = *game.objects.get(game.robot);
-    robot = {x,0,1.20-Cell::dropOffsetZ};
-    game.cell.carried = true;
-    game.advance(Clock::tick,false,false,false,false,true);
-    return game;
-}
-
-void report(const char* label, const Workshop& game) {
-    std::printf("%s: light %s / lift %s\n", label, game.powered ? "ON" : "OFF",
-                game.powered ? "OPEN" : "LOCKED");
+void step(Workshop& game, bool use = false, bool forward = false) {
+    game.advance(Clock::tick,forward,false,false,false,use);
 }
 
 int main() {
-    Workshop beside = dropAt(.60), inside = dropAt(0);
-    report("Beside", beside);
-    report("Seated", inside);
-    std::printf("Power changes: %u / %u\n", beside.powerChanges, inside.powerChanges);
-    if (beside.powered || !inside.powered || inside.powerChanges != 1) return 1;
-    for (int i = 0; i < 50; ++i) inside.advance(Clock::tick,false,false,false,false,false);
-    if (inside.powerChanges != 1) return 1;
-    Workshop clear = inside;
-    inside.advance(Clock::tick,false,false,false,false,true);
-    if (inside.powered || !inside.cell.carried || inside.powerChanges != 2) return 1;
-    for (Workshop* game : {&beside,&clear}) {
-        auto& robot = *game->objects.get(game->robot);
-        robot = {0,0,-1.8};
-        for (int i = 0; i < 50; ++i)
-            game->advance(Clock::tick,true,false,false,false,false);
-        if ((robot.z < liftGate.z0) != game->powered) return 1;
+    Workshop game;
+    auto& robot = *game.objects.get(game.robot);
+    robot = {2.60,0,-1.82};
+    step(game,true);
+    bool pickup = game.sounds.pickup;
+    step(game,true);
+    if (!pickup || game.sounds.pickup) return 1;
+    robot = {0,0,1.20-Cell::dropOffsetZ};
+    step(game);
+    step(game,true);
+    int latch = game.sounds.latch;
+    for (int i = 1; i < 50; ++i) {
+        step(game);
+        latch += game.sounds.latch;
     }
-    Cell probe;
-    for (auto position : {Vec3{.20,Cell::floorHeight,1.20}, Vec3{-.20,Cell::floorHeight,1.20},
-                          Vec3{0,Cell::floorHeight,.95}, Vec3{0,Cell::floorHeight,1.45},
-                          Vec3{0,Cell::carryHeight,1.20}}) {
-        probe.resting = position;
-        if (Socket{}.accepts(probe)) return 1;
+    robot = {0,0,-1.8};
+    int motor = 0;
+    for (int i = 0; i < 50; ++i) {
+        step(game,false,true);
+        motor += game.sounds.lift;
     }
-    return 0;
+    std::printf("Pickup: %d\nLatch / 1 s: %d\nLift: %d\n",int(pickup),latch,motor);
+    if (latch != 1 || motor != 1) return 1;
+    robot = {0,0,.60};
+    step(game,true);
+    if (game.powered || game.sounds.latch || !game.sounds.pickup) return 1;
+    step(game);
+    step(game,true);
+    if (!game.sounds.latch || game.sounds.pickup) return 1;
+    step(game);
+    if (game.sounds.latch) return 1;
+    robot = {2,0,-2.49};
+    step(game,false,true);
+    return game.sounds.lift ? 1 : 0;
 }

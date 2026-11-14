@@ -2,6 +2,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include "workshop_view.hpp"
+#include "audio.hpp"
 
 int main() {
     if (!glfwInit()) return 1;
@@ -16,6 +17,7 @@ int main() {
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }
     glfwSwapInterval(1);
 
+    AudioSink audio;
     Workshop workshop;
     WorkshopView view;
     double previous = glfwGetTime();
@@ -42,6 +44,7 @@ int main() {
                          held(GLFW_KEY_W), held(GLFW_KEY_A),
                          held(GLFW_KEY_S), held(GLFW_KEY_D), held(GLFW_KEY_E));
 
+        audio.play(workshop.sounds);
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         if (width > 0 && height > 0) {
