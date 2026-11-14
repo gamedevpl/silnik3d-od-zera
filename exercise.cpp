@@ -33,7 +33,24 @@ int main() {
             game->advance(Clock::tick,true,false,false,false,false);
         if ((robot.z < liftGate.z0) != game->powered) return 1;
     }
+    constexpr Box rim = Socket::opening;
+    constexpr double left = rim.x0 + Cell::halfWidth;
+    constexpr double right = rim.x1 - Cell::halfWidth;
+    constexpr double back = rim.z0 + Cell::halfDepth;
+    constexpr double front = rim.z1 - Cell::halfDepth;
+    // Make each fixture land exactly on its edge in double precision.
+    static_assert(left - Cell::halfWidth == rim.x0 && right + Cell::halfWidth == rim.x1);
+    static_assert(back - Cell::halfDepth == rim.z0 && front + Cell::halfDepth == rim.z1);
     Cell probe;
+    constexpr double middleX = (rim.x0 + rim.x1) / 2;
+    constexpr double middleZ = (rim.z0 + rim.z1) / 2;
+    for (Vec3 touch : {Vec3{left, Cell::floorHeight, middleZ},
+                       Vec3{right, Cell::floorHeight, middleZ},
+                       Vec3{middleX, Cell::floorHeight, back},
+                       Vec3{middleX, Cell::floorHeight, front}}) {
+        probe.resting = touch;
+        if (!Socket{}.accepts(probe)) return 1;
+    }
     for (auto position : {Vec3{.20,Cell::floorHeight,1.20}, Vec3{-.20,Cell::floorHeight,1.20},
                           Vec3{0,Cell::floorHeight,.95}, Vec3{0,Cell::floorHeight,1.45},
                           Vec3{0,Cell::carryHeight,1.20}}) {
