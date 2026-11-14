@@ -7,6 +7,7 @@
 struct WorkshopView {
     OrbitCamera eye{.20, 7.8};
     std::deque<Vec3> trail;
+    bool debugBoxes = true;
 
     void drawBlock(Vec3 low, Vec3 size, Tint color, double aspect) const {
         std::array<ClipPoint, 8> corners;
@@ -38,12 +39,13 @@ struct WorkshopView {
             block({-5,.003,double(i)}, {10,.003,.018}, grid);
             block({double(i),.003,-4}, {.018,.003,8}, grid);
         }
-        for (double shelf : {-3.7, 1.9}) {
+        for (Box bounds : shelves) {
+            double shelf = bounds.x0;
             for (double x : {shelf, shelf + 1.65})
                 for (double z : {-2.85, -2.22})
                     block({x,0,z}, {.08,1.30,.08}, steel);
             for (double y : {.15,.68,1.22})
-                block({shelf,y,-2.87}, {1.73,.07,.75}, timber);
+                block({shelf,y,bounds.z0}, {bounds.x1-shelf,.07,bounds.z1-bounds.z0}, timber);
             const Tint crates[] = {{.27f,.44f,.48f},{.80f,.54f,.29f},{.27f,.44f,.48f}};
             for (int i = 0; i < 3; ++i)
                 block({shelf + .10 + i * .50,.75,-2.72}, {.43,.28,.41}, crates[i]);
@@ -67,5 +69,19 @@ struct WorkshopView {
             part({x,.49,.166}, {.07,.035,.012}, {.87f,.99f,.77f});
         part({.12,.61,-.11}, {.026,.12,.026}, {.67f,.72f,.69f});
         part({.096,.73,-.13}, {.075,.05,.07}, {1.f,.60f,.27f});
+        if (debugBoxes) {
+            auto outline = [&](Box b, Tint tint) {
+                constexpr double edge = .035, y = .025;
+                for (double x : {b.x0, b.x1-edge})
+                    block({x,y,b.z0}, {edge,.012,b.z1-b.z0}, tint);
+                for (double z : {b.z0, b.z1-edge})
+                    block({b.x0,y,z}, {b.x1-b.x0,.012,edge}, tint);
+            };
+            glDisable(GL_DEPTH_TEST);
+            for (Box shelf : shelves) outline(shelf, {.38f,.87f,1.f});
+            outline(robotBox(p), blocked(p) ? Tint{1.f,.28f,.25f}
+                                            : Tint{1.f,.90f,.39f});
+            glEnable(GL_DEPTH_TEST);
+        }
     }
 };

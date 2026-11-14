@@ -10,7 +10,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
-    GLFWwindow* window = glfwCreateWindow(960, 540, "Night Shift | WASD | R reset", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(960, 540, "Night Shift | WASD | B boxes | R reset", nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }
     glfwMakeContextCurrent(window);
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }
@@ -19,7 +19,7 @@ int main() {
     Workshop workshop;
     WorkshopView view;
     double previous = glfwGetTime();
-    bool resetDown = false;
+    bool resetDown = false, boxesDown = false;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         auto held = [&](int key) {
@@ -31,6 +31,9 @@ int main() {
             view = WorkshopView{};
         }
         resetDown = held(GLFW_KEY_R);
+
+        if (held(GLFW_KEY_B) && !boxesDown) view.debugBoxes = !view.debugBoxes;
+        boxesDown = held(GLFW_KEY_B);
 
         double now = glfwGetTime();
         double elapsed = now - previous;

@@ -1,5 +1,6 @@
 #pragma once
 #include "clock.hpp"
+#include "collision.hpp"
 #include "drive.hpp"
 #include "rotation.hpp"
 #include "scene.hpp"
@@ -13,8 +14,7 @@ struct Workshop {
         clock.advance(elapsed, [&](double dt) {
             auto& p = *objects.get(robot);
             auto v = direction(w, a, s, d);
-            p.x += v.x * 2 * dt;
-            p.z += v.z * 2 * dt;
+            moveRobot(p, v.x * 2 * dt, v.z * 2 * dt);
         });
     }
 };
