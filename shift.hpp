@@ -11,6 +11,7 @@ struct Shift {
     void restart() {
         workshop = Workshop{};
         lift = Lift{};
+        departureRequested = false;
     }
 
     void advance(double elapsed, bool w, bool a, bool s, bool d, bool use = false) {
