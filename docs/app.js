@@ -169,7 +169,7 @@ function renderEpisodes(){
   tabs.hidden = SEASONS.length < 2;
   tabs.innerHTML = SEASONS.map(s => {
     const ready = s.episodes.filter(e => e.video).length;
-    return `<button type="button" role="tab" data-season="${s.n}" aria-selected="${s.n === season}">${esc(s[lang].t)}<span>${ready}/${s.episodes.length}</span></button>`;
+    return `<button type="button" role="tab" data-season="${s.n}" aria-selected="${s.n === season}">${esc(s[lang].t)}<span>${ready}/${s.episodes.length + (s.next || []).length}</span></button>`;
   }).join("");
   const s = SEASONS.find(x => x.n === season) || SEASONS[0];
   document.getElementById("episodes").innerHTML = s.episodes.map(e => {
