@@ -1,13 +1,13 @@
-# E10 · Ściana
+# E11 · Podnieś ogniwo
 
-Wjedź ukośnie w prawy regał i trzymaj W+D. Robot zatrzymuje się przy krawędzi, chociaż obok jest miejsce. Zmień funkcję `moveRobot` w `collision.hpp`, aby mógł sunąć wzdłuż regału. Podczas całej próby obrysy robota i regału mają się mijać. Na tej samej przekątnej w pustym miejscu robot zachowuje prędkość z E09.
+WASD dojedź pod prawy regał. Kiedy nad ogniwem pojawi się E, przytrzymaj klawisz. Robot podnosi i odkłada ogniwo wiele razy. Zmień `Cell::update` w `cell.hpp`, by jedno naciśnięcie dawało jedną akcję. Puść E, przejedź kawałek i naciśnij E ponownie, żeby odłożyć ogniwo.
 
-    git clone -b e10-start https://github.com/gamedevpl/silnik3d-od-zera.git
+    git clone -b e11-start https://github.com/gamedevpl/silnik3d-od-zera.git
     cd silnik3d-od-zera
     python3 check.py
 
-Próba wymaga Pythona 3 i kompilatora C++17. W ciągu ostatniej sekundy ruchu droga wzdłuż X powinna wynieść około 1,41, a szczelina przed regałem ma być mniejsza od 0,03. Porównaj wynik z gałęzią `e10-solution`. Gotowy odcinek jest pod tagiem `ep10`.
+Próba wymaga Pythona 3 i kompilatora C++17. Obejmuje sekundę trzymania E przy 50 odczytach wejścia, puszczenie, drugie naciśnięcie, zasięg, przewożenie i krótki nacisk między krokami ruchu. Celem jest jedna zmiana w pierwszej sekundzie i odłożenie po kolejnym naciśnięciu. Porównaj wynik z `e11-solution`. Pełny odcinek nosi tag `ep11`.
 
-Opcjonalne okno OpenGL 3.3 wymaga CMake 3.20 i zależności GLFW (na Debianie/Ubuntu `pkg-config xorg-dev libwayland-dev libxkbcommon-dev`). Wykonaj `cmake -S . -B build`, następnie `cmake --build build`, i uruchom `engine` z katalogu kompilacji. WASD porusza robotem, B przełącza obrysy, R odtwarza start, Esc zamyka okno.
+Okno OpenGL 3.3 wymaga CMake 3.20 i zależności GLFW (Debian/Ubuntu: pkg-config xorg-dev libwayland-dev libxkbcommon-dev). Wykonaj `cmake -S . -B build`, potem `cmake --build build`, i uruchom engine. WASD porusza robotem, E obsługuje ogniwo, B przełącza obrysy, R odtwarza start, Esc zamyka okno.
 
 [English](README.en.md)

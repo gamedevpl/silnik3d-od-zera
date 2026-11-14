@@ -7,7 +7,7 @@
 struct WorkshopView {
     OrbitCamera eye{.20, 7.8};
     std::deque<Vec3> trail;
-    bool debugBoxes = true;
+    bool debugBoxes = false;
 
     void drawBlock(Vec3 low, Vec3 size, Tint color, double aspect) const {
         std::array<ClipPoint, 8> corners;
@@ -27,7 +27,7 @@ struct WorkshopView {
         side(1,5,7,3,.77f);
     }
 
-    void draw(Vec3 p, double aspect) {
+    void draw(Vec3 p, const Cell& cell, double aspect) {
         glClearColor(.07f, .10f, .14f, 1.f);
         beginFrame();
         auto block = [&](Vec3 anchor, Vec3 size, Tint color) {
@@ -69,6 +69,20 @@ struct WorkshopView {
             part({x,.49,.166}, {.07,.035,.012}, {.87f,.99f,.77f});
         part({.12,.61,-.11}, {.026,.12,.026}, {.67f,.72f,.69f});
         part({.096,.73,-.13}, {.075,.05,.07}, {1.f,.60f,.27f});
+        Vec3 c = cell.position(p);
+        const Tint enamel{.15f,.83f,.71f}, brass{1.f,.78f,.22f};
+        block({c.x-.18,c.y,c.z-.13}, {.36,.09,.26}, brass);
+        block({c.x-.15,c.y+.09,c.z-.12}, {.30,.39,.24}, enamel);
+        block({c.x-.18,c.y+.48,c.z-.13}, {.36,.07,.26}, brass);
+        block({c.x-.06,c.y+.55,c.z-.07}, {.12,.06,.14}, brass);
+        block({c.x-.08,c.y+.20,c.z+.122}, {.16,.07,.012}, {.86f,1.f,.62f});
+        if (cell.carried || cell.inReach(p)) {
+            Vec3 sign{c.x-.14,c.y+.75,c.z+.14};
+            block({sign.x-.04,sign.y-.04,sign.z-.018}, {.37,.43,.025}, {.07f,.18f,.19f});
+            block(sign, {.065,.35,.025}, brass);
+            for (double dy : {0., .145, .29})
+                block({sign.x,sign.y+dy,sign.z}, {.26,.06,.025}, brass);
+        }
         if (debugBoxes) {
             auto outline = [&](Box b, Tint tint) {
                 constexpr double edge = .035, y = .025;

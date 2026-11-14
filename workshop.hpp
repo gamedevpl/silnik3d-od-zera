@@ -1,5 +1,6 @@
 #pragma once
 #include "clock.hpp"
+#include "cell.hpp"
 #include "collision.hpp"
 #include "drive.hpp"
 #include "rotation.hpp"
@@ -9,12 +10,14 @@ struct Workshop {
     Scene<Vec3> objects;
     Handle robot = objects.create({-.65, 0, 1.65});
     Clock clock;
+    Cell cell;
 
-    void advance(double elapsed, bool w, bool a, bool s, bool d) {
+    void advance(double elapsed, bool w, bool a, bool s, bool d, bool use = false) {
         clock.advance(elapsed, [&](double dt) {
             auto& p = *objects.get(robot);
             auto v = direction(w, a, s, d);
             moveRobot(p, v.x * 2 * dt, v.z * 2 * dt);
         });
+        cell.update(*objects.get(robot), use);
     }
 };

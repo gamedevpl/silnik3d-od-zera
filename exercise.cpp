@@ -4,33 +4,44 @@
 
 int main() {
     Workshop game;
+    auto& robot = *game.objects.get(game.robot);
+    robot = {2.60, 0, -1.82};
+    auto press = [&](double dt, bool down) {
+        game.advance(dt, false, false, false, false, down);
+    };
+    int changes = 0;
+    for (int i = 0; i < 50; ++i) {
+        bool before = game.cell.carried;
+        press(Clock::tick, true);
+        if (game.cell.carried != before) ++changes;
+    }
+    bool held = game.cell.carried;
+    std::printf("E held: 1.00 s\nState changes: %d\nCarrying: %s\n", changes, held ? "yes" : "no");
+    press(Clock::tick, false);
+    bool releaseKeptState = game.cell.carried == held;
+    press(Clock::tick, true);
+    bool dropped = !game.cell.carried;
+    std::printf("Next press: %s\n", dropped ? "drop" : "pick up");
+    if (changes != 1 || !held || !releaseKeptState || !dropped) return 1;
+
+    game = Workshop{};
     auto& p = *game.objects.get(game.robot);
-    p = {1.48, 0, -1.43};
-    bool touchesShelf = false;
-    double atContact = 0;
-    for (int tick = 0; tick < 75; ++tick) {
-        game.advance(Clock::tick, true, false, false, true);
-        touchesShelf |= blocked(p);
-        if (tick == 24) atContact = p.x;
-    }
-    const double slide = p.x - atContact;
-    const double gap = robotBox(p).z0 - shelves[1].z1;
-    std::printf("W+D  1.50 s\nOverlap: %s\nSlide along X: %.2f\nShelf gap: %.3f\n",
-                touchesShelf ? "yes" : "no", slide, gap);
-    // Exercise also protects ordinary movement and all four approach directions.
-    for (Box shelf : shelves) {
-        Vec3 starts[] = {{shelf.x0-1,0,(shelf.z0+shelf.z1)/2},
-                         {shelf.x1+1,0,(shelf.z0+shelf.z1)/2},
-                         {(shelf.x0+shelf.x1)/2,0,shelf.z0-1},
-                         {(shelf.x0+shelf.x1)/2,0,shelf.z1+1}};
-        for (int side = 0; side < 4; ++side) {
-            p = starts[side];
-            for (int step = 0; step < 50; ++step) {
-                game.advance(Clock::tick, side==3, side==1, side==2, side==0);
-                if (blocked(p)) return 1;
-            }
-            if (std::hypot(p.x-starts[side].x, p.z-starts[side].z) < .6) return 1;
-        }
-    }
-    return !touchesShelf && slide > 1.35 && slide < 1.45 && gap >= 0 && gap < .03 ? 0 : 1;
+    press(0, true);
+    if (game.cell.carried) return 1;
+    p = {2.60,0,-1.82};
+    press(Clock::tick, true);
+    if (game.cell.carried) return 1;
+    press(.003, false);
+    press(.003, true);
+    if (!game.cell.carried) return 1;
+    for (int i = 0; i < 30; ++i)
+        game.advance(Clock::tick, false, false, true, false, true);
+    Vec3 mounted = game.cell.position(p);
+    if (std::abs(mounted.z-p.z) > .001) return 1;
+    press(.003, false);
+    press(.003, true);
+    Vec3 atRest = game.cell.position(p);
+    if (game.cell.carried || atRest.y > .03 || !game.cell.inReach(p)) return 1;
+    game.advance(.08, false, false, true, false, false);
+    return std::abs(game.cell.position(p).z-atRest.z) > .001;
 }
