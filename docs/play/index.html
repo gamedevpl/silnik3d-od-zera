@@ -1,38 +1,191 @@
-<!doctype html>
-<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Silnik 3D w C++ od zera</title>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silnik 3D w C++ od zera · w przeglądarce · gamedev.pl</title>
+<meta name="description" content="Stan silnika z odcinka serii „Silnik 3D w C++ od zera”, uruchomiony w przeglądarce. / The engine from an episode of “C++ 3D Engine From Scratch”, running in your browser.">
+<meta name="theme-color" content="#0f1418">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="gamedev.pl">
+<meta property="og:title" content="Silnik 3D w C++ od zera · uruchom w przeglądarce">
+<meta property="og:description" content="Ten sam kod co w odcinku, skompilowany do WebAssembly. Bez instalacji.">
+<meta property="og:image" content="https://gamedevpl.github.io/silnik3d-od-zera/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/ProximaNovaBold.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-html,body{margin:0;height:100%;background:#0f1418;color:#e9e4d4;font:14px/1.4 "Courier New",monospace}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-canvas{width:min(100vw,calc((100vh - 40px)*16/9));aspect-ratio:16/9;height:auto;background:#000;image-rendering:pixelated;outline:none}
-#bar{min-height:20px;padding:0 8px;text-align:center;color:#00e4ac}
-</style></head><body>
-<canvas id="canvas" width="640" height="360" tabindex="0"></canvas>
-<div id="bar"></div>
+@font-face{font-family:'Proxima Nova';src:url('../fonts/ProximaNovaLight.woff2') format('woff2');font-weight:300;font-display:swap}
+@font-face{font-family:'Proxima Nova';src:url('../fonts/ProximaNovaSemibold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Proxima Nova';src:url('../fonts/ProximaNovaBold.woff2') format('woff2');font-weight:700;font-display:swap}
+:root{
+  --bg:#0f1418; --panel:#161c22; --panel-border:#232c35; --text:#f0f4f8; --muted:#94a3b8;
+  --turquoise:#00e4ac; --amber:#eea75e; --paper:#f4dfb4; --paper-ink:#293742;
+  --sans:'Proxima Nova',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --pix:"Courier New",Courier,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);background-image:radial-gradient(circle at 50% 0%,#1a232b 0%,#0f1418 70%);background-attachment:fixed;color:var(--text);font:600 16px/1.5 var(--sans);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+a{color:var(--turquoise);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;width:100%}
+
+header.top{position:sticky;top:0;z-index:10;background:rgba(22,28,34,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--panel-border)}
+header.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+.logo{display:flex;align-items:center;font-size:1.5em;font-weight:700;color:#fff;letter-spacing:-.5px}
+.logo:hover{text-decoration:none}
+.logo img{width:35px;height:30px;margin-right:10px}
+.logo .tq{color:var(--turquoise);font-weight:300}
+.crumb{color:var(--muted);font-size:.92rem;white-space:nowrap;padding-left:18px;border-left:1px solid var(--panel-border)}
+.crumb:hover{color:var(--text);text-decoration:none}
+.lang{display:flex;margin-left:auto;background:rgba(0,228,172,.08);border:1px solid rgba(0,228,172,.2);border-radius:999px;padding:2px}
+.lang button{background:none;border:0;color:var(--turquoise);padding:4px 10px;border-radius:999px;cursor:pointer;font:700 12px var(--sans)}
+.lang button[aria-pressed="true"]{background:var(--turquoise);color:#0f1418}
+@media (max-width:640px){.crumb{display:none}.wrap{padding:0 14px}}
+
+main{flex:1;padding:22px 0 28px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 18px;margin-bottom:14px}
+.kicker{font:700 13px var(--pix);color:var(--amber);text-transform:uppercase;letter-spacing:1.5px}
+h1{margin:2px 0 0;font-size:clamp(22px,3.2vw,32px);line-height:1.15;font-weight:700}
+.steps{margin-left:auto;display:flex;gap:8px}
+.steps a{font:700 13px var(--pix);color:var(--muted);border:1px solid var(--panel-border);border-radius:6px;padding:6px 10px;background:var(--panel)}
+.steps a:hover{color:var(--text);border-color:var(--turquoise);text-decoration:none}
+.steps a[aria-disabled="true"]{visibility:hidden}
+
+.screen{position:relative;margin:0 auto;width:min(100%,calc((100vh - 270px)*16/9));min-width:min(100%,320px);border:1px solid var(--panel-border);border-radius:12px;background:#000;padding:10px;box-shadow:0 0 0 1px rgba(0,228,172,.06),0 18px 60px rgba(0,0,0,.45),0 0 70px rgba(0,228,172,.08)}
+canvas{display:block;width:100%;aspect-ratio:16/9;height:auto;background:#000;border-radius:4px;outline:none}
+canvas:focus-visible{box-shadow:0 0 0 2px var(--turquoise)}
+.loading{position:absolute;inset:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#0b0f12;border-radius:4px;color:var(--muted);font:700 14px var(--pix)}
+.loading img{width:70px;height:60px;image-rendering:pixelated;animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.loading[hidden]{display:none}
+#bar{min-height:22px;margin:10px auto 0;width:min(100%,calc((100vh - 270px)*16/9));text-align:center;color:var(--turquoise);font:700 14px var(--pix);white-space:pre-wrap}
+.hint{margin:10px auto 0;max-width:720px;text-align:center;color:var(--muted);font-weight:300;font-size:15px}
+.hint a{font-weight:600}
+
+footer{padding:18px 0 26px;color:var(--muted);font-size:14px;border-top:1px solid var(--panel-border)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center}
+footer .made{display:flex;align-items:center;gap:8px;color:var(--text)}
+footer .made .logo{font-size:1.2em}
+footer .made .logo img{width:26px;height:22px;margin-right:6px}
+footer .right{margin-left:auto;display:flex;gap:20px}
+footer .right a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="https://www.gamedev.pl"><img src="../mascot.svg" alt="">gamedev<span class="tq">.pl</span></a>
+    <a class="crumb" href="../" data-t="crumb"></a>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="pl">PL</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <div class="kicker" id="kicker"></div>
+        <h1 id="title"></h1>
+      </div>
+      <nav class="steps"><a id="prev" href="#"></a><a id="next" href="#"></a></nav>
+    </div>
+    <div class="screen">
+      <canvas id="canvas" width="640" height="360" tabindex="0"></canvas>
+      <div class="loading" id="loading"><img src="../art/face-curious.png" alt=""><span data-t="loading"></span></div>
+    </div>
+    <div id="bar"></div>
+    <p class="hint" id="hint"></p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="made"><span>Made by</span> <a class="logo" href="https://www.gamedev.pl"><img src="../mascot.svg" alt="">gamedev<span class="tq">.pl</span></a></div>
+    <div class="right">
+      <a href="https://www.youtube.com/@gamedev_pl">YouTube</a>
+      <a href="https://github.com/gamedevpl/silnik3d-od-zera">GitHub</a>
+      <a href="https://www.gamedev.pl" data-t="games"></a>
+    </div>
+  </div>
+</footer>
+
+<script src="../series.js"></script>
 <script>
-const ep = (new URLSearchParams(location.search).get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
+const T = {
+  pl:{ crumb:"Silnik 3D w C++ od zera", loading:"Uruchamiam silnik…", games:"Gry w przeglądarce",
+       kicker:"Odcinek {n} · w przeglądarce", prev:"← Poprzedni", next:"Następny →", missing:"Nie ma takiej wersji silnika: {ep}",
+       hint:"Kliknij obraz, żeby klawisze trafiały do silnika. To stan kodu po odcinku, skompilowany do WebAssembly: {code}. Ćwiczenia z <code>check.py</code> robisz u siebie, {back}.",
+       code:"kod na GitHubie", back:"wszystkie odcinki są tutaj" },
+  en:{ crumb:"C++ 3D Engine From Scratch", loading:"Starting the engine…", games:"Browser games",
+       kicker:"Episode {n} · in your browser", prev:"← Previous", next:"Next →", missing:"No engine build for {ep}",
+       hint:"Click the picture so your keys reach the engine. This is the code as it stands after the episode, compiled to WebAssembly: {code}. The <code>check.py</code> exercises run on your machine, {back}.",
+       code:"code on GitHub", back:"all episodes are here" }
+};
+const REPO = "https://github.com/gamedevpl/silnik3d-od-zera";
+const params = new URLSearchParams(location.search);
+const ep = (params.get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
+const num = parseInt(ep.slice(2), 10);
 const bar = document.getElementById("bar"), canvas = document.getElementById("canvas");
-window.addEventListener("keydown", e => { if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Tab"].includes(e.key)) e.preventDefault(); });
-let language = navigator.language.startsWith("pl") ? "pl" : "en";
-try {
-  const selected = localStorage.getItem("lang");
-  if (selected === "pl" || selected === "en") language = selected;
-} catch (_) {}
+window.addEventListener("keydown", e => { if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Tab"].includes(e.key) && document.activeElement === canvas) e.preventDefault(); });
+
+let language = params.get("lang");
+if (language !== "pl" && language !== "en") {
+  language = (navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+  try { const s = localStorage.getItem("lang"); if (s === "pl" || s === "en") language = s; } catch (_) {}
+}
 document.documentElement.lang = language;
-const pl = language === "pl";
+const pl = language === "pl", L = T[language];
+
+/* Episode titles come from the series page data; builds exist for every tag. */
+const all = (window.SERIES ? window.SERIES.seasons : []).flatMap(s => [...s.episodes, ...(s.next || [])]);
+const entry = all.find(e => e.n === num);
+const builds = all.map(e => e.n).filter(n => n >= 0);
+const two = n => String(n).padStart(2, "0");
+document.querySelectorAll("[data-t]").forEach(el => el.textContent = L[el.dataset.t]);
+document.getElementById("kicker").textContent = L.kicker.replace("{n}", "E" + two(num));
+const title = entry ? entry[language].t : ep;
+document.getElementById("title").textContent = title;
+document.title = `E${two(num)} · ${title} · ${L.crumb} · gamedev.pl`;
+document.getElementById("hint").innerHTML = L.hint
+  .replace("{code}", `<a href="${REPO}/tree/${ep}">${L.code}</a>`)
+  .replace("{back}", `<a href="../?lang=${language}">${L.back}</a>`);
+const link = (id, n, label) => {
+  const a = document.getElementById(id);
+  a.textContent = label;
+  if (builds.includes(n)) a.href = `?ep=ep${two(n)}&lang=${language}`; else a.setAttribute("aria-disabled", "true");
+};
+link("prev", num - 1, L.prev);
+link("next", num + 1, L.next);
+document.querySelectorAll(".lang button").forEach(b => {
+  b.setAttribute("aria-pressed", b.dataset.lang === language);
+  b.onclick = () => {
+    try { localStorage.setItem("lang", b.dataset.lang); } catch (_) {}
+    const u = new URL(location); u.searchParams.set("lang", b.dataset.lang); location.replace(u);
+  };
+});
+
 const controls = pl
   ? "WASD · jazda   E · podnieś / odłóż   B · obrysy   R · od nowa"
   : "WASD · drive   E · pick up / drop   B · outlines   R · reset";
 if (["ep11","ep12","ep13","ep14"].includes(ep)) bar.textContent = controls;
-function gameTitle(title) {
-  if (ep === "ep14" && title === "Night Shift | Upper floor | R: next shift")
+function gameTitle(t) {
+  if (ep === "ep14" && t === "Night Shift | Upper floor | R: next shift")
     return pl ? "Górne piętro · R rozpoczyna następną zmianę" : "Upper floor · R starts the next shift";
-  if (ep === "ep14" && title === "Night Shift | WASD | E cell | R reset") return controls;
-  return title;
+  if (ep === "ep14" && t === "Night Shift | WASD | E cell | R reset") return controls;
+  return t;
 }
+const loading = document.getElementById("loading");
 const s = document.createElement("script"); s.src = ep + "/engine.js";
 s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = gameTitle(t),
-  printErr: t => console.error(t) }).then(() => canvas.focus()).catch(e => bar.textContent = String(e));
-s.onerror = () => bar.textContent = "Brak wersji " + ep;
+  printErr: t => console.error(t) }).then(() => { loading.hidden = true; canvas.focus(); })
+  .catch(e => { loading.hidden = true; bar.textContent = String(e); });
+s.onerror = () => { loading.querySelector("span").textContent = L.missing.replace("{ep}", ep); };
 document.body.appendChild(s);
-</script></body></html>
+</script>
+</body>
+</html>
