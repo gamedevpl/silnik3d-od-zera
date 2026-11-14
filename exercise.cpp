@@ -18,6 +18,7 @@ int main() {
                 && !shift.workshop.cell.carried;
     bool atStart = samePosition(*shift.workshop.objects.get(shift.workshop.robot),
                                 *fresh.objects.get(fresh.robot));
+    if (!atStart) std::puts("Robot position differs from its spawn point");
     for (int i = 0; i < 50; ++i) shift.advance(Clock::tick, false, false, false, false);
     std::printf("Reset: shelf %s | light %s\n", onShelf ? "yes" : "no",
                 shift.workshop.powered ? "ON" : "OFF");
