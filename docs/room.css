@@ -98,6 +98,15 @@ h3.sub:after{content:"";flex:1;height:3px;background:var(--seam)}
 .tiles li{display:flex;gap:12px;align-items:flex-start;min-width:0;padding:12px;background:var(--wall);box-shadow:0 0 0 3px var(--ink);border:2px dashed var(--seam)}
 .tiles canvas{flex:none;width:72px;height:45px;box-shadow:0 0 0 2px var(--ink)}
 .tiles li>div{min-width:0}
+.tiles li:has(.preview-material){display:grid;grid-template-columns:72px minmax(0,1fr)}
+.tiles .preview-material{grid-column:1/-1}
+.preview-material>a{color:var(--cream);font-size:14px}
+.preview-material .note{margin:12px 0 0;box-shadow:0 0 0 2px var(--ink)}
+.preview-material .note summary{gap:8px;padding:10px}
+.preview-material .note summary .label,.preview-material .note summary small,.preview-material .note summary img{display:none}
+.preview-material .note summary b{font-size:15px}
+.preview-material .note article{padding:0 12px 14px}
+.tiles .preview-material .note p{margin-top:10px;color:var(--paper-ink)}
 .tiles .ep-num{margin-right:8px}
 .tiles .pill{font-size:10px;padding:2px 7px;background:var(--seam);color:var(--cream)}
 .tiles h3{font:700 15px/1.25 var(--pix);margin:8px 0 3px;color:var(--text)}

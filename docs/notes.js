@@ -112,5 +112,63 @@ while (lag >= tick) {
 <p><b>Quaternions alone do not help.</b> I write the same three rotations as quaternions and repeat the test: still 0.000 [[19:46]]. I am composing the same three angles in the same order, so the result is the same.</p>
 <p><b>What helps.</b> I stop storing three angles. I keep one orientation and compose each turn with it around a local cube axis [[21:26]]. At the same 90° the gap is 1.000 [[22:04]].</p>`
     }
+  },
+  e03: {
+    pl: { t: "Gdzie zniknęła przekątna?", min: "1 min czytania", html: `
+<p>Połącz rogi 4 i 6. GPU potrafi narysować ten odcinek z dwóch wierzchołków. Co zobaczysz, jeśli w tym samym wywołaniu zmienisz tryb na <code>GL_TRIANGLES</code>? Znika nawet przekątna [[17:25]]. W buforze są trzy rogi, ale ostatni argument <code>glDrawArrays</code> wciąż każe pobrać tylko dwa.</p>
+<p>Na gałęzi <code>e03-start</code> uruchom <code>python3 check.py</code>. Test pobiera kolor wewnątrz spodziewanego trójkąta i obok niego. W <code>face.hpp</code> zmień liczbę pobieranych wierzchołków i powtórz pomiar. Wewnętrzny piksel powinien stać się miętowy, a zewnętrzny pozostać czarny. Po trzecim wierzchołku połowa ściany jest pełna [[18:01]]. Aby wypełnić resztę ściany, drugi trójkąt może użyć tej samej przekątnej i rogu 7.</p>` },
+    en: { t: "Where did the diagonal go?", min: "1 min read", html: `
+<p>Connect corners 4 and 6. Two vertices are enough for the GPU to draw that line. What happens if you switch the same draw call to <code>GL_TRIANGLES</code>? Even the diagonal disappears [[17:25]]. The buffer holds three corners, but the last argument to <code>glDrawArrays</code> still asks for only two.</p>
+<p>On <code>e03-start</code>, run <code>python3 check.py</code>. It samples a pixel inside the expected triangle and another outside it. Change the vertex count in <code>face.hpp</code> and repeat the measurement. The inside pixel should turn mint while the outside pixel stays black. Three vertices fill half the face [[18:01]]. A second triangle can use the same diagonal and corner 7 to fill the rest of the face.</p>` }
+  },
+  e04: {
+    pl: { t: "Dwie ściany w jednym pikselu", min: "1 min czytania", html: `
+<p>Narysuj miętową ścianę i za nią koralową. W miejscu, gdzie obie zasłaniają ten sam piksel, wygrywa ostatnie wywołanie [[11:23]]. Na <code>e04-start</code> testuje to <code>python3 check.py</code>. Po włączeniu porównywania głębi zamiana kolejności nadal daje miętowy środek [[13:54]].</p>
+<p>Przesuń kamerę z odległości 4 na 8. Listwa nadal ma 72 piksele. W <code>camera.hpp</code> przekaż odległość jako <code>w</code>. Po podzieleniu współrzędnych przez <code>w</code> ta sama listwa ma z daleka 36 pikseli [[20:09]]. Sprawdź też płaszczyzny odcinania. Po dopasowaniu <code>z</code> bliska granica przypada na −1, daleka na +1 [[21:16]].</p>` },
+    en: { t: "Two walls in one pixel", min: "1 min read", html: `
+<p>Draw the mint wall, then the coral wall behind it. At the pixel they share, the last draw wins [[11:23]]. On <code>e04-start</code>, <code>python3 check.py</code> samples that pixel. Enable the depth comparison and reversing the order still leaves a mint centre [[13:54]].</p>
+<p>Move the camera from distance 4 to 8. The strip still spans 72 pixels. In <code>camera.hpp</code>, pass distance as <code>w</code>. After the GPU divides by <code>w</code>, the strip spans 36 pixels at the greater distance [[20:09]]. Check the clipping planes too. After adjusting <code>z</code>, the near plane maps to −1 and the far plane to +1 [[21:16]].</p>` }
+  },
+  e05: {
+    pl: { t: "Który poziom tekstury trafia do piksela?", min: "1 min czytania", html: `
+<p>Jeśli obrócisz zwykłą szachownicę do góry nogami, trudno zauważyć różnicę. Nadaj rogom własne kolory i zaznacz je kreskami [[2:19]]. Po nałożeniu obrazka na kartę pojedyncza koralowa kreska wypada u góry. Popraw współrzędną <code>v</code> i sprawdź, czy kreska wróciła na dół po lewej [[23:28]].</p>
+<p>Teraz powtórz teksturę na podłodze 32 razy i rusz kamerą. Daleki pas migocze, choć na GPU jest już komplet mniejszych obrazów. Na <code>e05-start</code> wybierz filtr pomniejszania, który z nich korzysta. Powtórz ten sam przejazd i porównaj ruch dalekiego pasa [[25:01]].</p>` },
+    en: { t: "Which texture level reaches the pixel?", min: "1 min read", html: `
+<p>Flip a plain checkerboard upside down and the result is hard to spot. Give each corner a colour and a different number of bars [[2:19]]. On the textured card the single coral bar appears at the top. Correct <code>v</code> and check that the bar returns to the bottom left [[23:28]].</p>
+<p>Repeat the texture 32 times across the floor and move the camera. The far strip flickers even though the smaller images already exist on the GPU. On <code>e05-start</code>, choose a minification filter that samples them. Repeat the same camera movement and compare the far strip [[25:01]].</p>` }
+  },
+  e06: {
+    pl: { t: "Dwa materiały, jeden odblask", min: "1 min czytania", html: `
+<p>Jeden pierścień daje równik [[4:58]]. Zmień szerokość geograficzną, połącz sąsiednie rzędy trójkątami i zakoduj kierunek normalnej kolorem. Jeśli cała kula ma jeden kolor, sprawdź, czy wszystkie wierzchołki dostały tę samą normalną [[9:49]]. Na kuli jednostkowej wyśrodkowanej w początku układu lokalna pozycja wierzchołka jest już jego normalną.</p>
+<p>Oba materiały dają po 84 jasne piksele [[15:22]]. W <code>lighting.hpp</code> sprawdź wartość wysyłaną jako <code>roughness</code>. Przy 0,15 i 0,92 ten sam pomiar daje 81 i 443 piksele [[16:06]]. W obu ujęciach lampa i kamera stoją w tym samym miejscu.</p>` },
+    en: { t: "Two materials, one highlight", min: "1 min read", html: `
+<p>One ring gives you the equator [[4:58]]. Vary the latitude, join the rows with triangles, then use colour to show the normal direction. A single colour over the whole sphere is a reason to check whether every vertex received the same normal [[9:49]]. On a unit sphere centred at the origin, a vertex’s local position is already its normal.</p>
+<p>Both materials give 84 bright pixels [[15:22]]. In <code>lighting.hpp</code>, follow the value sent as <code>roughness</code>. With 0.15 and 0.92 the same measurement gives 81 and 443 pixels [[16:06]]. Both runs use the same lamp and camera positions.</p>` }
+  },
+  e07: {
+    pl: { t: "Czy druga kula potrzebuje drugiej siatki?", min: "1 min czytania", html: `
+<p>Program prosi o <code>sphere.bin</code>, a druga instancja o <code>./sphere.bin</code>. Na dysku jest jeden plik. W pierwszym podejściu <code>load</code> za każdym razem otwiera go od nowa. W drugim jest już mapa, ale różne zapisy ścieżki wciąż tworzą dwa wpisy [[5:34]].</p>
+<p>Na gałęzi <code>e07-path-start</code> sprawdź w <code>exercise.cpp</code> oba argumenty, potem przejdź do miejsca, w którym <code>asset_cache.hpp</code> tworzy klucz. Po ujednoliceniu ścieżek odczyt jest jeden, a obie kule mają tę samą siatkę i własne położenia [[6:24]].</p>` },
+    en: { t: "Does a second sphere need a second mesh?", min: "1 min read", html: `
+<p>One instance asks for <code>sphere.bin</code>, the other for <code>./sphere.bin</code>. Both refer to one file. The first loader opens it every time. Adding a map still leaves two entries because the path spellings differ [[5:34]].</p>
+<p>On <code>e07-path-start</code>, compare the arguments in <code>exercise.cpp</code>. Follow them to the line where <code>asset_cache.hpp</code> builds the key. Once both spellings resolve to the same key, the counter reads one. Both spheres share a mesh and keep separate positions [[6:24]].</p>` }
+  },
+  e08: {
+    pl: { t: "Ten sam indeks po usunięciu obiektu", min: "1 min czytania", html: `
+<p>Najpierw <code>create</code> tylko dopisuje na końcu tablicy. Po usunięciu A nowy obiekt trafia do 2:1. Stary uchwyt wygasł, ale miejsce zostaje puste [[7:52]]. Po dopisaniu puli wolnych miejsc B trafia do 1:2 i test ujawnia, że stary uchwyt A porusza nowym obiektem [[11:49]].</p>
+<p>Na gałęzi <code>e08-start</code> porównaj numer pokolenia w uchwycie z pokoleniem slotu. Po naprawie uruchom scenę. Klawisz X usuwa zaznaczony obiekt, N dodaje nowy, Tab wybiera aktualny uchwyt, a W i D przesuwają wybraną kulę [[13:11]].</p>` },
+    en: { t: "The same index after deleting an object", min: "1 min read", html: `
+<p>At first <code>create</code> only appends. Erase A and the replacement lands in 2:1. The old handle expires, but the slot stays empty [[7:52]]. Implement a free list and B reuses 1:2. The next test shows A’s old handle moving the new object [[11:49]].</p>
+<p>On <code>e08-start</code>, compare the handle’s generation with the slot’s generation. After the fix, try the scene. X erases the selected object, N adds an object, Tab selects a live handle, and W and D move the selected sphere [[13:11]].</p>` }
+  },
+  e09: {
+    pl: { t: "Co mierzą dwa klawisze?", min: "1 min czytania", html: `
+<p>Stań robotem na skrzyżowaniu linii. Wybierz W i jedź przez sekundę. Wróć klawiszem R, a potem przytrzymaj W i D. Żeby nie mierzyć sekundy stoperem, uruchom <code>python3 check.py</code> na gałęzi <code>e09-start</code> [[12:12]]. W obydwu przejazdach zegar wykona 50 kroków po 20 ms.</p>
+<p>W pierwszej próbie jazda prosto ma długość 2,00. Po skosie robot przesuwa się o 2 w prawo i o 2 w głąb [[10:08]]. Droga ma długość przekątnej: √(2² + 2²) ≈ 2,83. W <code>drive.hpp</code> zachowaj kierunek ruchu, ograniczając długość wektora wejścia. Sprawdź też W+S i puszczenie wszystkich klawiszy.</p>
+<p>Po poprawce oba przejazdy mają po 2,00 jednostki [[11:45]]. Porównaj swoją zmianę z <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution">rozwiązaniem E09</a>. Możesz też uruchomić <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09">pełny warsztat</a> i spróbować dojechać do półki [[11:57]].</p>` },
+    en: { t: "What do two keys measure?", min: "1 min read", html: `
+<p>Park the robot where two grid lines cross. Hold W for a second. Press R to return to the start, then drive with W and D. To time both runs precisely, run <code>python3 check.py</code> on the <code>e09-start</code> branch [[12:12]]. The clock advances 50 steps of 20 ms each time.</p>
+<p>The straight trip covers 2.00 units. On the diagonal the robot goes 2 units right and 2 units into the room [[10:08]]. The distance travelled is the diagonal of that square: √(2² + 2²) ≈ 2.83. In <code>drive.hpp</code>, keep the direction while limiting the length of the input vector. Try W+S and releasing all the keys, too.</p>
+<p>After the fix both trips cover 2.00 units [[11:45]]. Compare your change with the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution">E09 solution</a>, then open the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09">full workshop</a> and drive up to a shelf [[11:57]].</p>` }
   }
 };

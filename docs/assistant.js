@@ -38,7 +38,7 @@ const tools = [
         `${code(e)} "${e.en.t}" (${e.len}), ${isLive(e) ? "out since" : "premieres"} ${day(e.at)}.`,
         "Chapters: " + e.en.ch.map(([t, n]) => `${t} ${n}`).join("; "),
         `Exercise: ${e.en.exT}. ${e.en.exP.replace(/<[^>]+>/g, "")}`,
-        `Start: git clone -b ${e.slug}-start ${SERIES.repo}.git && cd silnik3d-od-zera && python3 check.py`,
+        `Start: git clone -b ${e.start || e.slug + "-start"} ${SERIES.repo}.git && cd silnik3d-od-zera && python3 check.py`,
         `It prints RETRY first. Edit ${e.file}, run python3 check.py again until PASS.`,
         `Compare with the solution: git diff origin/${e.slug}-solution -- ${e.file}`,
         "Needs Git, Python 3 and a C++17 compiler.",

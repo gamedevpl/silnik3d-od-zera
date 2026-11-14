@@ -2,13 +2,20 @@
 
 ## Try the episode exercises
 
-Choose the start branch for your episode. Its README has the task and instructions in Polish and English. The check needs Git, Python 3 and a C++17 compiler.
+Choose the start branch for your episode. Its README has the task and instructions in Polish and English. The basic E00–E02 checks need Git, Python 3 and a C++17 compiler.
+
+For E03–E06, `python3 check.py` builds the bundled GLFW library. You also need CMake 3.20+ and a graphical session with OpenGL 3.3. The default Linux build enables both X11 and Wayland. On Debian and Ubuntu install their development headers before running the check.
+
+```sh
+sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev
+```
 
 | Episode | Task | Start | Exercise solution | End-of-episode tag |
 | --- | --- | --- | --- | --- |
 | E00 | Make the background pulse again. | [e00-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-start) | [e00-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-solution) | `ep00` |
 | E01 | Cap the catch-up time after a long frame. | [e01-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-start) | [e01-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-solution) | `ep01` |
 | E02 | Straighten the side edges of the cube. | [e02-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [e02-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | `ep02` |
+| E09 · Night Shift | Give the robot the same speed on a diagonal in `drive.hpp`. | [e09-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-start) | [e09-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution) | [`ep09`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09) |
 
 ```sh
 git clone -b e00-start https://github.com/gamedevpl/silnik3d-od-zera.git

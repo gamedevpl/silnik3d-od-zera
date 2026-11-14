@@ -33,7 +33,7 @@ const T = {
     afterPass:"Pierwszy wynik to RETRY. Zapisz zmianę w {f} i uruchom check.py ponownie. Po PASS porównaj z rozwiązaniem:",
     solution:"Rozwiązanie", fullCode:"Pełny kod po odcinku", startBranch:"Gałąź startowa",
     copy:"kopiuj", copied:"skopiowane",
-    need:"Do zadań wystarczą Git, Python 3 i kompilator C++17. Kod na licencji MIT.",
+    need:"Do zadań potrzebujesz Git, Pythona 3 i kompilatora C++17. Próby graficzne w E03–E06 wymagają też CMake i środowiska OpenGL 3.3. Kod na licencji MIT.",
     made:"Made by",
     games:"Gry w przeglądarce",
     askOpen:"Zapytaj o serię", askTitle:"Zapytaj o serię", askHello:"Pytaj o odcinki, zadania i o to, w której minucie coś było.",
@@ -67,7 +67,7 @@ const T = {
     afterPass:"The first check prints RETRY. Save your change in {f} and run check.py again. Once you get PASS, compare with the solution:",
     solution:"Solution", fullCode:"Full code after the episode", startBranch:"Start branch",
     copy:"copy", copied:"copied",
-    need:"The exercises need only Git, Python 3 and a C++17 compiler. The code is MIT licensed.",
+    need:"The exercises use Git, Python 3 and a C++17 compiler. The graphics checks in E03–E06 also need CMake and an OpenGL 3.3 environment. The code is MIT licensed.",
     made:"Made by",
     games:"Browser games",
     askOpen:"Ask about the series", askTitle:"Ask about the series", askHello:"Ask about episodes, exercises, or the minute something happened.",
@@ -101,9 +101,18 @@ function featured(now){
   return all.find(x => x.s === newest);
 }
 
+function episodeNote(e, L, live){
+  const nt = NOTES[e.slug] && NOTES[e.slug][lang];
+  if (!nt) return "";
+  const noteHtml = nt.html.replace(/\[\[(\d+:\d\d)\]\]/g, (_, t) => live
+    ? `<a class="ts" href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${t}</a>`
+    : `<code>${t}</code>`);
+  return `<details class="note"><summary><img class="pix" src="art/m-focus.png" alt="" width="41" height="39"><span class="label">${L.note}</span><b>${esc(nt.t)}</b><small>${esc(nt.min)}</small></summary><article>${noteHtml}</article></details>`;
+}
+
 function body(e, L, now){
   const d = e[lang], live = isOut(e, now), shortLive = e.short && now >= Date.parse(e.shortAt);
-  const cmds = `git clone -b ${e.slug}-start ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
+  const cmds = `git clone -b ${e.start || e.slug + "-start"} ${REPO}.git\ncd silnik3d-od-zera\npython3 check.py`;
   const diff = `git diff origin/${e.slug}-solution -- ${e.file}`;
   const video = live
     ? `<div class="video" data-yt="${e.video}"><canvas class="pix" width="96" height="54" data-demo="${e.demo || "cube"}" aria-hidden="true"></canvas><img loading="lazy" alt="" onerror="this.remove()" src="https://i.ytimg.com/vi/${e.video}/hqdefault.jpg"><button class="play" aria-label="${esc(L.watchYT)}"></button></div>`
@@ -111,8 +120,6 @@ function body(e, L, now){
   const ytLinks = (live ? `<a href="https://www.youtube.com/watch?v=${e.video}">${L.watchYT}</a>` : "")
     + (shortLive ? `<a href="https://www.youtube.com/shorts/${e.short}">${L.shortLink}</a>` : "");
   const ch = d.ch.map(([t,n]) => `<li><code>${t}</code> ${live ? `<a href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${esc(n)}</a>` : esc(n)}</li>`).join("");
-  const nt = NOTES[e.slug] && NOTES[e.slug][lang];
-  const noteHtml = nt ? nt.html.replace(/\[\[(\d+:\d\d)\]\]/g, (_, t) => `<a class="ts" href="https://www.youtube.com/watch?v=${e.video}&t=${tsToSec(t)}s" data-seek="${tsToSec(t)}">${t}</a>`) : "";
   const check = k => `<button type="button" class="check" data-check="${k}" data-slug="${e.slug}" aria-pressed="${done(e.slug, k)}"><i aria-hidden="true"></i>${k === "w" ? L.doneW : L.doneP}</button>`;
   return `
     <div class="ep">
@@ -131,13 +138,13 @@ function body(e, L, now){
         <p class="after">${L.afterPass.replace("{f}", `<code>${e.file}</code>`)}</p>
         <div class="cw" style="margin-top:8px"><pre class="cmd"><span class="p">$ </span>${esc(diff)}</pre><button class="copy" type="button" data-copy="${esc(diff)}">${L.copy}</button></div>
         <div class="sol">
-          <a href="${REPO}/tree/${e.slug}-start">${L.startBranch}</a>
+          <a href="${REPO}/tree/${e.start || e.slug + "-start"}">${L.startBranch}</a>
           <a href="${REPO}/tree/${e.slug}-solution">${L.solution}</a>
           <a href="${REPO}/tree/${e.ep}">${L.fullCode}</a>
         </div>
       </div>
       <div class="checks">${check("w")}${check("p")}</div>
-      ${nt ? `<details class="note"><summary><img class="pix" src="art/m-focus.png" alt="" width="41" height="39"><span class="label">${L.note}</span><b>${esc(nt.t)}</b><small>${esc(nt.min)}</small></summary><article>${noteHtml}</article></details>` : ""}
+      ${episodeNote(e, L, live)}
     </div>`;
 }
 
@@ -162,7 +169,7 @@ function renderEpisodes(){
   tabs.hidden = SEASONS.length < 2;
   tabs.innerHTML = SEASONS.map(s => {
     const ready = s.episodes.filter(e => e.video).length;
-    return `<button type="button" role="tab" data-season="${s.n}" aria-selected="${s.n === season}">${esc(s[lang].t)}<span>${ready}/${s.episodes.length}</span></button>`;
+    return `<button type="button" role="tab" data-season="${s.n}" aria-selected="${s.n === season}">${esc(s[lang].t)}<span>${ready}/${s.episodes.length + (s.next || []).length}</span></button>`;
   }).join("");
   const s = SEASONS.find(x => x.n === season) || SEASONS[0];
   document.getElementById("episodes").innerHTML = s.episodes.map(e => {
@@ -181,7 +188,7 @@ function renderEpisodes(){
   }).join("");
   const next = s.next || [], ready = s.episodes.filter(e => e.video).length;
   document.getElementById("seasonIntro").innerHTML = `<b>${esc(s[lang].t)}</b><span>${esc(s[lang].d || "")}</span><small>${L.seasonCount.replace("{a}", ready).replace("{b}", s.episodes.length + next.length)}</small>`;
-  const tile = (num, x, d, big) => `<li${big ? ' class="big"' : ""}><canvas class="pix" width="${big ? 96 : 48}" height="${big ? 54 : 30}" data-demo="${x.demo}" aria-hidden="true"></canvas><div><span class="ep-num">${num}</span><span class="pill">${L.planned}</span><h3>${esc(x[lang].t)}</h3><p>${esc(d)}</p></div></li>`;
+  const tile = (num, x, d, big) => `<li${big ? ' class="big"' : ""}><canvas class="pix" width="${big ? 96 : 48}" height="${big ? 54 : 30}" data-demo="${x.demo}" aria-hidden="true"></canvas><div><span class="ep-num">${num}</span><span class="pill">${L.planned}</span><h3>${esc(x[lang].t)}</h3><p>${esc(d)}</p></div>${x.slug ? `<div class="preview-material"><a href="${REPO}/tree/${x.start || x.slug + "-start"}">${L.startBranch}</a>${episodeNote(x, L, false)}</div>` : ""}</li>`;
   document.getElementById("teasers").innerHTML =
     (next.length ? `<h3 class="sub">${L.nextEps}</h3><ul class="tiles">${next.map(x => tile(code(x), x, x[lang].q)).join("")}</ul>` : "")
     + (UPCOMING.length ? `<h3 class="sub">${L.nextSeasons}</h3><ul class="tiles two">${UPCOMING.map(x => tile(`${L.season} ${x.n}`, x, x[lang].d, true)).join("")}</ul>` : "");
