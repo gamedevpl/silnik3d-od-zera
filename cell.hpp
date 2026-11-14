@@ -28,6 +28,7 @@ struct Cell {
     }
 
     void update(Vec3 robot, bool down) {
-        if (down) interact(robot);
+        if (down && !wasDown) interact(robot);
+        wasDown = down;
     }
 };
