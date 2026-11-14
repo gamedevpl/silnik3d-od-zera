@@ -170,5 +170,15 @@ while (lag >= tick) {
 <p>Park the robot where two grid lines cross. Hold W for a second. Press R to return to the start, then drive with W and D. To time both runs precisely, run <code>python3 check.py</code> on the <code>e09-start</code> branch [[11:20]]. The clock advances 50 steps of 20 ms each time.</p>
 <p>The straight trip covers 2.00 units. On the diagonal the robot goes 2 units right and 2 units into the room [[9:22]]. The distance travelled is the diagonal of that square: √(2² + 2²) ≈ 2.83. In <code>drive.hpp</code>, keep the direction while limiting the length of the input vector. Try W+S and releasing all the keys, too.</p>
 <p>After the fix both trips cover 2.00 units [[10:53]]. Compare your change with the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution">E09 solution</a>, then open the <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09">full workshop</a> and drive up to a shelf [[11:05]].</p>` }
+  },
+  e10: {
+    pl: { t: "Dlaczego robot przykleja się do regału?", min: "1 min czytania", html: `
+<p>Przytrzymaj W i D. Każdy krok przesuwa robota trochę w prawo i trochę w głąb warsztatu. Przed regałem tylko ta druga część ruchu prowadzi do zderzenia. Gdy odrzucisz cały krok, znika także ruch w prawo.</p>
+<p>Uruchom <code>python3 check.py</code> na gałęzi <code>e10-start</code>. Robot trzyma oba klawisze przez 1,5 sekundy. Obrysy się mijają, ale w ostatniej sekundzie ruch wzdłuż półki wynosi 0,00. W <code>moveRobot</code> w pliku <code>collision.hpp</code> sprawdź osobno każdą oś. Przy drugim sprawdzeniu uwzględnij pozycję po pierwszym. Powtórz próbę. Robot przejeżdża 1,41 wzdłuż półki i zostawia szczelinę 0,006.</p>
+<p><a href="play/?ep=ep10">Poprowadź robota w przeglądarce</a>. Klawiszem B przełączysz obrysy, R wróci na start. <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution">Rozwiązanie ćwiczenia</a>.</p>` },
+    en: { t: "Why does the robot stick to the shelf?", min: "1 min read", html: `
+<p>Hold W and D. Each step moves the robot a little to the right and a little deeper into the workshop. At the shelf only the second part of that movement causes a collision. Rejecting the whole step also cancels the move to the right.</p>
+<p>Run <code>python3 check.py</code> on <code>e10-start</code>. The robot holds both keys for 1.5 seconds. The footprints stay apart, yet it travels 0.00 along the shelf in the final second. In <code>moveRobot</code> in <code>collision.hpp</code>, test each axis separately. Use the position after the first test when you check the second axis. Run the test again. The robot travels 1.41 along the shelf, leaving a gap of 0.006.</p>
+<p><a href="play/?ep=ep10">Drive the robot in your browser</a>. B toggles the outlines, R resets. <a href="https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution">Exercise solution</a>.</p>` }
   }
 };
