@@ -103,11 +103,14 @@ window.SERIES = {
         { n:14, slug:"e14", demo:"robot",
           pl:{ t:"Jeszcze jedna próba", q:"Po restarcie ogniwo jest na regale. Dlaczego pusta winda rusza?" },
           en:{ t:"One More Run", q:"The cell is back on the shelf. Why is the empty lift moving?" } }
-    ] }
+    ] },
+    { n:3, pl:{ t:"Sezon 3 · Edytor scen", d:"Ten sam silnik otwiera różne sceny. Zbuduj narzędzia do ich edycji." },
+           en:{ t:"Season 3 · Scene editor", d:"One engine opens different scenes. Build the tools to edit them." },
+      episodes:[], next:[
+        { n:15, slug:"e15", demo:"editor",
+          pl:{ t:"Pierwszy plik sceny", q:"Które trzy liczby decydują, gdzie po otwarciu stanie obiekt?" },
+          en:{ t:"The first scene file", q:"Which three numbers put an object back in place when you reopen a scene?" } }
+      ] }
   ],
-  /* Seasons after the current one: only a name and one line, no episodes. */
-  upcoming:[
-    { n:3, demo:"editor", pl:{ t:"Drugie piętro", d:"Do gry dochodzi edytor. Układasz własny poziom i dajesz go komuś do przejścia." },
-                          en:{ t:"The Second Floor", d:"The game gets an editor. You build your own level and hand it to someone to play." } }
-  ]
+  upcoming:[]
 };

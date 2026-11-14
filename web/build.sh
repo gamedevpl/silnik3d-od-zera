@@ -12,7 +12,9 @@ for tag in $tags; do
   git -C "$root" archive "$tag" -- . ':!vendor' ':!docs' | tar -x -C "$src"
   assets=(); [ -d "$src/assets" ] && assets=(--embed-file "$src/assets@/assets")
   libs=(); [ -f "$src/audio.hpp" ] && libs=(-lopenal)
-  (cd "$src" && em++ main.cpp -std=c++17 -O2 -fexceptions -I "$root/web/shim" \
+  entry=main.cpp
+  if [ -f "$src/scene_view.cpp" ]; then entry=scene_view.cpp; fi
+  (cd "$src" && em++ "$entry" -std=c++17 -O2 -fexceptions -I "$root/web/shim" \
     -DENGINE_ASSET_DIR='"/assets"' \
     -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASYNCIFY \
     -sALLOW_MEMORY_GROWTH -sMODULARIZE -sEXPORT_NAME=Engine -sENVIRONMENT=web \
