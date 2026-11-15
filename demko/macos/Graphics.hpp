@@ -1,8 +1,7 @@
 #pragma once
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
-#include "../race.hpp"
-#include "../geometry_api.hpp"
+#include "../track_mesh.hpp"
 
 class Graphics {
     struct Strip {
@@ -18,21 +17,10 @@ class Graphics {
     id<MTLDepthStencilState> depth, shadowDepth, background;
     Strip scenery[2];
     void makeStrip(Strip &strip, int simple) {
-        sceneBlock(simple);
-        std::vector<Vertex> data;
-        for (int sector = -1; sector <= int(ceil((neon::lapLength + 168) / 24)); sector++) {
-            int k = (sector % 6 + 6) % 6;
-            strip.starts.push_back(int(data.size()));
-            for (int j = sectionStart(k); j < sectionStart(k + 1); j++) {
-                Vertex v = vertices()[j];
-                v.z += (sector - k) * 24;
-                v.x += neon::road(v.z);
-                data.push_back(v);
-            }
-        }
-        strip.starts.push_back(int(data.size()));
-        strip.buffer = [device newBufferWithBytes:data.data()
-                                           length:data.size() * sizeof(Vertex)
+        neon::TrackMesh track(simple);
+        strip.starts = std::move(track.sections);
+        strip.buffer = [device newBufferWithBytes:track.data.data()
+                                           length:track.data.size() * sizeof(Vertex)
                                           options:MTLResourceStorageModeShared];
     }
 
@@ -88,11 +76,7 @@ class Graphics {
         if (!pass || !drawable)
             return nil;
         double local = s.distance - s.laps * neon::lapLength, cz = local - 9.2;
-        auto objects = s.visible();
-        int count = int(std::min<size_t>(64, objects.size()));
-        for (int i = 0; i < count; i++)
-            std::copy(objects[i].begin(), objects[i].end(), objectBuffer() + i * 4);
-        int n = actors(fmod(s.elapsed, 240.), local, s.x, s.lean, s.thrust, count);
+        int n = neon::buildActors(s, s.elapsed);
         auto moving = [device newBufferWithBytes:vertices()
                                           length:n * sizeof(Vertex)
                                          options:MTLResourceStorageModeShared];

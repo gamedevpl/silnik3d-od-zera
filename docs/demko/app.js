@@ -1,5 +1,5 @@
-import {renderer} from './renderer.js?v=play2';
-import {loadRace} from './race.js?v=core1';
+import {renderer} from './renderer.js?v=mesh1';
+import {loadRace} from './race.js?v=mesh1';
 import {Sound} from './audio.js?v=grid2';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -18,10 +18,13 @@ const words={
 };
 const read=k=>{try{return localStorage.getItem(k);}catch{return null;}};
 const save=(k,v)=>{try{localStorage.setItem(k,v);}catch{}};
-const simulation=await loadRace();
-const {reset,advance,shoot,LAP}=simulation;
-screen.dataset.simulation=simulation.backend;
-let en=read('neon.lang')!=='pl',mode='loading',race=reset(),draw,flash='',flashUntil=0,last=0;
+const simulation=await loadRace().catch(error=>{
+ console.error('Neon Canal:',error);
+ return null;
+});
+const {reset,advance,shoot,LAP}=simulation??{};
+screen.dataset.simulation=simulation?'wasm':'unavailable';
+let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
 let best=Number(read('neon.lap.v2'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
@@ -35,7 +38,7 @@ function updateHUD(){
  updateRadar();
 }
 const radar=$('#radar');
-const dots=Array.from({length:race.rivals.length+1},(_,i)=>{
+const dots=Array.from({length:race?race.rivals.length+1:0},(_,i)=>{
  const dot=document.createElement('i');if(!i)dot.className='player';
  radar.append(dot);return dot;
 });
@@ -56,6 +59,15 @@ function panel(){
  $('#lang').textContent=en?'PL':'EN';$('#lang').setAttribute('aria-label',en?'Polski':'English');
  $('#sound').textContent=tr(sound.muted?'muted':'sound');$('#sound').setAttribute('aria-pressed',String(!sound.muted));
  $('#pause').disabled=!['run','paused'].includes(mode);$('#pause').textContent=tr(mode==='paused'?'resume':'pause');
+ if(mode==='unavailable'){
+  $('#start').hidden=true;$('#sound').disabled=true;
+  for(const selector of ['.gesture','.keys'])$(selector).hidden=true;
+  $('#info').setAttribute('role','status');
+  $('#info').textContent=typeof WebAssembly==='undefined'
+   ? (en?'Enable WebAssembly in your browser and reload to race.':'Włącz WebAssembly w przeglądarce i odśwież stronę, aby zagrać.')
+   : (en?'Could not load the WebAssembly game. Reload the page to try again.':'Nie udało się wczytać gry WebAssembly. Odśwież stronę, aby spróbować ponownie.');
+  return;
+ }
  $('.controls').hidden=mode!=='run';
  $('.overlay').hidden=mode==='run';$('.hud').hidden=radar.hidden=$('#meter').hidden=['loading','menu'].includes(mode);
  const coarse=matchMedia('(pointer: coarse)').matches;
@@ -179,5 +191,8 @@ function tick(now){
  requestAnimationFrame(tick);
 }
 panel();
-const engine=await renderer(canvas,simulation);draw=engine.draw;screen.dataset.renderer=engine.backend;
+let engine;
+if(simulation){
+ engine=await renderer(canvas,simulation);draw=engine.draw;screen.dataset.renderer=engine.backend;
 draw(race);screen.classList.add('ready');mode='menu';panel();requestAnimationFrame(tick);
+}

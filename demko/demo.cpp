@@ -3,7 +3,7 @@
 #include "scene-cues.hpp"
 
 static std::vector<Vertex> mesh;
-static float objects[64][4]; // Lane X, world Z, object kind, animation phase.
+static float objects[64*4]; // Lane X, world Z, object kind, animation phase.
 static_assert(sizeof(Vertex)==16);
 
 static Frame geometryFrame(double time){
@@ -59,7 +59,7 @@ int sceneBlock(int simple){
     return starts[6];
 }
 const Vertex* vertices(){return mesh.data();}
-float* objectBuffer(){return &objects[0][0];}
+float* objectBuffer(){return objects;}
 
 int actors(double time,double distance,double x,double lean,double thrust,int count){
     mesh.clear();
@@ -67,7 +67,8 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
     f.ship(true);
     for(int i=0;i<std::clamp(count,0,64);i++){
-        const float xx=objects[i][0],z=objects[i][1],kind=objects[i][2],age=objects[i][3];
+        const float *o=objects+4*i;
+        const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
         if(kind>=6){
             rival(f,int(kind)-6,xx,z,age);

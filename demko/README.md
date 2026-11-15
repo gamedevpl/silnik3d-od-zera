@@ -22,7 +22,9 @@ Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for
 
 - [Ship models, lane markings and track geometry in C++](demo.cpp)
 - [Race physics, rival pilots and collisions in C++](race.hpp)
-- [WebGL renderer and Canvas 2D fallback](../docs/demko/renderer.js)
+- [Curved track meshes shared by Metal and WebGL](track_mesh.hpp)
+- [Projected scenery, ships and reflections for Canvas 2D](canvas_scene.hpp)
+- [WebGL and Canvas browser bindings](../docs/demko/renderer.js)
 - [Browser controls and HUD](../docs/demko/app.js)
 - [Music playback and synthesized sound effects](../docs/demko/audio.js)
 
@@ -34,9 +36,9 @@ To play locally, serve the prebuilt files from the repository root and open [the
 python3 -m http.server --directory docs 8000
 ```
 
-To rebuild, point `WASI_SDK_PATH` at WASI SDK 34. Put Binaryen 133’s `wasm2js` on your `PATH` or set `WASM2JS` to its executable. Then run `./demko/build.sh`. The script compiles the simulation and geometry into `docs/demko/flight.wasm`. It also generates a JavaScript version of the same C++ simulation for browsers with WebAssembly disabled.
+The browser requires WebAssembly. WebGL draws the full scene on the GPU. When WebGL is unavailable, the same WebAssembly module projects the scene for Canvas 2D.
 
-Run `node --test demko/tests/endless.mjs` to check both browser builds against five laps recorded before the simulation moved to C++.
+To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to replay five reference laps against the compiled game.
 
 ## Native macOS version
 

@@ -5,11 +5,9 @@ import {readFileSync} from 'node:fs';
 import {loadRace} from '../../docs/demko/race.js';
 
 const binary=readFileSync(new URL('../../docs/demko/flight.wasm',import.meta.url));
-for(const [name,bytes] of [['WebAssembly',binary],['compatibility build',new Uint8Array()]]){
- test(name+' reproduces five laps of the original browser race',async()=>{
-  if(name==='WebAssembly') assert(WebAssembly.validate(bytes));
-  const sim=await loadRace(bytes),s=sim.reset(),counts={};
-  assert.equal(sim.backend,name==='WebAssembly'?'wasm':'compat');
+test('the WebAssembly build reproduces five laps of the original browser race',async()=>{
+  assert(WebAssembly.validate(binary));
+  const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
   const checkpoints=[[1451.179305,1,6],[2888.378654,2,4],[4362.021990,3,6],[5791.485178,5,4]];
   for(let i=0;i<10800;i++){
@@ -31,4 +29,7 @@ for(const [name,bytes] of [['WebAssembly',binary],['compatibility build',new Uin
   assert.deepEqual(counts,{rocket:6,fire:540,break:152,hit:20,repair:8,pad:10,rail:6,lap:5});
   assert.equal(sim.reset().distance,0);
  });
-}
+
+test('an invalid WebAssembly module fails to load',async()=>{
+ await assert.rejects(loadRace(new Uint8Array()),WebAssembly.CompileError);
+});

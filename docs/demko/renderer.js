@@ -1,5 +1,3 @@
-const horizon=.43, eye=4.15;
-const colors=['#34e4d0','#f96198','#f6c547','#7d91ff','#d372f8','#88e26b'];
 function camera(s,{LAP,road,slope}){
  const z=s.distance-s.laps*LAP-9.2;
  const pan=s.previewPan??0;
@@ -61,7 +59,6 @@ function program(gl,vs,fs){
  return p;
 }
 function gpu(canvas,simulation){
- const {LAP,road,visible}=simulation;
  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
  const engine=simulation.geometry;
@@ -77,23 +74,11 @@ function gpu(canvas,simulation){
  }
  // Contiguous sections let all visible scenery share one draw call per pass.
  const scenery=[0,1].map(simple=>{
-  const count=engine.sceneBlock(simple),raw=new Uint8Array(engine.memory.buffer,engine.vertices(),count*16);
-  const starts=Array.from({length:7},(_,i)=>engine.sectionStart(i));
-  const end=Math.ceil((LAP+168)/24),data=new Uint8Array((Math.ceil((end+2)/6)+1)*count*16);
-  const dst=new DataView(data.buffer),sections=[];
-  let cursor=0;
-  for(let sector=-1;sector<=end;sector++){
-   const k=((sector%6)+6)%6,base=(sector-k)*24,n=starts[k+1]-starts[k];
-   sections.push(cursor);
-   data.set(raw.subarray(16*starts[k],16*starts[k+1]),16*cursor);
-   for(let j=cursor;j<cursor+n;j++){
-    const i=j*16,z=base+dst.getFloat32(i+8,true);
-    dst.setFloat32(i,dst.getFloat32(i,true)+road(z),true);dst.setFloat32(i+8,z,true);
-   }
-   cursor+=n;
-  }
-  sections.push(cursor);
-  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,data.subarray(0,cursor*16),gl.STATIC_DRAW);
+  const count=engine.buildTrack(simple);
+  const sections=new Int32Array(engine.memory.buffer,engine.trackSections(),count).slice();
+  const data=new Uint8Array(engine.memory.buffer,engine.trackVertices(),16*sections[count-1]);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+  engine.releaseTrack();
   return {buf,sections};
  });
  function bind(buf){
@@ -109,10 +94,7 @@ function gpu(canvas,simulation){
   const framing=Math.min(1,canvas.width/canvas.height);
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
-  const list=visible();
-  const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),256);
-  list.forEach((o,i)=>data.set(o,4*i));
-  const n=engine.actors(s.elapsed%240,s.distance-s.laps*LAP,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
+  const n=engine.raceActors(s.elapsed);upload(dynamic,n,gl.DYNAMIC_DRAW);
   gl.useProgram(world);gl.uniform4fv(u.cam,cam);
   const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
@@ -132,67 +114,32 @@ function gpu(canvas,simulation){
 
 // A lightweight chase view also keeps the course playable when a browser disables WebGL.
 function canvasFlight(canvas,simulation){
- const {LAP,road,visible}=simulation;
- const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,span=Math.min(w,h),f=span*.76;
+ const core=simulation.geometry,ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height;
  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#161b3d');sky.addColorStop(.43,'#9c6177');sky.addColorStop(.44,'#333448');sky.addColorStop(1,'#101e32');
+ const palette=new Map();
+ function color(rgb){
+  if(!palette.has(rgb))palette.set(rgb,'#'+rgb.toString(16).padStart(6,'0'));
+  return palette.get(rgb);
+ }
  return s=>{
-  const cam=camera(s,simulation);
-  const pt=(x,y,z)=>{const d=Math.max(.4,z-cam[1]);return [w/2+f*(x+road(z)-cam[0]-d*cam[2])/d,h*horizon-f*(y-eye)/d];};
-  function poly(points,color,stroke=false){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();if(stroke){ctx.strokeStyle=color;ctx.stroke();}else{ctx.fillStyle=color;ctx.fill();}}
+  const size=core.canvasFrame(w,h,s.previewPan??0),data=new Float32Array(core.memory.buffer,core.canvasData(),size);
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-  const sunX=w*.5+span*.256-cam[2]*f;
-  ctx.fillStyle='#ffdc9f';ctx.beginPath();ctx.arc(sunX,h*horizon-span*.17,span*.065,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#ffcd96';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sunX,h*horizon-span*.17,span*.13,span*.018,-.2,0,Math.PI*2);ctx.stroke();
-  // Paint distant reflections under the track before its near structures.
-  ctx.save();ctx.beginPath();ctx.rect(0,h*horizon,w,h*(1-horizon));ctx.clip();
-  ctx.fillStyle='#87726d';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.063,span*.061,0,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#b39370';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.128,span*.014,.2,0,Math.PI*2);ctx.stroke();
-  for(let k=Math.floor((cam[1]+144)/12);k*12>cam[1]+1;k--){
-   const z=k*12;
-   for(const side of [-1,1]){
-    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
-    poly([pt(x,0,z),pt(x,-top,z),pt(x+side*5,-top,z),pt(x+side*5,0,z)],'#252c40');
+  // See CanvasScene::Op. Positions and painter order come from C++.
+  for(let i=0;i<size;){
+   const op=data[i++];
+   if(op===-3){const y=data[i++];ctx.save();ctx.beginPath();ctx.rect(0,y,w,h-y);ctx.clip();continue;}
+   if(op===-4){ctx.restore();continue;}
+   const paint=color(data[i++]);
+   if(op===-2){ctx.fillStyle=paint;ctx.fillRect(data[i++],data[i++],data[i++],data[i++]);continue;}
+   const stroke=data[i++];ctx.beginPath();
+   if(op===-1)ctx.ellipse(data[i++],data[i++],data[i++],data[i++],data[i++],0,Math.PI*2);
+   else{
+    ctx.moveTo(data[i++],data[i++]);
+    for(let j=1;j<op;j++)ctx.lineTo(data[i++],data[i++]);
+    ctx.closePath();
    }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.12/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),-4-7*Math.sin(i*Math.PI/6),z)),'#645265',true);}
-  }
-  ctx.restore();
-  for(let k=Math.floor((cam[1]+156)/12);k*12>cam[1]+1;k--){
-   const z=k*12;
-   for(const side of [-1,1]){
-    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
-    poly([pt(x,0,z),pt(x,top,z),pt(x+side*5,top,z),pt(x+side*5,0,z)],'#272840');
-    poly([pt(x,top*.7,z),pt(x+side*4,top*.7,z),pt(x+side*4,top*.68,z),pt(x,top*.68,z)],'#ab8294');
-    poly([pt(side*19.3,0,z),pt(side*19.55,0,z),pt(side*19.55,0,z+11),pt(side*19.3,0,z+11)],'#68c8d3');
-   }
-   for(let lane=-2;lane<=2;lane++){
-    const x=lane*7;poly([pt(x-.12,.08,z),pt(x+.12,.08,z),pt(x+.12,.08,z+4),pt(x-.12,.08,z+4)],'#84a9af');
-   }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.17/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),4+7*Math.sin(i*Math.PI/6),z)),'#e7aa87',true);}
-  }
-  for(const [x,z,kind,age] of visible().sort((a,b)=>b[1]-a[1])){
-   if(z<=cam[1]+1)continue;
-   const [cx,cy]=pt(x,1.85,z),r=f/(z-cam[1]);
-   if(kind>=6){
-    const color=colors[kind-6],p=(dx,dy,dz)=>pt(x+dx,1.85+dy+dx*age,z+dz);
-    for(const side of [-1,1]){
-     poly([p(0,.12,2.4),p(side*.58,.32,.1),p(0,.38,-1.3)],'#c4ddd9');
-     poly([p(side*.58,.32,.1),p(side*1.75,0,-1.2),p(side*.7,.1,-1.4),p(0,.15,-1.3)],color);
-     poly([p(side*.6,.08,-1.3),p(side*.86,.08,-1.3),p(side*.72,.06,-3.5)],color);
-    }
-   }else if(kind===0){
-    for(let j=0;j<3;j++)for(const side of [-1,1]){
-     const zz=z-2+j*1.9;poly([pt(x,.14,zz+1.8),pt(x+side*2.9,.14,zz),pt(x+side*2.9,.14,zz-.65),pt(x,.14,zz+1.1)],'#50f6b7');
-    }
-   }
-   else if(kind===1)poly([[cx,cy-r],[cx+r,cy],[cx,cy+r],[cx-r,cy]],'#ff664e');
-   else if(kind===5){ctx.fillStyle='#ffc36c';ctx.fillRect(cx-r,cy-r,r*(1+age),r);}
-   else {ctx.fillStyle='#ffc875';ctx.fillRect(cx,cy,Math.max(2,r*.19),Math.max(3,r));}
-  }
-  const p=(x,y,z)=>pt(s.x+x,1.85+y+x*s.lean,s.distance-s.laps*LAP+z);
-  for(const side of [-1,1]){
-   poly([p(0,.3,2.35),p(side*.55,.1,.54),p(0,.4,-1)],'#d4d9dd');
-   poly([p(side*.55,.1,.54),p(side*1.55,-.09,-.91),p(side*.56,.08,-1.12)],'#f19b55');
-   poly([p(side*.49,0,-1.16),p(side*.66,0,-1.16),p(side*.57,0,-1.7-s.thrust*.8)],'#59e6ff');
+   if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=paint;ctx.stroke();}
+   else{ctx.fillStyle=paint;ctx.fill();}
   }
  };
 }
@@ -218,7 +165,7 @@ export async function renderer(canvas,simulation){
   screen.dataset.renderer=backend;
   if(lastScene)draw(lastScene);
  }
- try{if(!simulation.geometry)throw Error('WebAssembly unavailable');draw=gpu(canvas,simulation);canvas.addEventListener('webglcontextlost',simplify);}
+ try{draw=gpu(canvas,simulation);canvas.addEventListener('webglcontextlost',simplify);}
  catch(e){console.warn('Canal renderer:',e.message);simplify();}
  const observer=new ResizeObserver(resize);
  observer.observe(screen);resize();
