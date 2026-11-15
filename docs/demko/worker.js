@@ -18,7 +18,7 @@ const loaded=loadEngine();
 self.onmessage=async({data})=>{
     try{
         await loaded;
-        const ptr=engine.fly(data.t,data.steer,data.shot);
+        const ptr=engine.fly(data.t,data.steer,data.shot,data.rocket,data.boost,data.animation);
         const rgb=new Uint8Array(engine.memory.buffer,ptr,480*300*3);
         const out=compositeNeon(rgb);
         self.postMessage({pixels:out},[out.buffer]);

@@ -1,4 +1,4 @@
-// Neon canal. Perspective rasterizer, lighting, flight dynamics and arcade effects.
+// A small perspective rasterizer for the fly-through on the mascot's CRT.
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <cstring>
 #include <vector>
 using std::array;
-constexpr int W=480,H=300;
+int W=480,H=300;
 constexpr double pi=3.141592653589793;
 struct V{double x,y,z;};
 V operator+(V a,V b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
@@ -19,7 +19,7 @@ C mix(C a,C b,double f){f=std::clamp(f,0.,1.);for(int i=0;i<3;i++)a[i]=int(a[i]*
 double random01(int n){uint32_t h=uint32_t(n)*2654435761u;h^=h>>16;h*=2246822519u;return (h^(h>>13))/4294967296.;}
 double ease(double f){f=std::clamp(f,0.,1.);return f*f*(3-2*f);}
 struct Timing {
-    double duration, end[11], bolts[3], launch, impact, pass, room;
+    double duration, end[18], bolts[3], launch, impact, pass, room;
 } cue;
 double integratedRamp(double t,double start,double span){
     double u=std::clamp((t-start)/span,0.,1.);
@@ -28,10 +28,11 @@ double integratedRamp(double t,double start,double span){
 double distanceAt(double t){
     // Distance is the integral of cruise, spool-up, boost and the loop recovery.
     return 13*t+7*integratedRamp(t,7,3)+10*integratedRamp(t,16,4)
-        +9*integratedRamp(t,24,3)+75*integratedRamp(t,cue.end[10],1.9)
-        -101*integratedRamp(t,cue.room+.04,1.29);
+        +9*integratedRamp(t,24,3)+75*integratedRamp(t,cue.end[10],.60)
+        +42*integratedRamp(t,cue.end[15],.55)+62*integratedRamp(t,cue.end[16],.42)
+        +76*integratedRamp(t,cue.end[17],.30)-281*integratedRamp(t,cue.room,.95);
 }
-double route(double t){return 2304*distanceAt(t)/distanceAt(cue.duration);}
+double route(double t){return 2736*distanceAt(t)/distanceAt(cue.duration);}
 // Two connected arcs shift the canal to the next valley. The camera follows its tangent.
 double road(double z){
     const double start=route(38.5),span=route(43.4)-start;
@@ -46,19 +47,26 @@ double dodge(double t){return ease((t-cue.pass+.66)/.64)*(1-ease((t-cue.pass-.28
 #include "lighting.h"
 struct Point{double x,y,iz;};
 struct Frame{
-    double t,cz,cx,cy,roll,focus,chaseLag,pilot,roadX,heading,turnBank;int stage;bool mirror=false;
+    double t,cz,cx,cy,roll,focus,chaseLag,roadX,heading,turnBank,anim,bank,bankSin,bankCos,widthFactor,pilot,boost;int stage;bool mirror=false;
     std::vector<uint8_t> rgb=std::vector<uint8_t>(W*H*3);
     std::vector<float> depths=std::vector<float>(W*H);
-    Frame(double time,int s,double steer=0):t(time),stage(s){
-        pilot=steer;
+    Frame(double time,int s,double steering=0,double thrust=-1,double animation=-1):t(time),stage(s){
+        pilot=steering;anim=animation<0?t:animation;
+        widthFactor=1+.85*reveal(11,.32);
         double phase=t/cue.duration*2*pi;
-        double boost=ease((t-cue.end[10])/1.9)*(1-ease((t-cue.room)/1.4));
-        chaseLag=2.05*boost;
+        boost=thrust<0?ease((t-cue.end[10])/.60)*(1-ease((t-cue.room)/1.4)):thrust;
+        chaseLag=.56*boost;
         cz=route(t)-chaseLag;roadX=road(cz);heading=roadSlope(cz);
         turnBank=std::clamp((roadSlope(cz+38)-roadSlope(cz-38))*2.9,-.73,.73);
         cx=.48*pilot+2.15*std::sin(phase*3)-1.2*dodge(t);
         cy=3.95+.22*std::sin(phase*2);roll=.036*std::cos(phase*3);
-        focus=257-44*boost-8*std::sin(phase)-45*dodge(t);roll-=.17*dodge(t)+.20*turnBank;
+        bank=.24*std::cos(t*pi/4)+.82*dodge(t)-turnBank-.12*pilot;
+        bankSin=std::sin(bank);bankCos=std::cos(bank);
+        focus=257-17*boost-8*std::sin(phase)-45*dodge(t);roll-=.17*dodge(t)+.20*turnBank;focus*=H/300.;
+    }
+    double reveal(int index,double span)const{
+        if(stage<=index)return 0;
+        return t<.72?1:ease((t-cue.end[index])/span);
     }
     double bend(double z)const{return road(z)-roadX-(z-cz)*heading;}
     Point project(V p)const{
@@ -91,7 +99,7 @@ struct Frame{
     }
     void quad(V a,V b,V c,V d,C col){tri(a,b,c,col);tri(a,c,d,col);}
     C haze(C col,double z){
-        return mix(col,{107,76,123},(stage>=4?.66:.25)*std::clamp((z-cz-18)/180.,0.,1.));
+        (void)z; return col;
     }
     void box(double x,double y,double z,double dx,double dy,double dz,C lit,C shade){
         V a{x,y,z},b{x+dx,y,z},c{x+dx,y+dy,z},d{x,y+dy,z},back{0,0,dz};
@@ -103,7 +111,7 @@ struct Frame{
         int first=int(cz/8)-2;
         for(int k=first;k<first+23;k++)for(int side:{-1,1})for(int lane=0;lane<2;lane++){
             int id=((k%18+18)%18)*23+side*93+lane*43;
-            double z=k*8+random01(id)*2.5, x=side*(12+lane*12+random01(id+7)*5);
+            double z=k*8+random01(id)*2.5, x=side*(12+8*(widthFactor-1)+lane*12+random01(id+7)*5);
             double w=2+random01(id+3)*3.8,h=4+random01(id+2)*(lane?28:16);
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
@@ -133,7 +141,7 @@ struct Frame{
             C metal={64,62,91},hot=stage<2?C{112,180,182}:C{255,135,67};
             auto v=[&](int j,double radius,double depth){
                 double angle=j*pi/6+pi/12;
-                return V{gateX+radius*std::cos(angle),4.1+radius*std::sin(angle),z+depth};
+                return V{gateX+widthFactor*radius*std::cos(angle),4.1+radius*std::sin(angle),z+depth};
             };
             for(int j=0;j<12;j++){
                 quad(v(j,7,0),v(j+1,7,0),v(j+1,6.45,0),v(j,6.45,0),haze(metal,z));
@@ -141,7 +149,7 @@ struct Frame{
                 quad(v(j,6.8,-.015),v(j+1,6.8,-.015),v(j+1,6.68,-.015),v(j,6.68,-.015),haze(hot,z));
                 if(stage>=5){
                     // Alternating race beacons travel along the physical arch and its mirror.
-                    double phase=std::fmod(j+12*std::fmod(t*1.25+k*.1666667,1.),12.);
+                    double phase=std::fmod(j+12*std::fmod(anim*1.25+k*.1666667,1.),12.);
                     C beacon=mix({67,71,116},{157,255,236},std::exp(-phase*.66));
                     quad(v(j,7.34,.2),v(j+1,7.34,.2),v(j+1,7.12,.2),v(j,7.12,.2),haze(beacon,z));
                 }
@@ -150,15 +158,22 @@ struct Frame{
             // Short floating lane markers let the viewer follow individual lengths of canal.
             for(int j=0;j<3;j++){
                 int side=(k+j)%2==0?1:-1;
-                double x=side*(3.15+.22*std::sin(k*pi/3)),zz=z-8+j*8;
+                double x=side*widthFactor*(3.15+.22*std::sin(k*pi/3)),zz=z-8+j*8;
                 box(x-.16,.04,zz,.32,.15,1.9,{67,86,102},{36,55,67});
                 box(x-.12,.19,zz+.12,.24,.04,.76,j==0?C{233,174,102}:C{132,212,209},{65,107,118});
             }
+            if(stage>=12){
+                double spread=(widthFactor-1)*2.95;
+                for(int sign:{-1,1})for(int mark=0;mark<3;mark++){
+                    double xx=gateX+sign*spread,zz=z+mark*8-4;
+                    quad({xx-.08,.07,zz},{xx+.08,.07,zz},{xx+.08,.07,zz+3.8},{xx-.08,.07,zz+3.8},{107,211,194});
+                }
+            }
             for(int side:{-1,1}){
-                box(gateX+side*6.75-.28,0,z,.56,4.9,1.1,metal,{30,36,60});
+                box(gateX+side*6.75*widthFactor-.28,0,z,.56,4.9,1.1,metal,{30,36,60});
                 if(stage>=2){
-                    box(side*8.8,.36,z-8,.28,.27,24,{67,83,100},{41,46,70});
-                    for(int j=0;j<4;j++)box(side*8.8,.64,z-8+j*6,.19,.06,2.8,{77,221,226},{52,124,146});
+                    box(side*8.8*widthFactor,.36,z-8,.28,.27,24,{67,83,100},{41,46,70});
+                    for(int j=0;j<4;j++)box(side*8.8*widthFactor,.64,z-8+j*6,.19,.06,2.8,{77,221,226},{52,124,146});
                 }
             }
         }
@@ -186,13 +201,13 @@ struct Frame{
     }
     #include "race_fx.inc"
     void wake(double x,double y,double bank){
-        if(stage<11)return;
+        if(boost<.01)return;
         for(int side:{-1,1}){
             for(int i=0;i<16;i++){
                 auto ribbon=[&](int step,double flank){
-                    double u=step/16.,reach=3.35+.6*dodge(t);
-                    double sx=side*(.57+.08*u)+u*u*.29*std::sin(9*t-u*5)+flank*(.087+.1*std::sin(u*pi))*(1-u);
-                    return V{x+sx*std::cos(bank)+u*u*.8*dodge(t),y+sx*std::sin(bank)-.10-.28*u+.10*u*std::sin(12*t-u*6),cz+chaseLag+5.20-reach*u};
+                    double u=step/16.,reach=1+2.35*boost+.6*dodge(t);
+                    double sx=side*(.57+.08*u)+u*u*.29*std::sin(9*anim-u*5)+flank*(.087+.1*std::sin(u*pi))*(1-u);
+                    return V{x+sx*std::cos(bank)+u*u*.8*dodge(t),y+sx*std::sin(bank)-.10-.28*u+.10*u*std::sin(12*anim-u*6),cz+chaseLag+5.20-reach*u};
                 };
                 auto color=mix({181,255,249},{80,87,224},i/16.);
                 quad(ribbon(i,-1),ribbon(i,1),ribbon(i+1,1),ribbon(i+1,-1),color);
@@ -200,7 +215,7 @@ struct Frame{
         }
     }
     void ship(){
-        double bank=.24*std::cos(t*pi/4)+.82*dodge(t)+turnBank-.12*pilot,x=cx+.52*pilot+.65*std::sin(t*pi/4)-1.85*dodge(t),y=1.95+.18*std::sin(t*pi/2);
+        double x=cx+.52*pilot+.65*std::sin(t*pi/4)-1.85*dodge(t),y=1.95+.18*std::sin(t*pi/2);
         auto p=[&](double sx,double sy,double sz){return V{x+sx*std::cos(bank)-sy*std::sin(bank),y+sy*std::cos(bank)+sx*std::sin(bank),cz+chaseLag+6.4+sz};};
         wake(x,y,bank);
         V nose=p(0,.29,2.35),base=p(0,.10,-1.15),spine=p(0,.53,.25);
@@ -215,11 +230,21 @@ struct Frame{
             tri(wing,p(side*1.24,.0,-.62),p(side*.7,.12,.16),{254,209,121});
             tri(tail,p(side*.8,.07,-1.35),p(side*.74,.53,-1.44),{194,87,65});
             V a=p(side*.57-.15,.0,-1.19),b=p(side*.57+.15,.0,-1.19);
-            tri(a,b,p(side*.57,-.01,-(stage>=11?2.47:1.85)-.13*std::sin(t*5*pi)),{62,214,255});
+            tri(a,b,p(side*.57,-.01,-(1.85+.62*boost)-.13*std::sin(anim*5*pi)),{62,214,255});
             tri(a,b,p(side*.57,.03,-1.55),{231,255,252});
         }
         tri(p(-.26,.38,-.14),p(.26,.38,-.14),p(0,.46,.95),{16,82,110});
         tri(p(-.2,.41,-.03),p(-.02,.45,.62),p(.05,.45,.68),{122,234,238});
+    }
+    void depthFog(){
+        if(stage<4)return;
+        for(int i=0;i<W*H;i++){
+            if(depths[i]<=0)continue;
+            double f=.58*ease((1./depths[i]-22)/106);
+            if(f<=0)continue;
+            C fog{117,89,131};
+            for(int j=0;j<3;j++)rgb[3*i+j]=int(rgb[3*i+j]*(1-f)+fog[j]*f);
+        }
     }
     void fadeHorizon(const std::vector<uint8_t>& backdrop){
         for(int i=0;i<W*H;i++){
@@ -231,19 +256,19 @@ struct Frame{
     std::vector<uint8_t> draw(){
         double sunX=305-cx*.6-126*heading,sunY=77;
         for(int y=0;y<H;y++)for(int x=0;x<W;x++){
-            double dx=x-sunX,dy=y-sunY,dist=std::sqrt(dx*dx+dy*dy);
-            C color=mix({17,27,62},{174,101,121},(double)y/145);
+            double dx=(x-W*.5)*300/H+240-sunX,dy=y*300./H-sunY,dist=std::sqrt(dx*dx+dy*dy);
+            C color=mix({17,27,62},{174,101,121},(double)y/(145*H/300.));
             color=mix(color,{255,192,118},.34*std::exp(-dist/54));
             if(dist<25)color=mix({255,226,164},{237,143,117},(dy+25)/50);
             double ring=std::abs(std::sqrt(std::pow((dx+.46*dy)/49,2)+std::pow((dy-.25*dx)/5.8,2))-1);
             if(ring<.14 && (dy>0||dist>25))color={241,205,155};
-            if(y<96 && random01(x*3811+y*1993)>.999)color={207,213,227};
+            if(y<96*H/300. && random01(x*3811+y*1993)>.999)color={207,213,227};
             pixel(y*W+x,stage==0?C{17,24,37}:color);
         }
         if(stage==0)return rgb;
         auto sky=rgb;
         if(stage>=3){
-            mirror=true;skyline();rings();lightBays();lockGate();boltTrials();pulseTarget();ship();fadeHorizon(sky);mirror=false;
+            mirror=true;skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet();ship();depthFog();fadeHorizon(sky);mirror=false;
         }
         auto reflected=rgb;rgb=sky;
         const double shipX=shipCenter(t),shipY=1.95+.18*std::sin(t*pi/2);
@@ -257,7 +282,7 @@ struct Frame{
             int i=y*W+x,j=(y*W+std::clamp(x+ripple,0,W-1))*3;
             C sample={reflected[j],reflected[j+1],reflected[j+2]};
             C water=mix({24,47,70},sample,stage>=3?.65:.08);
-            if(stage>=3 && std::abs(x-sunX-4*std::sin(phase))<3+below*.047 && std::sin(phase)>.38)water=mix(water,{251,182,123},.36);
+            if(stage>=3 && std::abs((x-W*.5)*300/H+240-sunX-4*std::sin(phase))<3+below*.047 && std::sin(phase)>.38)water=mix(water,{251,182,123},.36);
             if(stage>=3){
                 double wave=std::sin((cz+z)*2.1+t*pi+x*.022+.54*std::sin(x*.11+(cz+z)*.4));
                 double crest=std::max(0.,wave-.73)*std::min(.48,below*.0045);
@@ -273,6 +298,6 @@ struct Frame{
             pixel(i,water);depths[i]=1/z;
         }
         auto background=rgb;
-        skyline();rings();lightBays();lockGate();boltTrials();pulseTarget();fadeHorizon(background);atmosphere();motionBlur();ship();return rgb;
+        skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet();depthFog();fadeHorizon(background);canalMist();atmosphere();motionBlur();ship();return rgb;
     }
 };

@@ -20,12 +20,13 @@ function translate(){
 langButton.onclick=()=>{lang=lang==='pl'?'en':'pl';try{localStorage.setItem('lang',lang);}catch{}translate();};
 translate();
 const held=new Set(),controls=[...document.querySelectorAll('[data-hold]')];
-let t=20,steer=0,shot=-1,rate=1,last=performance.now(),busy=false;
+let t=20,steer=0,shot=-1,rocket=-1,animation=20,rate=1,last=performance.now(),busy=false;
 function resetInput(){held.clear();controls.forEach(b=>b.classList.remove('held'));last=performance.now();}
 function togglePause(){paused=!paused;resetInput();translate();}
 pause.onclick=togglePause;
 $('#fire').onclick=()=>{if(!paused)shot=t;};
-$('#turn').onclick=()=>{t=38.4;shot=-1;paused=false;resetInput();translate();};
+$('#rocket').onclick=()=>{if(!paused)rocket=t;};
+$('#turn').onclick=()=>{t=38.4;shot=-1;rocket=-1;paused=false;resetInput();translate();};
 function hold(action,down){
     if(down)held.add(action);else held.delete(action);
     controls.forEach(el=>el.classList.toggle('held',held.has(el.dataset.hold)));
@@ -41,6 +42,7 @@ window.addEventListener('keydown',e=>{
     if(e.altKey||e.ctrlKey||e.metaKey||e.defaultPrevented)return;
     if(keys[e.key]){e.preventDefault();hold(keys[e.key],true);}
     else if(e.code==='Space'&&!e.target.closest('button,a')){e.preventDefault();if(!e.repeat&&!paused)shot=t;}
+    else if(e.code==='KeyR'&&!e.repeat&&!paused)rocket=t;
     else if(e.code==='KeyP'&&!e.repeat&&ready)togglePause();
 });
 window.addEventListener('keyup',e=>{if(keys[e.key])hold(keys[e.key],false);});
@@ -62,9 +64,9 @@ function tick(now){
         const direction=Number(held.has('right'))-Number(held.has('left'));
         steer+=(direction*3.2-steer)*(1-Math.exp(-9*dt));
         rate+=((held.has('boost')?2.3:1)-rate)*(1-Math.exp(-3*dt));
-        if(!paused&&ready)t+=dt*rate;
-        if(t>=48){t%=48;shot=-1;}
-        if(!busy){busy=true;worker.postMessage({t,steer,shot});}
+        if(!paused&&ready){t+=dt*rate;animation+=dt;}
+        if(t>=48){t%=48;shot=-1;rocket=-1;}
+        if(!busy){busy=true;worker.postMessage({t,steer,shot,rocket,boost:(rate-1)/1.3,animation});}
     }
     requestAnimationFrame(tick);
 }
