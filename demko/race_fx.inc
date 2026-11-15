@@ -33,24 +33,6 @@ void lightBays(){
         for(int j=0;j<4;j++)box(x-2.82+j*1.40,1.86,z+.85,.75,.07,.21,{147,155,165},{48,52,68});
     }
 }
-double castShadow(double wx,double wz,int gate,double shipX,double shipY) const{
-    // Trace from the water toward the key light. Intersect the wing plane and the gantry.
-    double divisor=bankCos-.52*bankSin;
-    if(divisor>.025){
-        double travel=(shipY*bankCos+(wx-shipX)*bankSin)/divisor;
-        double sx=(wx+.52*travel-shipX)/bankCos,sz=wz-.88*travel-(cz+chaseLag+6.4);
-        if(travel>0 && sz>=-1.35 && sz<2.35){
-            double wing=sz<-.91?.65+(sz+1.35)*2.04:1.55*(2.35-sz)/3.26;
-            double opacity=ease((wing-std::abs(sx)+.09)/.2)*ease((sz+1.35)/.14);
-            if(opacity>0)return .56*opacity;
-        }
-    }
-    const double gz=24*gate+23, travel=(wz-gz)/.88;
-    if(travel<=0 || travel>7.5)return 0;
-    double gx=((gate%2==0?7.8:-7.8)*widthFactor),hitX=wx+travel*.52;
-    if(std::abs(hitX-gx)<.25 || (travel>6.85 && travel<7.25 && hitX*gx>0 && std::abs(hitX-gx)<3.4))return .71;
-    return 0;
-}
 void atmosphere(){
     if(stage<8)return;
     // Integrate the shaft cross-section along each view ray up to the opaque surface.
@@ -214,7 +196,7 @@ void motionBlur(){
 // Rival craft enter from opposite shoulders, settle into lanes, then get passed.
 std::vector<V> jetLights;
 void fleet(bool lightsOnly=false){
-    if(!mirror)jetLights.clear();
+    if(!mirror && !casting)jetLights.clear();
     if(stage<13)return;
     double pass=reveal(16,.85),warp=reveal(17,.30);
     int count=stage>=16?5:2;
@@ -230,7 +212,7 @@ void fleet(bool lightsOnly=false){
         double drift=.43*std::sin(2.4*age+j*2);
         double x=cx+lane*arrive+side*(3.6-1.5*arrive)*(1-arrive)+drift;
         double y=(j==0?3.1:j==1?4.05:2.85+.65*(j-2))+.21*std::sin(2.7*age+j);
-        if(!mirror)jetLights.push_back({x,y-.13,z-1.3});
+        if(!mirror && !casting)jetLights.push_back({x,y-.13,z-1.3});
         if(lightsOnly)continue;
         double lean=-turnBank*.76-.22*std::cos(2.4*age+j*2);
         double cs=std::cos(lean),sn=std::sin(lean);
@@ -247,6 +229,7 @@ void fleet(bool lightsOnly=false){
             tri(intake,p(flank*.87,.10,-.75),exhaust,{54,65,89});
             tri(intake,exhaust,p(flank*.50,.10,-.85),paint);
             tri(p(flank*.69,.21,-.33),p(flank*.74,.19,-.46),p(flank*.62,.22,-.46),{246,222,152});
+            if(casting)continue;
             tri(p(flank*.52-.10,.08,-1.14),p(flank*.52+.1,.08,-1.14),p(flank*.52,.04,-1.8),{231,255,246});
             double trail=reveal(14,.24);
             if(trail<=0)continue;
@@ -261,7 +244,7 @@ void fleet(bool lightsOnly=false){
         }
         tri(p(-.20,.29,.06),p(.20,.29,.06),p(0,.40,.82),{25,42,63});
     }
-    if(lightsOnly || warp<=0 || t<cue.end[17])return;
+    if(casting || lightsOnly || warp<=0 || t<cue.end[17])return;
     // The finish aperture has a fixed world position. Its layers sweep over the camera.
     double z=route(cue.room-.23)+6.4;
     for(int layer=0;layer<5;layer++){

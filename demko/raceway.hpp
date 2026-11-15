@@ -47,7 +47,9 @@ double dodge(double t){return ease((t-cue.pass+.66)/.64)*(1-ease((t-cue.pass-.28
 #include "lighting.h"
 struct Point{double x,y,iz;};
 struct Frame{
-    double t,cz,cx,cy,roll,focus,chaseLag,roadX,heading,turnBank,anim,bank,bankSin,bankCos,widthFactor,pilot,boost;int stage;bool mirror=false;
+    double t,cz,cx,cy,roll,focus,chaseLag,roadX,heading,turnBank,anim,bank,bankSin,bankCos,widthFactor,pilot,boost;int stage;bool mirror=false,casting=false;
+    V toKey{};
+    std::vector<uint8_t> shadow;
     std::vector<uint8_t> rgb=std::vector<uint8_t>(W*H*3);
     std::vector<float> depths=std::vector<float>(W*H);
     Frame(double time,int s,double steering=0,double thrust=-1,double animation=-1):t(time),stage(s){
@@ -75,6 +77,25 @@ struct Frame{
     }
     void pixel(int i,C c){for(int j=0;j<3;j++)rgb[3*i+j]=std::clamp(c[j],0,255);}
     void tri(V a,V b,V c,C color){
+        if(casting){
+            // Clip submerged faces before projecting them onto the receiver.
+            V in[3]={a,b,c},out[4];int n=0;
+            for(int i=0;i<3;i++){
+                V u=in[i],v=in[(i+1)%3];
+                if(u.y>0)out[n++]=u;
+                if((u.y>0)!=(v.y>0))out[n++]=u+(v-u)*(u.y/(u.y-v.y));
+            }
+            for(int i=0;i<n;i++){
+                V &p=out[i];
+                double receiverZ=p.z-toKey.z*p.y;
+                p={p.x+bend(p.z)-toKey.x*p.y-bend(receiverZ),0,receiverZ};
+            }
+            for(int j=1;j+1<n;j++)clipTriangle(out[0],out[j],out[j+1],color);
+            return;
+        }
+        clipTriangle(a,b,c,color);
+    }
+    void clipTriangle(V a,V b,V c,C color){
         // Clip in camera space, including towers passing beside the camera.
         V in[3]={a,b,c},out[4];int n=0;
         for(int i=0;i<3;i++){
@@ -93,6 +114,7 @@ struct Frame{
             double p=edge(b,c,x+.5,y+.5)/area,q=edge(c,a,x+.5,y+.5)/area,r=1-p-q;
             if(p<0||q<0||r<0)continue;
             double iz=p*a.iz+q*b.iz+r*c.iz;int i=y*W+x;
+            if(casting){shadow[i]=255;continue;}
             if(iz<=depths[i])continue;
             depths[i]=iz;pixel(i,color);
         }
@@ -190,6 +212,7 @@ struct Frame{
             quad({x+.44,.7,z-.035},{x+.94,.7,z-.035},{x+.51,4.9,z-.035},{x,4.9,z-.035},{193,117,76});
         }
         box(edge,5.65,z-.08,9.5,.11,.12,{255,187,109},{215,126,78});
+        if(casting)return;
         // Hot particles shed by the moving track, viewed directly and in the canal.
         for(int j=0;j<36;j++){
             double life=std::fmod(std::max(0.,t-cue.pass+.69)*1.9+random01(45+j),1.);
@@ -217,7 +240,7 @@ struct Frame{
     void ship(){
         double x=cx+.52*pilot+.65*std::sin(t*pi/4)-1.85*dodge(t),y=1.95+.18*std::sin(t*pi/2);
         auto p=[&](double sx,double sy,double sz){return V{x+sx*std::cos(bank)-sy*std::sin(bank),y+sy*std::cos(bank)+sx*std::sin(bank),cz+chaseLag+6.4+sz};};
-        wake(x,y,bank);
+        if(!casting)wake(x,y,bank);
         V nose=p(0,.29,2.35),base=p(0,.10,-1.15),spine=p(0,.53,.25);
         for(int side:{-1,1}){
             V wing=p(side*1.55,-.09,-.91),mid=p(side*.53,.07,.54),tail=p(side*.56,.08,-1.12);
@@ -229,6 +252,7 @@ struct Frame{
             }
             tri(wing,p(side*1.24,.0,-.62),p(side*.7,.12,.16),{254,209,121});
             tri(tail,p(side*.8,.07,-1.35),p(side*.74,.53,-1.44),{194,87,65});
+            if(casting)continue;
             V a=p(side*.57-.15,.0,-1.19),b=p(side*.57+.15,.0,-1.19);
             tri(a,b,p(side*.57,-.01,-(1.85+.62*boost)-.13*std::sin(anim*5*pi)),{62,214,255});
             tri(a,b,p(side*.57,.03,-1.55),{231,255,252});
@@ -255,34 +279,52 @@ struct Frame{
     }
     std::vector<uint8_t> draw(){
         double sunX=305-cx*.6-126*heading,sunY=77;
-        for(int y=0;y<H;y++)for(int x=0;x<W;x++){
+        auto skyAt=[&](double x,double y){
             double dx=(x-W*.5)*300/H+240-sunX,dy=y*300./H-sunY,dist=std::sqrt(dx*dx+dy*dy);
             C color=mix({17,27,62},{174,101,121},(double)y/(145*H/300.));
             color=mix(color,{255,192,118},.34*std::exp(-dist/54));
             if(dist<25)color=mix({255,226,164},{237,143,117},(dy+25)/50);
             double ring=std::abs(std::sqrt(std::pow((dx+.46*dy)/49,2)+std::pow((dy-.25*dx)/5.8,2))-1);
             if(ring<.14 && (dy>0||dist>25))color={241,205,155};
-            if(y<96*H/300. && random01(x*3811+y*1993)>.999)color={207,213,227};
-            pixel(y*W+x,stage==0?C{17,24,37}:color);
-        }
-        if(stage==0)return rgb;
+            if(y<96*H/300. && random01(int(x)*3811+int(y)*1993)>.999)color={207,213,227};
+            return color;
+        };
+        if(stage==0){for(int i=0;i<W*H;i++)pixel(i,{17,24,37});return rgb;}
+        for(int y=0;y<H;y++)for(int x=0;x<W;x++)pixel(y*W+x,skyAt(x,y));
         auto sky=rgb;
+        const double normalSq=1+roll*roll;
         if(stage>=3){
-            mirror=true;skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet();ship();depthFog();fadeHorizon(sky);mirror=false;
+            // Reflect view rays about the rolled water horizon before adding mirrored meshes.
+            for(int y=0;y<H;y++)for(int x=0;x<W;x++){
+                double drop=y-H*.43-roll*(x-W*.5);
+                if(drop< -10)continue;
+                int xx=std::lround(x+2*roll*drop/normalSq),yy=std::lround(y-2*drop/normalSq);
+                if(xx>=0 && xx<W && yy>=0 && yy<H)
+                    std::copy_n(&sky[3*(yy*W+xx)],3,&rgb[3*(y*W+x)]);
+                else pixel(y*W+x,skyAt(xx,yy));
+            }
+            auto mirrorSky=rgb;
+            mirror=true;skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet();ship();depthFog();fadeHorizon(mirrorSky);mirror=false;
+        }
+        if(stage>=6){
+            // Unproject the centre of the bright disk to set one key direction for every caster.
+            double u=(sunX-240)*H/300./focus, v=(.43*H-sunY*H/300.)/focus;
+            double elevation=(v+roll*u)/normalSq;
+            toKey={(u-roll*v)/(normalSq*elevation),1,1/elevation};
+            shadow.assign(W*H,0);
+            casting=true;skyline();rings();lightBays();lockGate();fleet();ship();casting=false;
         }
         auto reflected=rgb;rgb=sky;
-        const double shipX=shipCenter(t),shipY=1.95+.18*std::sin(t*pi/2);
         std::fill(depths.begin(),depths.end(),0);
         for(int y=0;y<H;y++)for(int x=0;x<W;x++){
             double below=(y-H*.43)-roll*(x-W*.5);
             if(below<=0)continue;
-            double z=cy*focus/below;
+            double z=cy*focus*normalSq/below;
             double phase=(cz+z)*.73+t*pi+4*std::sin(x*.027+t*pi/12);
             int ripple=std::clamp(int(std::round(std::sin(phase)*below*.075)), -7,7);
             int i=y*W+x,j=(y*W+std::clamp(x+ripple,0,W-1))*3;
             C sample={reflected[j],reflected[j+1],reflected[j+2]};
             C water=mix({24,47,70},sample,stage>=3?.65:.08);
-            if(stage>=3 && std::abs((x-W*.5)*300/H+240-sunX-4*std::sin(phase))<3+below*.047 && std::sin(phase)>.38)water=mix(water,{251,182,123},.36);
             if(stage>=3){
                 double wave=std::sin((cz+z)*2.1+t*pi+x*.022+.54*std::sin(x*.11+(cz+z)*.4));
                 double crest=std::max(0.,wave-.73)*std::min(.48,below*.0045);
@@ -290,10 +332,12 @@ struct Frame{
             }
             if(stage==1 && (std::fmod(cz+z,3)<std::min(.42,.07*z/8) || std::fmod(std::abs(cx+(x-W*.5)*z/focus),3)<.06))water={79,145,161};
             if(stage>=6){
-                double wz=cz+z,wx=cx+(x-W*.5)*z/focus+roll*cy-bend(wz);
-                int gate=int(std::floor((wz-23)/24));
-                double shade=castShadow(wx,wz,gate,shipX,shipY);
-                water=mix(mix(water,{133,159,162},.19),{9,18,41},shade);
+                int left=std::max(0,x-1),right=std::min(W-1,x+1);
+                int above=std::max(0,y-1),under=std::min(H-1,y+1);
+                double shade=(4*shadow[i]+shadow[y*W+left]+shadow[y*W+right]+shadow[above*W+x]+shadow[under*W+x])/(8.*255);
+                // The shadow removes direct illumination. Reflected sky still reaches the eye.
+                water=mix(water,{133,159,162},.19*(1-shade));
+                water=mix(water,{9,18,41},.24*shade);
             }
             pixel(i,water);depths[i]=1/z;
         }
