@@ -213,7 +213,7 @@ void motionBlur(){
 
 // Rival craft enter from opposite shoulders, settle into lanes, then get passed.
 std::vector<V> jetLights;
-void fleet(){
+void fleet(bool lightsOnly=false){
     if(!mirror)jetLights.clear();
     if(stage<13)return;
     double pass=reveal(16,.85),warp=reveal(17,.30);
@@ -231,6 +231,7 @@ void fleet(){
         double x=cx+lane*arrive+side*(3.6-1.5*arrive)*(1-arrive)+drift;
         double y=(j==0?3.1:j==1?4.05:2.85+.65*(j-2))+.21*std::sin(2.7*age+j);
         if(!mirror)jetLights.push_back({x,y-.13,z-1.3});
+        if(lightsOnly)continue;
         double lean=-turnBank*.76-.22*std::cos(2.4*age+j*2);
         double cs=std::cos(lean),sn=std::sin(lean);
         auto p=[&](double u,double v,double w){return V{x+1.2*(u*cs-v*sn),y+1.2*(u*sn+v*cs),cz+z+w};};
@@ -242,6 +243,10 @@ void fleet(){
             tri(nose,root,canopy,flank<0?C{43,56,75}:C{88,103,122});tri(root,tip,jet,paint);
             tri(root,jet,keel,{43,52,75});tri(root,canopy,keel,{52,65,81});
             tri(tip,p(flank*.93,.46,-.78),jet,light);
+            V intake=p(flank*.65,.14,.62),exhaust=p(flank*.65,.24,-.88);
+            tri(intake,p(flank*.87,.10,-.75),exhaust,{54,65,89});
+            tri(intake,exhaust,p(flank*.50,.10,-.85),paint);
+            tri(p(flank*.69,.21,-.33),p(flank*.74,.19,-.46),p(flank*.62,.22,-.46),{246,222,152});
             tri(p(flank*.52-.10,.08,-1.14),p(flank*.52+.1,.08,-1.14),p(flank*.52,.04,-1.8),{231,255,246});
             double trail=reveal(14,.24);
             if(trail<=0)continue;
@@ -256,7 +261,7 @@ void fleet(){
         }
         tri(p(-.20,.29,.06),p(.20,.29,.06),p(0,.40,.82),{25,42,63});
     }
-    if(warp<=0 || t<cue.end[17])return;
+    if(lightsOnly || warp<=0 || t<cue.end[17])return;
     // The finish aperture has a fixed world position. Its layers sweep over the camera.
     double z=route(cue.room-.23)+6.4;
     for(int layer=0;layer<5;layer++){

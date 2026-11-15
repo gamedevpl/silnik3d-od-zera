@@ -298,6 +298,6 @@ struct Frame{
             pixel(i,water);depths[i]=1/z;
         }
         auto background=rgb;
-        skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet();depthFog();fadeHorizon(background);canalMist();atmosphere();motionBlur();ship();return rgb;
+        skyline();rings();lightBays();lockGate();boltTrails();pulseTarget();warpTube();fleet(true);depthFog();fadeHorizon(background);canalMist();atmosphere();motionBlur();fleet();ship();return rgb;
     }
 };
