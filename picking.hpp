@@ -34,12 +34,14 @@ inline std::optional<double> boxHit(Ray ray, Vec3 low, Vec3 size) {
 inline Vec3 offset(Vec3 a, Vec3 b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 
 inline int pick(const Layout& nodes, const Models& models, Ray ray) {
+    double closest = lens::farPlane;
     int selected = -1;
     for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
         const auto& node = nodes[i];
         for (const auto& part : models.at(node.model)) {
             auto hit = boxHit(ray, offset(node.position, part.low), part.size);
-            if (hit) {
+            if (hit && *hit < closest) {
+                closest = *hit;
                 selected = i;
             }
         }
