@@ -1,40 +1,52 @@
-# Neonowy kanał
+# Neon Canal
 
-[Zagraj w Neon Grand Prix](https://gamedevpl.github.io/silnik3d-od-zera/demko/).
+[Play Neon Grand Prix in your browser](https://gamedevpl.github.io/silnik3d-od-zera/demko/).
 
-Siedem statków startuje na torze o długości 1152 jednostek. Wyścig trwa przez kolejne okrążenia. Pozycja zależy od łącznego przebytego dystansu, a gra zapisuje najlepszy czas pełnego okrążenia w przeglądarce.
+Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
-Możesz wyprzedzać po obu stronach. Tuż za rywalem dostajesz premię do prędkości i szybciej ładujesz dopalacz. Zielone strzałki dają krótki zryw i odnawiają osłonę. Działko i rakiety spowalniają rywali i niszczą pomarańczowe miny. Kontakt z bandą kosztuje prędkość. Po utracie osłony statek zwalnia na naprawę i wraca do wyścigu.
+Tuck in behind a rival to gain speed and recharge your boost, then pull out to pass on either side. Green boost pads give you a burst of speed and restore one shield point. Use the cannon or rockets to slow rivals and clear orange mines. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
 
-| Sterowanie | Akcja |
+| Control | Action |
 | --- | --- |
-| ← → lub A/D | Skręt |
-| ↑ lub W | Dopalacz |
-| ↓ lub S | Hamulec aerodynamiczny, ciaśniejszy skręt |
-| Spacja / R | Działko / rakieta |
-| P lub Esc | Pauza i wznowienie |
+| ← → or A / D | Steer |
+| ↑ or W | Boost |
+| ↓ or S | Apply the airbrake for a tighter turn |
+| Space / R | Fire the cannon / launch a rocket |
+| P or Esc | Pause or resume |
 
-Na telefonie można trzymać skręt i dopalacz dwoma palcami. Start uruchamia oryginalną muzykę 150 BPM z filmu *I have a vibe, for a new game*. Po pierwszych 48 sekundach powtarza się fragment od 16. do 48. sekundy. Silnik i efekty reagują na grę niezależnie od muzyki.
+On a touchscreen, hold steer and boost with two fingers. The game opens in English. Select **PL** in the browser to switch to Polish.
 
-## Kod
+Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. Engine and weapon sounds respond to your inputs independently of the music.
 
-- [Modele statków, pasy i geometria toru w C++](demo.cpp)
-- [Fizyka wyścigu, rywale i kolizje](race.hpp)
-- [WebGL i zapasowy widok Canvas 2D](../docs/demko/renderer.js)
-- [Sterowanie i interfejs](../docs/demko/app.js)
-- [Odtwarzanie muzyki i synteza efektów](../docs/demko/audio.js)
+## Source code
 
-Ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Skrypt kompiluje symulację i geometrię do jednego modułu WebAssembly. Generuje też z tego samego C++ awaryjną wersję symulacji dla przeglądarek z wyłączonym WebAssembly. Wymaga do tego narzędzia `wasm2js` z Binaryen 133 w PATH (lub ścieżki w `WASM2JS`). Gotowy moduł gry jest w `docs/demko/flight.wasm`. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.
+- [Ship models, lane markings and track geometry in C++](demo.cpp)
+- [Race physics, rival pilots and collisions in C++](race.hpp)
+- [WebGL renderer and Canvas 2D fallback](../docs/demko/renderer.js)
+- [Browser controls and HUD](../docs/demko/app.js)
+- [Music playback and synthesized sound effects](../docs/demko/audio.js)
 
-## Wersja natywna na macOS
+## Run or build the browser version
 
-Na Macu z Metal i macOS 13 lub nowszym zbuduj aplikację z katalogu głównego repozytorium. Kompilacja wymaga Apple Command Line Tools.
+To play locally, serve the prebuilt files from the repository root and open [the local game](http://localhost:8000/demko/).
+
+```sh
+python3 -m http.server --directory docs 8000
+```
+
+To rebuild, point `WASI_SDK_PATH` at WASI SDK 34. Put Binaryen 133’s `wasm2js` on your `PATH` or set `WASM2JS` to its executable. Then run `./demko/build.sh`. The script compiles the simulation and geometry into `docs/demko/flight.wasm`. It also generates a JavaScript version of the same C++ simulation for browsers with WebAssembly disabled.
+
+Run `node --test demko/tests/endless.mjs` to check both browser builds against five laps recorded before the simulation moved to C++.
+
+## Native macOS version
+
+Building requires macOS 13 or later, a Metal-capable GPU and Apple’s Command Line Tools. Run these commands from the repository root.
 
 ```sh
 ./demko/macos/build.sh
-open 'build/macos/Neonowy kanał.app'
+open 'build/macos/Neon Canal.app'
 ```
 
-Enter rozpoczyna wyścig. Sterowanie jest takie jak w tabeli powyżej, a M przełącza dźwięk. Aplikacja zawiera muzykę, działa offline i zapisuje rekord lokalnie. Używa tej samej symulacji wyścigu i tych samych modeli C++ co wersja WWW. Reguły wyścigu są w [race.hpp](race.hpp), za grafikę odpowiada Metal, a za dźwięk AVFoundation.
+Press **Return** to start. The keyboard controls above also work on Mac, and **M** toggles sound. To switch languages, open the application menu and choose **Polski** or **English**.
 
-Test porównujący pięć okrążeń z wersją sprzed przeniesienia reguł do C++ uruchom przez `node --test demko/tests/endless.mjs`. Testuje oba warianty przeglądarkowe.
+The app runs offline, includes the soundtrack and saves your best lap locally. It shares the browser version’s C++ simulation and ship models, with Metal for graphics and AVFoundation for audio.

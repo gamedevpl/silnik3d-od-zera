@@ -3,7 +3,9 @@
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>pl.gamedev.neoncanal</string>
 <key>CFBundleExecutable</key><string>NeonCanal</string>
-<key>CFBundleName</key><string>Neonowy kanał</string>
+<key>CFBundleName</key><string>Neon Canal</string>
+<key>CFBundleDisplayName</key><string>Neon Canal</string>
+<key>CFBundleDevelopmentRegion</key><string>en</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>1</string>
 <key>CFBundleShortVersionString</key><string>1.0</string>

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-app="${1:-$here/../../build/macos}/Neonowy kanał.app"
+app="${1:-$here/../../build/macos}/Neon Canal.app"
 contents="$app/Contents"
 mkdir -p "$contents/MacOS" "$contents/Resources"
 xcrun clang++ -std=c++20 -O2 -fobjc-arc -mmacosx-version-min=13.0 \

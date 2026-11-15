@@ -3,9 +3,15 @@
 #include "Graphics.hpp"
 #include "Sound.hpp"
 
+static bool polish() {
+    return [[NSUserDefaults.standardUserDefaults stringForKey:@"gameLanguage"] isEqualToString:@"pl"];
+}
+static NSString *localized(NSString *english, NSString *pl) { return polish() ? pl : english; }
+
 @interface RaceView : MTKView <MTKViewDelegate>
 - (void)toggleRace;
 - (void)pauseRace;
+- (void)updateLanguage;
 @end
 @implementation RaceView {
     neon::Race race;
@@ -29,16 +35,16 @@
     NSError *error = nil;
     if (!device || !graphics.setup(self, &error)) {
         NSAlert *alert = [NSAlert new];
-        alert.messageText = @"Nie udało się uruchomić Metal";
-        alert.informativeText = error.localizedDescription ?: @"Gra wymaga GPU obsługującego Metal.";
+        alert.messageText = localized(@"Metal could not start", @"Nie udało się uruchomić Metal");
+        alert.informativeText = error.localizedDescription
+                                    ?: localized(@"The game requires a Metal-capable GPU.",
+                                                 @"Gra wymaga GPU obsługującego Metal.");
         [alert runModal];
         return nil;
     }
     best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLap"];
     hud = [self label:16];
     hint = [self label:16];
-    hint.stringValue = @"← →  skręt     ↑  dopalacz     ↓  hamulec\nSpacja  działko     R  rakieta     "
-                       @"M  dźwięk     P  pauza";
     hint.alignment = NSTextAlignmentCenter;
     play = [NSButton buttonWithTitle:@"Start   ↵" target:self action:@selector(toggleRace)];
     play.bezelStyle = NSBezelStyleRounded;
@@ -47,7 +53,7 @@
     self.delegate = self;
     self.enableSetNeedsDisplay = YES;
     self.paused = YES;
-    [self updateHUD];
+    [self updateLanguage];
     return self;
 }
 - (NSTextField *)label:(CGFloat)size {
@@ -77,16 +83,29 @@
 - (BOOL)acceptsFirstResponder {
     return YES;
 }
+- (void)updateLanguage {
+    self.window.title = localized(@"Neon Canal", @"Neonowy kanał");
+    hint.stringValue =
+        localized(@"← →  steer     ↑  boost     ↓  airbrake\nSpace  cannon     R  rocket     M  sound  "
+                  @"   P  pause",
+                  @"← →  skręt     ↑  dopalacz     ↓  hamulec\nSpacja  działko     R  rakieta     "
+                  @"M  dźwięk     P  pauza");
+    play.title = started ? localized(@"Resume   ↵", @"Wznów   ↵") : @"Start   ↵";
+    [self updateHUD];
+}
 - (void)updateHUD {
     NSString *time = best > 0 ? [NSString stringWithFormat:@"%.2f s", best] : @"—";
-    hud.stringValue =
-        [NSString stringWithFormat:@"  %d / 7     OKR %d     OSŁONA %d / 3     RAKIETY %d\n  Dopalacz "
-                                   @"%.0f%%     Rekord %@%@%@",
-                                   race.rank, race.laps + 1, race.shield, race.rockets, race.energy,
-                                   time, race.drafting ? @"     W smudze" : @"",
-                                   started && !audioOK ? @"     Brak wyjścia audio"
-                                   : sound.muted       ? @"     Wyciszono"
-                                                       : @""];
+    hud.stringValue = [NSString
+        stringWithFormat:localized(@"  %d / 7     LAP %d     SHIELD %d / 3     ROCKETS %d\n  Boost "
+                                   @"%.0f%%     Best lap %@%@%@",
+                                   @"  %d / 7     OKR %d     OSŁONA %d / 3     RAKIETY %d\n  Dopalacz "
+                                   @"%.0f%%     Rekord %@%@%@"),
+                         race.rank, race.laps + 1, race.shield, race.rockets, race.energy, time,
+                         race.drafting ? localized(@"     Slipstream", @"     W smudze") : @"",
+                         started && !audioOK
+                             ? localized(@"     No audio output", @"     Brak wyjścia audio")
+                         : sound.muted ? localized(@"     Muted", @"     Wyciszono")
+                                       : @""];
 }
 - (void)toggleRace {
     if (running) {
@@ -113,7 +132,7 @@
     running = false;
     std::fill_n(keys, 128, false);
     sound.pause();
-    play.title = @"Wznów   ↵";
+    play.title = localized(@"Resume   ↵", @"Wznów   ↵");
     hint.hidden = NO;
     play.hidden = NO;
     self.paused = YES;
@@ -184,14 +203,31 @@
 @property(strong) NSWindow *window;
 @end
 @implementation CanalApp
+- (void)refreshMenu {
+    NSMenu *menu = NSApp.mainMenu.itemArray.firstObject.submenu;
+    [menu removeAllItems];
+    NSMenuItem *language = [menu addItemWithTitle:localized(@"Polski", @"English")
+                                           action:@selector(switchLanguage:)
+                                    keyEquivalent:@""];
+    language.target = self;
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:localized(@"Quit Neon Canal", @"Zakończ grę")
+                    action:@selector(terminate:)
+             keyEquivalent:@"q"];
+}
+- (void)switchLanguage:(id)sender {
+    [NSUserDefaults.standardUserDefaults setObject:polish() ? @"en" : @"pl" forKey:@"gameLanguage"];
+    [(RaceView *)self.window.contentView updateLanguage];
+    [self refreshMenu];
+}
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     auto menu = [NSMenu new];
     auto appMenu = [NSMenu new];
     auto item = [NSMenuItem new];
     item.submenu = appMenu;
     [menu addItem:item];
-    [appMenu addItemWithTitle:@"Zakończ grę" action:@selector(terminate:) keyEquivalent:@"q"];
     NSApp.mainMenu = menu;
+    [self refreshMenu];
     NSRect rect = NSMakeRect(0, 0, 1024, 640);
     auto w = [[NSWindow alloc]
         initWithContentRect:rect
@@ -200,7 +236,7 @@
                     backing:NSBackingStoreBuffered
                       defer:NO];
     self.window = w;
-    w.title = @"Neonowy kanał";
+    w.title = localized(@"Neon Canal", @"Neonowy kanał");
     w.contentMinSize = NSMakeSize(530, 320);
     w.delegate = self;
     w.releasedWhenClosed = NO;

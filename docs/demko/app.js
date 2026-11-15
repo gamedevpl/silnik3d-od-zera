@@ -3,9 +3,11 @@ import {loadRace} from './race.js?v=core1';
 import {Sound} from './audio.js?v=grid2';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
-const labels=[...document.querySelectorAll('[data-en]')].map(el=>[el,el.textContent]);
+const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
+const englishTitle=document.title;
 const keys=new Set(),touch=new Set(),sound=new Sound();
 const words={
+ course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
  brief:['Sześciu rywali. Jedź w smudze za statkiem, a przed zakrętem wyjdź z niej na dopalaczu. Zielone strzałki dodają prędkości.','Six rivals. Slipstream behind a ship, then boost past it before the bend. Green chevrons give you a burst of speed.'],
  loading:['Ładowanie…','Loading…'],start:['Start','Start'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],
  paused:['Pauza','Paused'],
@@ -19,7 +21,7 @@ const save=(k,v)=>{try{localStorage.setItem(k,v);}catch{}};
 const simulation=await loadRace();
 const {reset,advance,shoot,LAP}=simulation;
 screen.dataset.simulation=simulation.backend;
-let en=read('lang')==='en',mode='loading',race=reset(),draw,flash='',flashUntil=0,last=0;
+let en=read('neon.lang')!=='pl',mode='loading',race=reset(),draw,flash='',flashUntil=0,last=0;
 let best=Number(read('neon.lap.v2'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
@@ -46,7 +48,11 @@ function updateRadar(){
  race.rivals.forEach((p,i)=>{const dz=p.z-race.distance;plot(dots[i+1],p.x,dz-LAP*Math.round(dz/LAP));});
 }
 function panel(){
- labels.forEach(([e,pl])=>e.textContent=en?e.dataset.en:pl);document.documentElement.lang=en?'en':'pl';
+ labels.forEach(([el,english])=>el.textContent=en?english:el.dataset.pl);
+ $('canvas').setAttribute('aria-label',tr('course'));
+ for(const dir of ['left','right'])$(`[data-hold="${dir}"]`).setAttribute('aria-label',tr(dir));
+ document.documentElement.lang=en?'en':'pl';
+ document.title=en?englishTitle:'Neonowy kanał · Silnik 3D od zera';
  $('#lang').textContent=en?'PL':'EN';$('#lang').setAttribute('aria-label',en?'Polski':'English');
  $('#sound').textContent=tr(sound.muted?'muted':'sound');$('#sound').setAttribute('aria-pressed',String(!sound.muted));
  $('#pause').disabled=!['run','paused'].includes(mode);$('#pause').textContent=tr(mode==='paused'?'resume':'pause');
@@ -68,7 +74,7 @@ function start(){
  $('#start').blur();
 }
 $('#start').onclick=start;$('#pause').onclick=()=>mode==='run'?pause():start();
-$('#lang').onclick=()=>{en=!en;save('lang',en?'en':'pl');panel();};
+$('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
  sound.cue(k);
