@@ -1,0 +1,17 @@
+@font-face{font-family:Proxima;src:url(../fonts/ProximaNovaSemibold.woff2)}@font-face{font-family:Proxima;src:url(../fonts/ProximaNovaBold.woff2);font-weight:bold}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 40%,#242438 0,#10151b 68%);color:#f5ecd9;font:18px/1.4 Proxima,system-ui,sans-serif;min-height:100svh}
+main{max-width:min(940px,calc(132svh + 60px));margin:auto;padding:16px clamp(14px,3vw,42px) 25px}
+header,.heading,.controls,.wheel{display:flex;align-items:center;gap:10px}header,.heading{justify-content:space-between}
+header{border-bottom:1px solid #383a47;padding-bottom:10px}a{color:#76ebc7;text-decoration:none}a:hover{text-decoration:underline}
+h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.045em;margin:12px 0 8px}
+button{color:inherit;background:#222936;border:1px solid #414858;border-radius:8px;min-height:40px;padding:7px 15px;font:inherit;cursor:pointer;touch-action:manipulation;user-select:none}
+button:hover,button:focus-visible,a:focus-visible{outline:2px solid #79e5cb;outline-offset:2px}
+button:active,button.held{background:#9aded0;color:#162733}button:disabled{opacity:.55}
+#lang{min-height:32px;font-size:14px}#pause{font-size:15px}
+.screen{position:relative;aspect-ratio:8/5;border:3px solid #575167;border-radius:10px;background:#161b2c;box-shadow:0 12px 36px #0006;overflow:hidden}
+canvas,.screen img{position:absolute;width:100%;height:100%;image-rendering:pixelated}.screen canvas{visibility:hidden}.screen.ready canvas{visibility:visible}
+output{position:absolute;bottom:14px;left:14px;padding:5px 12px;border-radius:5px;color:white;background:#1b2032e8}output:empty{display:none}
+.controls{margin-top:14px;flex-wrap:wrap;gap:8px}.controls button{min-height:44px;touch-action:none}#turn{margin-left:auto;color:#ffd191}
+.keys{font-size:15px;color:#a7b1c0;margin:12px 0}.wheel{gap:5px}.wheel button{width:49px}
+@media(max-width:540px){main{padding:12px 10px}.controls button{font-size:15px;padding:8px 10px}.wheel button{width:42px}#turn{margin-left:0}}
