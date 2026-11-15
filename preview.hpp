@@ -9,7 +9,7 @@ struct Preview {
     int exhibit = -1;
 
     Layout& active(Layout& editor) {
-        return editor;
+        return running ? runtime : editor;
     }
     void play(Layout& editor, double time) {
         if (running) return;
