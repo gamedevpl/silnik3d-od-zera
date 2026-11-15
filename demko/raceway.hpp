@@ -45,6 +45,7 @@ double roadSlope(double z){
 }
 double dodge(double t){return ease((t-cue.pass+.66)/.64)*(1-ease((t-cue.pass-.28)/1.23));}
 #include "lighting.h"
+struct Vertex{float x,y,z; uint8_t r,g,b,a;};
 struct Point{double x,y,iz;};
 struct Frame{
     double t,cz,cx,cy,roll,focus,chaseLag,roadX,heading,turnBank,anim,bank,bankSin,bankCos,widthFactor,pilot,boost;int stage;bool mirror=false,casting=false;
@@ -76,7 +77,13 @@ struct Frame{
         return {W*.5+focus*(x+roll*y)/z,H*.43-focus*(y-roll*x)/z,1/z};
     }
     void pixel(int i,C c){for(int j=0;j<3;j++)rgb[3*i+j]=std::clamp(c[j],0,255);}
+    std::vector<Vertex>* geometry=nullptr;
+    bool block=false, simple=false;
     void tri(V a,V b,V c,C color){
+        if(geometry){
+            for(V p:{a,b,c})geometry->push_back({float(p.x),float(p.y),float(p.z),uint8_t(color[0]),uint8_t(color[1]),uint8_t(color[2]),255});
+            return;
+        }
         if(casting){
             // Clip submerged faces before projecting them onto the receiver.
             V in[3]={a,b,c},out[4];int n=0;
@@ -130,14 +137,15 @@ struct Frame{
     }
     void skyline(){
         if(stage<2)return;
-        int first=int(cz/8)-2;
-        for(int k=first;k<first+23;k++)for(int side:{-1,1})for(int lane=0;lane<2;lane++){
+        int first=int(cz/8)-(block?0:2);
+        for(int k=first;k<first+(block?3:23);k++)for(int side:{-1,1})for(int lane=0;lane<2;lane++){
             int id=((k%18+18)%18)*23+side*93+lane*43;
             double z=k*8+random01(id)*2.5, x=side*(12+8*(widthFactor-1)+lane*12+random01(id+7)*5);
             double w=2+random01(id+3)*3.8,h=4+random01(id+2)*(lane?28:16);
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
             box(x,0,z,w,h,4,dark,mix(dark,{17,21,48},.48));
+            if(simple)continue;
             box(x+.3,h,z+.35,w*.66,1.2,2.6,{67,63,90},{37,43,71});
             if(id%4==0)box(x+w*.5,h+1,z+1,.08,2.5,.1,light,light);
             for(int row=1;row<h-1;row+=2){
@@ -158,7 +166,7 @@ struct Frame{
     }
     void rings(){
         int first=int(cz/24);
-        for(int k=first;k<first+7;k++){
+        for(int k=first;k<first+(block?1:7);k++){
             double z=24*k+15,gateX=1.6*std::sin(k*pi/3);
             C metal={64,62,91},hot=stage<2?C{112,180,182}:C{255,135,67};
             auto v=[&](int j,double radius,double depth){
@@ -237,8 +245,9 @@ struct Frame{
             }
         }
     }
-    void ship(){
+    void ship(bool manual=false){
         double x=cx+.52*pilot+.65*std::sin(t*pi/4)-1.85*dodge(t),y=1.95+.18*std::sin(t*pi/2);
+        if(manual){x=pilot;y=1.85+.06*std::sin(anim*4);}
         auto p=[&](double sx,double sy,double sz){return V{x+sx*std::cos(bank)-sy*std::sin(bank),y+sy*std::cos(bank)+sx*std::sin(bank),cz+chaseLag+6.4+sz};};
         if(!casting)wake(x,y,bank);
         V nose=p(0,.29,2.35),base=p(0,.10,-1.15),spine=p(0,.53,.25);

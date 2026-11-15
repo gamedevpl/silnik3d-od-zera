@@ -2,11 +2,11 @@
 void lightBays(){
     if(stage<6)return;
     static const NeonCavity lightmap;
-    int first=int(cz/24)-1;
-    for(int k=first;k<first+9;k++){
+    int first=int(cz/24)-(block?0:1);
+    for(int k=first;k<first+(block?1:9);k++){
         double z=24*k+23;
         int side=(k%2==0)?1:-1;
-        double x=side*7.8*widthFactor;
+        double x=side*(block?10.3:7.8)*widthFactor;
         box(x-.22,0,z,.44,7.5,.6,{59,63,88},{38,42,68});
         double start=x-side*3.4;
         box(std::min(start,x),6.85,z,3.4,.30,.63,{54,56,78},{35,36,56});
@@ -15,9 +15,11 @@ void lightBays(){
         if(stage<7)continue;
         // Back-lit recessed bay and two ceiling emitters. The black ribs break up the spill.
         box(x-3.17,0,z+1,6.34,7.03,2.5,{32,33,54},{64,65,84});
-        for(int y=0;y<NeonCavity::rows;y++)for(int c=0;c<NeonCavity::cols;c++){
+        if(simple)continue;
+        int step=block?2:1;
+        for(int y=0;y<NeonCavity::rows;y+=step)for(int c=0;c<NeonCavity::cols;c+=step){
             double l=x-3+c*6./NeonCavity::cols,b=2.92+y*4./NeonCavity::rows;
-            double r=l+6./NeonCavity::cols,top=b+4./NeonCavity::rows;
+            double r=l+step*6./NeonCavity::cols,top=b+step*4./NeonCavity::rows;
             quad({l,b,z+.98},{r,b,z+.98},{r,top,z+.98},{l,top,z+.98},haze(lightmap.tex[y][c],z));
         }
         for(int sign:{-1,1}){

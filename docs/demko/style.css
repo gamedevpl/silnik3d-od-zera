@@ -15,3 +15,12 @@ output{position:absolute;bottom:14px;left:14px;padding:5px 12px;border-radius:5p
 .controls{margin-top:14px;flex-wrap:wrap;gap:8px}.controls button{min-height:44px;touch-action:none}#turn{margin-left:auto;color:#ffd191}
 .keys{font-size:15px;color:#a7b1c0;margin:12px 0}.wheel{gap:5px}.wheel button{width:49px}
 @media(max-width:540px){main{padding:12px 10px}.controls button{font-size:15px;padding:8px 10px}.wheel button{width:42px}#turn{margin-left:0}}
+.heading>div{white-space:nowrap}.heading>div button{font-size:15px;padding:7px 10px}
+.overlay{position:absolute;inset:0;background:#10172469;display:grid;place-items:center}.overlay[hidden],[hidden]{display:none!important}
+.card{width:min(84%,385px);padding:clamp(12px,3vw,24px);border-radius:10px;border:1px solid #697279;background:#14202bf5;text-align:center}
+.card h2{font-size:clamp(21px,4vw,32px);margin:0}.card p{font-size:clamp(15px,2vw,18px);margin:6px 0 11px}.card button{background:#86f2cf;color:#112823;font-weight:bold}
+.hud{position:absolute;inset:8px 9px auto;display:flex;justify-content:space-between;pointer-events:none;font:600 clamp(12px,2vw,17px)/1.4 Proxima,system-ui;color:white}
+.hud span,#flash:not(:empty){background:#111b29dd;border-radius:4px;padding:3px 7px}
+#shield{color:#ffc493}#gates{color:#91ffdf}#meter{position:absolute;left:10px;bottom:11px;width:26%;height:6px;background:#1c2636;border-radius:4px;overflow:hidden}#meter i{display:block;height:100%;width:100%;background:#6bedcd;transform-origin:left}
+#flash{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:white;font-size:clamp(12px,2vw,16px);white-space:nowrap;pointer-events:none}
+@media(max-width:540px){.heading h1{font-size:29px}.heading>div button{font-size:13px;padding:5px 7px}.controls{margin-top:9px}}
