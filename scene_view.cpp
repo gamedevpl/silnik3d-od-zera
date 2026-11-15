@@ -5,6 +5,7 @@
 #include "picking.hpp"
 #include "history.hpp"
 #include "preview.hpp"
+#include "floor_map.hpp"
 #include "instances_edit.hpp"
 #include <filesystem>
 #include <iostream>
@@ -17,6 +18,8 @@ struct Browser {
     Models models;
     Layout nodes;
     WorkshopView view;
+    FloorMap floorMap;
+    fs::path resources, lastPack;
     Preview preview;
     History history;
     int selected = -1;
@@ -41,6 +44,22 @@ struct Browser {
         dragging = false;
     }
 };
+
+static void openPackage(Browser& b, const fs::path& folder) {
+    std::ifstream in(folder/"models.boxes"), camera(folder/"camera.txt");
+    Models models=readModels(in);
+    auto eye=b.view.eye;
+    if (!(camera>>eye.yaw>>eye.radius) || !std::isfinite(eye.yaw) || eye.radius<3.2 || eye.radius>14)
+        throw std::runtime_error("Invalid package camera");
+    Browser fresh;
+    fresh.models=std::move(models);
+    fresh.open(folder/"exhibit.scene");
+    fresh.floorMap.load(folder);
+    if(b.floorMap.texture) glDeleteTextures(1,&b.floorMap.texture);
+    b.models=std::move(fresh.models); b.nodes=std::move(fresh.nodes); b.document=fresh.document;
+    b.floorMap=fresh.floorMap; b.resources=folder; b.view.eye=eye;
+    b.selected=-1; b.dragging=false; b.history={}; b.preview.stop();
+}
 
 static Ray mouseRay(Browser& b, int width, int height) {
     return cursorRay(b.mouseX, b.mouseY, width, height, b.view.eye.yaw, b.view.eye.radius);
@@ -89,6 +108,7 @@ static void mouseButton(GLFWwindow* w, int button, int action, int) {
 static void drawEditor(Browser& b, double aspect) {
     b.preview.tick(b.nodes,glfwGetTime());
     drawScene(worldLayout(b.preview.active(b.nodes)),b.models,b.view,aspect,b.selected);
+    for (const auto& n : b.nodes) if (n.model == "gallery") { b.floorMap.draw(b.view.eye,aspect); break; }
     if (b.selected >= 0 && !b.nodes[b.selected].parent) {
         glDisable(GL_DEPTH_TEST);
         b.view.drawBlock(b.handle(),b.handleSize,{1.f,.30f,.18f},aspect);
@@ -100,10 +120,18 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
     if (action != GLFW_PRESS) return;
     auto& b = *static_cast<Browser*>(glfwGetWindowUserPointer(w));
     try {
+        if (!b.preview.running && key>=GLFW_KEY_1 && key<=GLFW_KEY_5 && b.resources!=b.directory) {
+            std::ifstream lib(b.directory/"models.boxes"); b.models=readModels(lib);
+            b.floorMap.load(b.directory); b.resources=b.directory;
+        }
         if (key == GLFW_KEY_P) {
             if (b.preview.running) b.preview.stop();
             else if (!b.dragging) { b.selected=-1; b.preview.play(b.nodes,glfwGetTime()); }
         } else if (b.preview.running) return;
+        else if (key == GLFW_KEY_E) {
+            b.lastPack=exportGallery(b.nodes,b.view.eye.yaw,b.view.eye.radius,b.resources,fs::current_path());
+            glfwSetWindowTitle(w,("Export: "+b.lastPack.filename().string()).c_str()); return;
+        } else if (key == GLFW_KEY_F && !b.lastPack.empty()) openPackage(b,b.lastPack);
         else if (key == GLFW_KEY_LEFT) b.view.eye.move(-.1,0);
         else if (key == GLFW_KEY_RIGHT) b.view.eye.move(.1,0);
         else if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
@@ -134,10 +162,13 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
 int main(int argc, char** argv) {
     Browser b;
     b.directory = fs::path(ENGINE_ASSET_DIR) / "scenes";
+    b.resources=b.directory;
+    const bool package=argc>1 && fs::is_directory(argv[1]);
+    if (package) b.directory=b.resources=fs::path(argv[1]);
     try {
         std::ifstream models(b.directory / "models.boxes");
         b.models = readModels(models);
-        b.open(argc > 1 ? fs::path(argv[1]) : b.directory / "workshop.scene");
+        b.open(package ? b.directory/"exhibit.scene" : argc > 1 ? fs::path(argv[1]) : b.directory / "workshop.scene");
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
     if (!glfwInit()) return 1;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
@@ -148,6 +179,10 @@ int main(int argc, char** argv) {
     if (!w) { glfwTerminate(); return 1; }
     glfwMakeContextCurrent(w);
     if (!gladLoadGL(glfwGetProcAddress)) { glfwTerminate(); return 1; }
+    try {
+        if (package) openPackage(b,b.directory);
+        else b.floorMap.load(b.resources);
+    } catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; glfwTerminate(); return 1; }
     glfwSwapInterval(1);
     glfwSetWindowUserPointer(w,&b);
     glfwSetKeyCallback(w,input);

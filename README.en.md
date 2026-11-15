@@ -1,11 +1,11 @@
-# E20 · Play then return
+# E21 · Open the exported gallery
 
-Set the camera. Play, stop and repeat. Check X during motion and after returning to edit.
+Disconnect the source folder. Follow the material reference and verify the bitmap bytes in the package.
 
-`git clone -b e20-start https://github.com/gamedevpl/silnik3d-od-zera.git`
+`git clone -b e21-start https://github.com/gamedevpl/silnik3d-od-zera.git`
 
-`python3 check.py` · `preview.hpp` · `git diff origin/e20-solution -- preview.hpp`
+`python3 check.py` · `package.hpp` · `git diff origin/e21-solution -- package.hpp`
 
 Build the viewer with `cmake -S . -B build`, `cmake --build build --target scene-view`, `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). C++17, OpenGL, OpenAL, GLFW; Linux: X11 development headers.
 
-2 gallery · left/right orbit · P play/stop · P play again.
+2 gallery · E export · F open last package · scene-view gallery-pack-1
