@@ -1,22 +1,22 @@
-const horizon=.43, eye=3.65;
-const road=z=>4.5*Math.sin(z*.019)+3*Math.sin(z*.032+.8);
-const slope=z=>.0855*Math.cos(z*.019)+.096*Math.cos(z*.032+.8);
+import {visible,LAP,road,slope} from './race.js?v=grid2';
+const horizon=.43, eye=4.15;
+const colors=['#34e4d0','#f96198','#f6c547','#7d91ff','#d372f8','#88e26b'];
 function camera(s){
-    const z=s.distance-6.4;
-    return [s.x*.53+road(z),z,slope(z),s.lean*.12];
+ const z=s.distance-s.laps*LAP-9.2;
+ return [s.x*.87+road(z),z,slope(z),s.lean*.15];
 }
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;
 uniform vec4 cam;uniform vec2 scale;uniform float moving,pass;
 varying vec3 color;varying float depth,alt;
-float road(float z){return 4.5*sin(z*.019)+3.*sin(z*.032+.8);}
+float road(float z){float a=z*.00545415391;return 17.*sin(3.*a)+10.*sin(2.*a+.8)+4.*sin(6.*a-.6);}
 void main(){
  float z=pos.z;float y=pos.y;alt=y;
  float x=pos.x-cam.x-(z-cam.y)*cam.z;
  if(moving>.5)x+=road(z);
  if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){y=-y;}
  float d=z-cam.y; depth=d;
- float h=y-3.65;float px=x+cam.w*h;float py=h-cam.w*x;
+ float h=y-4.15;float px=x+cam.w*h;float py=h-cam.w*x;
  gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.009*d-1.61,d);
  color=tint.rgb;
 }`;
@@ -63,7 +63,7 @@ function program(gl,vs,fs){
 async function gpu(canvas){
  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
- const bin=await fetch('flight.wasm?v=run1');
+ const bin=await fetch('flight.wasm?v=grid2');
  if(!bin.ok)throw Error('WASM '+bin.status);
  const {instance}=await WebAssembly.instantiate(await bin.arrayBuffer(),{wasi_snapshot_preview1:{fd_close:()=>8,fd_write:()=>8,fd_seek:()=>8,clock_time_get:()=>0}});
  const engine=instance.exports;engine._initialize();
@@ -81,7 +81,7 @@ async function gpu(canvas){
  const scenery=[0,1].map(simple=>{
   const count=engine.sceneBlock(simple),raw=new Uint8Array(engine.memory.buffer,engine.vertices(),count*16);
   const starts=Array.from({length:7},(_,i)=>engine.sectionStart(i));
-  const end=Math.ceil((FINISH+168)/24),data=new Uint8Array((Math.ceil((end+2)/6)+1)*count*16);
+  const end=Math.ceil((LAP+168)/24),data=new Uint8Array((Math.ceil((end+2)/6)+1)*count*16);
   const dst=new DataView(data.buffer),sections=[];
   let cursor=0;
   for(let sector=-1;sector<=end;sector++){
@@ -111,11 +111,11 @@ async function gpu(canvas){
   gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
   const list=visible(s);
-  const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),128);
+  const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),256);
   list.forEach((o,i)=>data.set(o,4*i));
-  const n=engine.actors(s.elapsed,s.distance,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
+  const n=engine.actors(s.elapsed%240,s.distance-s.laps*LAP,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
   gl.useProgram(world);gl.uniform4fv(u.cam,cam);
-  gl.uniform2f(u.scale,1.66*canvas.height/canvas.width,1.66);
+  const focus=1.55-.12*s.thrust;gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
    if(pass!==0)gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -133,7 +133,7 @@ async function gpu(canvas){
 
 // A lightweight chase view also keeps the course playable when a browser disables WebGL.
 function canvasFlight(canvas){
- const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,f=h*.83;
+ const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,f=h*.76;
  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#161b3d');sky.addColorStop(.43,'#9c6177');sky.addColorStop(.44,'#333448');sky.addColorStop(1,'#101e32');
  return s=>{
   const cam=camera(s);
@@ -150,31 +150,45 @@ function canvasFlight(canvas){
   for(let k=Math.floor((cam[1]+144)/12);k*12>cam[1]+1;k--){
    const z=k*12;
    for(const side of [-1,1]){
-    const x=side*(11+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
+    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
     poly([pt(x,0,z),pt(x,-top,z),pt(x+side*5,-top,z),pt(x+side*5,0,z)],'#252c40');
    }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.12/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(7*Math.cos(i*Math.PI/6),-4-7*Math.sin(i*Math.PI/6),z)),'#645265',true);}
+   if(k%2===0){ctx.lineWidth=Math.max(1,f*.12/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),-4-7*Math.sin(i*Math.PI/6),z)),'#645265',true);}
   }
   ctx.restore();
   for(let k=Math.floor((cam[1]+156)/12);k*12>cam[1]+1;k--){
    const z=k*12;
    for(const side of [-1,1]){
-    const x=side*(11+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
+    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
     poly([pt(x,0,z),pt(x,top,z),pt(x+side*5,top,z),pt(x+side*5,0,z)],'#272840');
     poly([pt(x,top*.7,z),pt(x+side*4,top*.7,z),pt(x+side*4,top*.68,z),pt(x,top*.68,z)],'#ab8294');
-    poly([pt(side*8,0,z),pt(side*8.22,0,z),pt(side*8.22,0,z+11),pt(side*8,0,z+11)],'#68c8d3');
+    poly([pt(side*19.3,0,z),pt(side*19.55,0,z),pt(side*19.55,0,z+11),pt(side*19.3,0,z+11)],'#68c8d3');
    }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.17/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(7*Math.cos(i*Math.PI/6),4+7*Math.sin(i*Math.PI/6),z)),'#e7aa87',true);}
+   for(let lane=-2;lane<=2;lane++){
+    const x=lane*7;poly([pt(x-.12,.08,z),pt(x+.12,.08,z),pt(x+.12,.08,z+4),pt(x-.12,.08,z+4)],'#84a9af');
+   }
+   if(k%2===0){ctx.lineWidth=Math.max(1,f*.17/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),4+7*Math.sin(i*Math.PI/6),z)),'#e7aa87',true);}
   }
   for(const [x,z,kind,age] of visible(s).sort((a,b)=>b[1]-a[1])){
    if(z<=cam[1]+1)continue;
    const [cx,cy]=pt(x,1.85,z),r=f/(z-cam[1]);
-   if(kind===0||kind===4){ctx.strokeStyle=kind===4?'#ffe188':'#45ffcb';ctx.lineWidth=Math.max(2,r*.22);ctx.beginPath();ctx.arc(cx,cy,r*(kind===4?6.5:1.65),0,Math.PI*2);ctx.stroke();}
+   if(kind>=6){
+    const color=colors[kind-6],p=(dx,dy,dz)=>pt(x+dx,1.85+dy+dx*age,z+dz);
+    for(const side of [-1,1]){
+     poly([p(0,.12,2.4),p(side*.58,.32,.1),p(0,.38,-1.3)],'#c4ddd9');
+     poly([p(side*.58,.32,.1),p(side*1.75,0,-1.2),p(side*.7,.1,-1.4),p(0,.15,-1.3)],color);
+     poly([p(side*.6,.08,-1.3),p(side*.86,.08,-1.3),p(side*.72,.06,-3.5)],color);
+    }
+   }else if(kind===0){
+    for(let j=0;j<3;j++)for(const side of [-1,1]){
+     const zz=z-2+j*1.9;poly([pt(x,.14,zz+1.8),pt(x+side*2.9,.14,zz),pt(x+side*2.9,.14,zz-.65),pt(x,.14,zz+1.1)],'#50f6b7');
+    }
+   }
    else if(kind===1)poly([[cx,cy-r],[cx+r,cy],[cx,cy+r],[cx-r,cy]],'#ff664e');
    else if(kind===5){ctx.fillStyle='#ffc36c';ctx.fillRect(cx-r,cy-r,r*(1+age),r);}
    else {ctx.fillStyle='#ffc875';ctx.fillRect(cx,cy,Math.max(2,r*.19),Math.max(3,r));}
   }
-  const p=(x,y,z)=>pt(s.x+x,1.85+y+x*s.lean,s.distance+z);
+  const p=(x,y,z)=>pt(s.x+x,1.85+y+x*s.lean,s.distance-s.laps*LAP+z);
   for(const side of [-1,1]){
    poly([p(0,.3,2.35),p(side*.55,.1,.54),p(0,.4,-1)],'#d4d9dd');
    poly([p(side*.55,.1,.54),p(side*1.55,-.09,-.91),p(side*.56,.08,-1.12)],'#f19b55');
@@ -196,4 +210,3 @@ export async function renderer(canvas){
  catch(e){console.warn('Canal renderer:',e.message);simplify();}
  return {draw:s=>{lastScene=s;draw(s);},simplify,get backend(){return backend;}};
 }
-import {visible,FINISH} from './race.js';

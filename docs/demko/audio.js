@@ -1,6 +1,6 @@
-// All instruments and cues are synthesized locally. Audio starts in the race button gesture.
+// The film score loops independently of the engine, weapons and race cues.
 export class Sound{
- constructor(){this.muted=false;this.running=false;this.step=0;}
+ constructor(){this.muted=false;this.running=false;this.musicOffset=0;}
  unlock(){
   try{
    if(!this.ctx){
@@ -16,8 +16,35 @@ export class Sound{
   }catch{return;}
  }
  setMute(on){this.muted=on;if(this.ctx)this.volume.gain.setTargetAtTime(on?0:.48,this.ctx.currentTime,.012);}
- play(){this.unlock();this.running=true;this.step=0;if(this.ctx)this.next=this.ctx.currentTime+.025;}
- pause(){this.running=false;if(this.ctx)this.motorGain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);}
+ async loadScore(){
+  if(!this.scoreLoad){
+   this.scoreLoad=(async()=>{
+    const response=await fetch('vibe-score.mp3');
+    if(!response.ok)throw Error('Score '+response.status);
+    this.score=await this.ctx.decodeAudioData(await response.arrayBuffer());
+   })().catch(error=>{this.scoreLoad=null;console.warn(error);});
+  }
+  await this.scoreLoad;
+  if(!this.running||!this.score||this.music)return;
+  const source=this.ctx.createBufferSource();source.buffer=this.score;
+  source.loop=true;source.loopStart=16;source.loopEnd=Math.min(48,this.score.duration);
+  const level=this.ctx.createGain();level.gain.value=.78;
+  source.connect(level).connect(this.volume);
+  source.onended=()=>{source.disconnect();level.disconnect();};
+  this.music=source;this.musicSince=this.ctx.currentTime;source.start(0,this.musicOffset);
+ }
+ play(){this.unlock();this.running=true;if(this.ctx)this.loadScore();}
+ pause(){
+  this.running=false;
+  if(!this.ctx)return;
+  if(this.music){
+   this.musicOffset+=this.ctx.currentTime-this.musicSince;
+   const end=this.music.loopEnd;
+   if(this.musicOffset>=end)this.musicOffset=16+(this.musicOffset-end)%(end-16);
+   this.music.stop();this.music=null;
+  }
+  this.motorGain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);
+ }
  tone(freq,end,duration,gain,type,when){
   if(!this.ctx||this.muted)return;
   const c=this.ctx,t=when??c.currentTime,o=c.createOscillator(),env=c.createGain();
@@ -32,20 +59,13 @@ export class Sound{
   const now=this.ctx.currentTime;
   this.motor.frequency.setTargetAtTime(48+52*thrust,now,.07);this.filter.frequency.setTargetAtTime(140+400*thrust,now,.09);
   this.motorGain.gain.setTargetAtTime(.049+.028*thrust,now,.09);
-  if(this.next<now-.12)this.next=now+.015;
-  while(this.next<now+.09){
-   const t=this.next,k=this.step++,base=[130.81,103.83,116.54,155.56][Math.floor(k/16)%4];
-   if(k%4===0)this.tone(125,43,.19,.45,'sine',t);
-   if(k%4===2)this.tone(base/2,base/2,.12,.16,'triangle',t);
-   const f=base*[1,1.5,2,2.38,1.5,1.78,2,1.5][k%8];
-   this.tone(f,f,.083,.066,'sawtooth',t);this.next+=.10;
-  }
+
  }
  cue(event){
   const cues={fire:[680,150,.115,.24,'triangle'],rocket:[135,650,.36,.19,'sawtooth'],
    break:[210,39,.28,.32,'sawtooth'],hit:[120,34,.36,.40,'square'],
-   gate:[640,1180,.17,.22,'sine'],miss:[180,128,.12,.14,'triangle'],
-   win:[440,880,.6,.25,'triangle'],crash:[180,39,.51,.24,'sawtooth'],short:[270,135,.46,.22,'triangle']};
+   pad:[640,1180,.17,.22,'sine'],miss:[180,128,.12,.14,'triangle'],
+   lap:[440,880,.36,.19,'triangle'],repair:[160,46,.32,.20,'sawtooth'],rail:[160,95,.09,.11,'triangle']};
   if(cues[event])this.tone(...cues[event]);
  }
 }

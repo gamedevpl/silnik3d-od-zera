@@ -1,11 +1,27 @@
 # Neonowy kanał
 
-[Zagraj w slalom](https://gamedevpl.github.io/silnik3d-od-zera/demko/).
+[Zagraj w Neon Grand Prix](https://gamedevpl.github.io/silnik3d-od-zera/demko/).
 
-Przeleć przez przynajmniej 11 z 18 zielonych bramek i dotrzyj do złotej mety. Kontakt z pomarańczową miną zabiera jeden z trzech punktów osłony. Dopalacz zużywa energię, a trafiona bramka ją odnawia. Za co czwartą bramkę dostajesz rakietę. Rakieta ma większy zasięg rażenia niż działko. Gra zapisuje najlepszy czas ukończonego slalomu w tej przeglądarce.
+Siedem statków startuje na torze o długości 1152 jednostek. Wyścig trwa przez kolejne okrążenia. Pozycja zależy od łącznego przebytego dystansu, a gra zapisuje najlepszy czas pełnego okrążenia w przeglądarce.
 
-Steruj strzałkami lub A/D. Przytrzymaj ↑ lub W, aby przyspieszyć. Spacja obsługuje działko, R odpala rakietę, P zatrzymuje grę. Przyciski pod ekranem obsługują dotyk. Start włącza muzykę i silnik, a przycisk z nutą wycisza i przywraca dźwięk.
+Możesz wyprzedzać po obu stronach. Tuż za rywalem dostajesz premię do prędkości i szybciej ładujesz dopalacz. Zielone strzałki dają krótki zryw i odnawiają osłonę. Działko i rakiety spowalniają rywali i niszczą pomarańczowe miny. Kontakt z bandą kosztuje prędkość. Po utracie osłony statek zwalnia na naprawę i wraca do wyścigu.
 
-Modele miasta, bram i statku powstają w C++ w WebAssembly. Przeglądarka przesyła powtarzalny odcinek miasta do GPU raz. WebGL rysuje lot, lustrzane odbicia i cienie. Przy wyłączonym WebGL działa prostszy widok Canvas 2D z tymi samymi zasadami i przeszkodami. Web Audio generuje muzykę i efekty na miejscu.
+| Sterowanie | Akcja |
+| --- | --- |
+| ← → lub A/D | Skręt |
+| ↑ lub W | Dopalacz |
+| ↓ lub S | Hamulec aerodynamiczny, ciaśniejszy skręt |
+| Spacja / R | Działko / rakieta |
+| P lub Esc | Pauza i wznowienie |
 
-Aby zbudować moduł, ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.
+Na telefonie można trzymać skręt i dopalacz dwoma palcami. Start uruchamia oryginalną muzykę 150 BPM z filmu *I have a vibe, for a new game*. Po pierwszych 48 sekundach powtarza się fragment od 16. do 48. sekundy. Silnik i efekty reagują na grę niezależnie od muzyki.
+
+## Kod
+
+- [Modele statków, pasy i geometria toru w C++](demo.cpp)
+- [Fizyka wyścigu, rywale i kolizje](../docs/demko/race.js)
+- [WebGL i zapasowy widok Canvas 2D](../docs/demko/renderer.js)
+- [Sterowanie i interfejs](../docs/demko/app.js)
+- [Odtwarzanie muzyki i synteza efektów](../docs/demko/audio.js)
+
+Ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Gotowy moduł jest w `docs/demko/flight.wasm`. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.

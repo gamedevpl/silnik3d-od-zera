@@ -202,8 +202,8 @@ struct Frame{
             for(int side:{-1,1}){
                 box(gateX+side*6.75*widthFactor-.28,0,z,.56,4.9,1.1,metal,{30,36,60});
                 if(stage>=2){
-                    box(side*8.8*widthFactor,.36,z-8,.28,.27,24,{67,83,100},{41,46,70});
-                    for(int j=0;j<4;j++)box(side*8.8*widthFactor,.64,z-8+j*6,.19,.06,2.8,{77,221,226},{52,124,146});
+                    box(side*(block?19.3:8.8*widthFactor),.36,z-8,.28,.27,24,{67,83,100},{41,46,70});
+                    for(int j=0;j<4;j++)box(side*(block?19.3:8.8*widthFactor),.64,z-8+j*6,.19,.06,2.8,{77,221,226},{52,124,146});
                 }
             }
         }

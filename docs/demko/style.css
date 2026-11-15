@@ -24,3 +24,15 @@ output{position:absolute;bottom:14px;left:14px;padding:5px 12px;border-radius:5p
 #shield{color:#ffc493}#gates{color:#91ffdf}#meter{position:absolute;left:10px;bottom:11px;width:26%;height:6px;background:#1c2636;border-radius:4px;overflow:hidden}#meter i{display:block;height:100%;width:100%;background:#6bedcd;transform-origin:left}
 #flash{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:white;font-size:clamp(12px,2vw,16px);white-space:nowrap;pointer-events:none}
 @media(max-width:540px){.heading h1{font-size:29px}.heading>div button{font-size:13px;padding:5px 7px}.controls{margin-top:9px}}
+
+.source{margin-left:auto;margin-right:7px;font-size:15px}#position{color:#91ffdf}
+#radar{position:absolute;right:11px;bottom:11px;width:clamp(66px,13%,106px);height:45px;border:1px solid #5b6b7a;border-radius:4px;background:linear-gradient(90deg,#151e2cd9 49%,#60767c 50%,#151e2cd9 51%);pointer-events:none}
+#radar i{position:absolute;width:4px;height:4px;background:#ffce86;transform:translate(-50%,-50%);border-radius:50%}
+#radar .player{z-index:1;background:#74ffe4;width:7px;height:7px;clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%);border-radius:0}
+@media(max-width:460px){.source{font-size:13px}#shield{font-size:11px}}
+
+@media(max-width:540px){
+ .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .controls .wheel{display:contents}.controls .wheel button{width:auto}
+ .controls button{min-height:46px}.controls [data-hold="brake"]{grid-column:3;grid-row:2}
+}

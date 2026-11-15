@@ -3,7 +3,7 @@
 #include "scene-cues.hpp"
 
 static std::vector<Vertex> mesh;
-static float objects[32][4]; // Lane X, world Z, object kind, animation phase.
+static float objects[64][4]; // Lane X, world Z, object kind, animation phase.
 static_assert(sizeof(Vertex)==16);
 
 static Frame geometryFrame(double time){
@@ -11,8 +11,32 @@ static Frame geometryFrame(double time){
     cue=sceneCues;
     Frame f(time,8);
     f.geometry=&mesh;
-    f.widthFactor=1;
+    f.widthFactor=3.15;
     return f;
+}
+
+static void rival(Frame &f,int id,double x,double z,double bank){
+    const C colors[]={{52,228,208},{249,97,152},{246,197,71},{125,145,255},{211,114,248},{136,226,107}};
+    const C paint=colors[id], trim=mix(paint,{246,248,236},.63);
+    const double cs=std::cos(bank),sn=std::sin(bank),wing=1.5+.23*(id%3);
+    auto p=[&](double a,double b,double c){return V{x+a*cs-b*sn,1.85+b*cs+a*sn,z+c};};
+    V nose=p(0,.05,2.5),canopy=p(0,.60,.05),tail=p(0,.10,-1.4);
+    for(int side:{-1,1}){
+        V shoulder=p(side*.56,.19,.5),tip=p(side*wing,-.1,-.98),jet=p(side*.8,.12,-1.35);
+        f.tri(nose,shoulder,canopy,trim);f.tri(shoulder,tail,canopy,{66,78,98});
+        f.tri(shoulder,tip,jet,paint);f.tri(shoulder,jet,tail,paint);
+        f.tri(tip,jet,p(side*(wing-.14),.50,-1.36),trim);
+        f.tri(jet,p(side*.58,.1,-1.32),p(side*.70,.10,-3.65),paint);
+        for(int j=0;j<4;j++){
+            auto trail=[&](int k,double edge){
+                double u=k/4.;
+                return p(side*.70+bank*u*u*.85+edge*.12*(1-u),.07-.30*u,-1.6-5.7*u);
+            };
+            f.quad(trail(j,-1),trail(j,1),trail(j+1,1),trail(j+1,-1),mix(paint,{87,86,129},j*.18));
+        }
+        f.tri(jet,p(side*.58,.1,-1.32),p(side*.70,.10,-2.05),{226,251,247});
+    }
+    f.tri(p(-.23,.40,.2),p(.23,.40,.2),p(0,.29,1.43),{42,86,110});
 }
 
 extern "C" {
@@ -24,6 +48,12 @@ int sceneBlock(int simple){
     f.block=true;f.simple=simple!=0;
     for(int z=0;z<144;z+=24){
         starts[z/24]=int(mesh.size());f.cz=z;f.skyline();f.rings();f.lightBays();
+        // Short dash groups divide the broad deck into passing lanes.
+        for(int lane=-2;lane<=2;lane++)for(int j=0;j<2;j++){
+            double x=lane*7.0, zz=z+j*12.;
+            f.quad({x-.10,.08,zz},{x+.10,.08,zz},{x+.10,.08,zz+4},{x-.10,.08,zz+4},
+                   lane==0?C{190,169,130}:C{104,163,179});
+        }
     }
     starts[6]=int(mesh.size());
     return starts[6];
@@ -36,19 +66,17 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
     f.ship(true);
-    for(int i=0;i<std::clamp(count,0,32);i++){
+    for(int i=0;i<std::clamp(count,0,64);i++){
         const float xx=objects[i][0],z=objects[i][1],kind=objects[i][2],age=objects[i][3];
         double y=1.85;
-        if(kind==0 || kind==4){
-            // Hollow checkpoint. Its centre is also the collision target.
-            const double r=kind==4?6.5:1.65;
-            C c=kind==4?C{255,212,96}:C{54,255,193};
-            auto v=[&](int j,double radius,double zz){double a=j*pi/4+pi/8;return V{xx+radius*std::cos(a),y+radius*std::sin(a),z+zz};};
-            for(int j=0;j<8;j++){
-                f.quad(v(j,r,0),v(j+1,r,0),v(j+1,r-.23,0),v(j,r-.23,0),c);
-                f.quad(v(j,r,0),v(j+1,r,0),v(j+1,r,.34),v(j,r,.34),{23,117,107});
+        if(kind>=6){
+            rival(f,int(kind)-6,xx,z,age);
+        }else if(kind==0){
+            for(int j=0;j<3;j++)for(int side:{-1,1}){
+                const double zz=z+j*1.9-2;
+                f.quad({xx,.14,zz+1.8},{xx+side*2.9,.14,zz},{xx+side*2.9,.14,zz-.65},{xx,.14,zz+1.1},
+                       j==2?C{180,255,222}:C{42,236,174});
             }
-            if(kind==0)f.tri({xx-.28,y,z},{xx,y+.39,z},{xx+.28,y,z},{218,255,240});
         }else if(kind==1){
             V top{xx,y+1.15,z},bottom{xx,y-.89,z};
             for(int j=0;j<4;j++){
