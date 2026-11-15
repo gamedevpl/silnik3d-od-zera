@@ -13,6 +13,7 @@
 <meta property="og:image" content="https://gamedevpl.github.io/silnik3d-od-zera/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ask/ask.css">
 <link rel="preload" href="fonts/ProximaNovaBold.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:'Proxima Nova';src:url('fonts/ProximaNovaLight.woff2') format('woff2');font-weight:300;font-display:swap}
@@ -204,42 +205,6 @@ footer .by{font-weight:300}
 footer .right{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
 footer .right a{color:var(--muted)}
 
-/* ask the mascot */
-.ask{position:fixed;right:20px;bottom:20px;z-index:200;font-weight:600}
-.ask-open{display:flex;align-items:center;gap:10px;background:var(--panel-card);color:var(--text);border:1px solid rgba(0,228,172,.35);border-radius:999px;padding:10px 18px 10px 12px;font:700 15px var(--sans);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 24px rgba(0,228,172,.15)}
-.head{display:block;width:74px;height:56px;flex:none;background:url(art/face-head.png) 0 0/3108px 56px no-repeat;image-rendering:pixelated;animation:head 3.5s steps(42) infinite}
-@keyframes head{to{background-position:-3108px 0}}
-@media (prefers-reduced-motion:reduce){.head{animation:none}}
-.ask-open .head{margin:-14px 0 -10px -4px}
-.ask-panel{width:min(380px,calc(100vw - 24px));max-height:min(600px,calc(100vh - 90px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--panel-border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden}
-.ask-panel[hidden],.ask-open[hidden],.ask-form[hidden],.ask-model[hidden],.ask-new[hidden]{display:none}
-.ask-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--panel-border)}
-.ask-head .head{margin:-6px 0 -12px -6px}
-.ask-head b{flex:1}
-.ask-head button{background:none;border:0;color:var(--muted);font:600 14px var(--sans);cursor:pointer;padding:4px 6px}
-.ask-head .ask-close{font-size:22px;line-height:1}
-.ask-log{flex:1;overflow-y:auto;padding:16px 14px 6px;display:flex;flex-direction:column;gap:14px;min-height:140px;background:var(--wall)}
-.ask-msg.me{align-self:flex-end;background:var(--panel-card);border:1px solid var(--panel-border);border-radius:14px 14px 2px 14px;padding:8px 12px;max-width:85%;font-size:15px}
-.ask-msg.bot{padding:3px 3px 18px}
-.ask-msg.bot .bubble{position:relative;display:inline-block;text-align:left;font-size:14px;line-height:1.4;max-width:100%;overflow-wrap:anywhere}
-.ask-msg.bot .bubble:before{right:auto;left:18px}.ask-msg.bot .bubble:after{right:auto;left:10px}
-.ask-msg.bot .bubble.dim{color:#8e7e79}
-.ask-msg.bot a{color:var(--teal);text-decoration:underline}
-.ask-msg.bot code{background:rgba(41,55,66,.14);padding:0 3px;border-radius:3px;font:inherit}
-.ask-steps{font:700 11px var(--pix);color:#8e7e79;text-transform:uppercase;letter-spacing:1px;margin-bottom:-6px}
-.ask-err{color:#f4aba7;font-size:13px}
-.ask-chips{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-.ask-chips button{background:none;border:1px solid var(--seam);color:var(--cream);border-radius:999px;padding:5px 12px;font:600 13px var(--sans);cursor:pointer;text-align:left}
-.ask-chips button:hover{border-color:var(--turquoise)}
-.ask-model{padding:12px 14px;text-align:center;color:var(--muted)}
-.ask-dl{background:var(--turquoise);color:#0f1418;border:0;border-radius:999px;padding:9px 16px;font:700 14px var(--sans);cursor:pointer}
-.ask-bar{height:8px;background:var(--ink);border-radius:4px;overflow:hidden;margin-bottom:6px}.ask-bar i{display:block;height:100%;background:var(--turquoise)}
-.ask-form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--panel-border)}
-.ask-form input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--panel-border);border-radius:999px;color:var(--text);padding:9px 14px;font:600 15px var(--sans)}
-.ask-form input:focus{outline:2px solid var(--turquoise);outline-offset:1px}
-.ask-form button{background:var(--turquoise);color:#0f1418;border:0;border-radius:999px;padding:0 16px;font:700 14px var(--sans);cursor:pointer}
-.ask-note{margin:0;padding:0 14px 10px;font-size:12px;color:var(--muted);line-height:1.35}
-@media (max-width:560px){.ask{right:12px;bottom:12px}.ask-open span.lbl{display:none}.ask-open{padding:10px 12px}}
 </style>
 <link rel="stylesheet" href="room.css">
 </head>
