@@ -10,7 +10,7 @@ inline Vec3 turnY(Vec3 p, int quarters) {
 }
 
 inline Node compose(Node base, Node child) {
-    Vec3 local = child.position;
+    Vec3 local = turnY(child.position, base.turns);
     child.position = {base.position.x + local.x,
                       base.position.y + local.y,
                       base.position.z + local.z};
