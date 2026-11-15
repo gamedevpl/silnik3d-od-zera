@@ -112,7 +112,13 @@ window.SERIES = {
           en:{ t:"The first scene file", q:"Which three numbers put an object back in place when you reopen a scene?" } },
         { n:16, slug:"e16", demo:"editor",
           pl:{ t:"Co jest pod kursorem?", q:"Czemu ten sam klik wybiera raz rzeźbę, a raz kolumnę?" },
-          en:{ t:"What is under the cursor?", q:"Why does the same click sometimes select the column behind the sculpture?" } }
+          en:{ t:"What is under the cursor?", q:"Why does the same click sometimes select the column behind the sculpture?" } },
+        {"n": 17, "slug": "e17", "demo": "editor", "pl": {"t": "Jedno przeciągnięcie, jedno Undo", "q": "Przesuwam kolumnę przez trzy pola. Dlaczego Undo cofa ją tylko o jedno?"}, "en": {"t": "One drag, one undo", "q": "I drag the column across three grid points. Why does Undo only take it back one?"}},
+        {"n": 18, "slug": "e18", "demo": "editor", "pl": {"t": "Dwie lampy", "q": "Klikam jedną lampę. Dlaczego obie zmieniają kolor?"}, "en": {"t": "Two lamps", "q": "I change one lamp. Why do both bulbs change colour?"}},
+        {"n": 19, "slug": "e19", "demo": "editor", "pl": {"t": "Reflektor na ramieniu", "q": "Obracam podstawę. Ramię jedzie w głąb, a głowica zostaje w powietrzu."}, "en": {"t": "The hinged spotlight", "q": "I rotate the base. The arm swings into the room but the head hangs in midair."}},
+        {"n": 20, "slug": "e20", "demo": "editor", "pl": {"t": "Uruchom i wróć", "q": "Zatrzymuję próbę. Dlaczego rzeźba została pod ścianą?"}, "en": {"t": "Play then return", "q": "I stop the preview. Why is the sculpture still by the wall?"}},
+        {"n": 21, "slug": "e21", "demo": "editor", "pl": {"t": "Otwórz na innym komputerze", "q": "Otwieram paczkę w drugim katalogu. Gdzie zniknęła mozaika?"}, "en": {"t": "Open the exported gallery", "q": "I open the package in another directory. Where did the mosaic go?"}},
+        {"n": 22, "slug": "e22", "demo": "editor", "pl": {"t": "Twój pierwszy wernisaż", "q": "Oddaję pustą scenę drugiemu autorowi. Czy po otwarciu paczki zobaczę jego kadr?"}, "en": {"t": "Your first exhibition", "q": "Give a blank scene to a second author. Will the package show the frame they chose?"}}
       ] }
   ],
   upcoming:[]

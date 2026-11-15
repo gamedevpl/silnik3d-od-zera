@@ -115,6 +115,7 @@ footer .right a{color:var(--muted)}
 </footer>
 
 <script src="../series.js"></script>
+<script src="gallery.js"></script>
 <script>
 const T = {
   pl:{ crumb:"Silnik 3D w C++ od zera", loading:"Uruchamiam silnik…", games:"Gry w przeglądarce",
@@ -177,7 +178,12 @@ const sceneControls = pl ? "1 warsztat · 2 galeria · S zapisz kopię · R odcz
 const pickControls = pl ? "2 / 3 galeria · klik wybiera · przeciągnij czerwony uchwyt X" : "2 / 3 gallery · click to select · drag the red X handle";
 if (ep === "ep16") bar.textContent = pickControls;
 if (ep === "ep15") bar.textContent = sceneControls;
+const editorKeys = {"17": ["2 galeria · kliknij kolumnę · przeciągnij czerwony uchwyt · U cofnij · Y ponów", "2 gallery · click column · drag red handle · U undo · Y redo"], "18": ["4 lampy · kliknij lampę · D duplikuj · C zmień kolor", "4 lamps · click fixture · D duplicate · C change bulb"], "19": ["5 ramię · kliknij podstawę · przeciągnij uchwyt · T obrót", "5 rig · click base · drag handle · T rotate"], "20": ["2 galeria · ←/→ kamera · P uruchom / zatrzymaj", "2 gallery · ←/→ orbit · P play / stop"], "21": ["2 galeria · E eksportuj · F otwórz lokalną kopię", "2 gallery · E export · F reopen local copy"], "22": ["N nowa · G sala · B cokół · A rzeźba · L lampa · C kolor · ,/. i [/] pozycja · ↑/↓ wysokość · T obrót · ←/→ kamera · =/− odległość · V/H kadr · E/F eksport i odczyt", "N new · G room · B plinth · A sculpture · L lamp · C colour · ,/. and [/] position · ↑/↓ height · T rotate · ←/→ orbit · =/− distance · V/H bookmark · E/F export and reopen"]};
+const guide = editorKeys[num]?.[pl?0:1];
+if (guide) bar.textContent=guide;
+const pack = (ep==="ep21" || ep==="ep22") ? setupGallery(ep,pl,canvas) : null;
 function gameTitle(t) {
+  if (guide) {pack?.title(t); return t+" · "+guide;}
   if (ep === "ep16") return t + " · " + pickControls;
   if (ep === "ep15") return t + " · " + sceneControls;
   if (ep === "ep14" && t === "Night Shift | Upper floor | R: next shift")
@@ -187,8 +193,8 @@ function gameTitle(t) {
 }
 const loading = document.getElementById("loading");
 const s = document.createElement("script"); s.src = ep + "/engine.js";
-s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = gameTitle(t),
-  printErr: t => console.error(t) }).then(() => { loading.hidden = true; canvas.focus(); })
+s.onload = () => Engine({ ...pack?.options, canvas, locateFile: f => ep + "/" + f, onTitle: t => bar.textContent = gameTitle(t),
+  printErr: t => console.error(t) }).then(m => { pack?.ready(m); loading.hidden = true; canvas.focus(); })
   .catch(e => { loading.hidden = true; bar.textContent = String(e); });
 s.onerror = () => { loading.querySelector("span").textContent = L.missing.replace("{ep}", ep); };
 document.body.appendChild(s);

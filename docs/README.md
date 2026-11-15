@@ -14,3 +14,10 @@ Statyczna strona dla GitHub Pages (`main` / `/docs`): https://gamedevpl.github.i
 Podgląd lokalnie: `python3 -m http.server -d docs 8000`.
 
 Grafiki w `art/` pochodzą z renderera filmu w repo ops (`tools/media/essay/productions/cpp-3d-engine/montaz/e02/`, sprite'y w `room_art/brand/`, gotowe miny w `maskotka/`). Arkusze mają klatki 320×180 obok siebie, 12 kl./s; opis w `art/frames.json`.
+
+
+## Scene editor, E17–E22
+
+Open `play/?ep=ep22&lang=en` to start with an empty exhibition. The controls are printed under the canvas. Press E to export, then use **Download exported exhibition**. Open the downloaded file on another browser with **Open a received exhibition**. E21 offers the same transfer for the gallery lesson.
+
+For a desktop copy, download `play/unpack.py` and run `python3 unpack.py exhibit.gallery gallery` followed by `./build/scene-view gallery` from the corresponding episode checkout. Exports contain geometry, the scene and camera, the floor material and its bitmap.
