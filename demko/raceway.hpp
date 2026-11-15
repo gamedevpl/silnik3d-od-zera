@@ -45,7 +45,7 @@ double roadSlope(double z){
 }
 double dodge(double t){return ease((t-cue.pass+.66)/.64)*(1-ease((t-cue.pass-.28)/1.23));}
 #include "lighting.h"
-struct Vertex{float x,y,z; uint8_t r,g,b,a;};
+#include "geometry_api.hpp"
 struct Point{double x,y,iz;};
 struct Frame{
     double t,cz,cx,cy,roll,focus,chaseLag,roadX,heading,turnBank,anim,bank,bankSin,bankCos,widthFactor,pilot,boost;int stage;bool mirror=false,casting=false;
