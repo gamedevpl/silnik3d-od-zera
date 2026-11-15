@@ -15,6 +15,8 @@ inline std::string mapName(const files::path& material) {
 inline void copyResources(const files::path& source, const files::path& target) {
     files::copy_file(source / "models.boxes", target / "models.boxes");
     files::copy_file(source / "floor.mat", target / "floor.mat");
+    const auto bitmap = mapName(source / "floor.mat");
+    files::copy_file(source / bitmap, target / bitmap);
 }
 
 inline files::path exportGallery(const Layout& nodes, double yaw, double radius,
