@@ -4,6 +4,7 @@
 #include "scene_models.hpp"
 #include "picking.hpp"
 #include "history.hpp"
+#include "instances_edit.hpp"
 #include <filesystem>
 #include <iostream>
 
@@ -96,6 +97,9 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
         if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
         else if (key == GLFW_KEY_2) b.open(b.directory / "gallery.scene");
         else if (key == GLFW_KEY_3) b.open(b.directory / "reordered.scene");
+        else if (key == GLFW_KEY_4) b.open(b.directory / "lamps.scene");
+        else if (key == GLFW_KEY_D && b.selected >= 0) b.selected = duplicate(b.nodes,b.selected);
+        else if (key == GLFW_KEY_C && b.selected >= 0) changeLight(b.nodes,b.nodes[b.selected].id);
         else if (key == GLFW_KEY_U) b.history.undo(b.nodes);
         else if (key == GLFW_KEY_Y) b.history.redo(b.nodes);
         else if (key == GLFW_KEY_R) b.open(b.document);

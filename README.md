@@ -1,11 +1,11 @@
-# E17 · Jedno przeciągnięcie, jedno Undo
+# E18 · Dwie lampy
 
-Przeciągnij kolumnę przez trzy pola. Cofnij raz i ponów. Sprawdź też nowy gest po cofnięciu.
+Zduplikuj lampę. Po zmianie barwy kopii pierwsza powinna pozostać bursztynowa. Sprawdź identyfikatory i wspólną nazwę modelu.
 
-`git clone -b e17-start https://github.com/gamedevpl/silnik3d-od-zera.git`
+`git clone -b e18-start https://github.com/gamedevpl/silnik3d-od-zera.git`
 
-`python3 check.py` · `history.hpp` · `git diff origin/e17-solution -- history.hpp`
+`python3 check.py` · `instances_edit.hpp` · `git diff origin/e18-solution -- instances_edit.hpp`
 
 Zbuduj okno przez `cmake -S . -B build`, `cmake --build build --target scene-view`, `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). C++17, OpenGL, OpenAL, GLFW; Linux: X11 development headers.
 
-2 gallery · click · drag the red X handle · U undo · Y redo.
+4 lamps · select lamp · D duplicate · C change bulb · S save.

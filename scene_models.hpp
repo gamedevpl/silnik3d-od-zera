@@ -15,7 +15,11 @@ inline void drawScene(const Layout& nodes, const Models& models,
             low.y += part.low.y;
             low.z += part.low.z;
             const Tint highlight{1.f, .82f, .18f};
-            view.drawBlock(low, part.size, i == selected ? highlight : part.color, aspect);
+            Tint color = part.color;
+            if (node.model == "lamp" && part.color[1] > .8f)
+                color = node.light == 2 ? Tint{.18f,.83f,1.f} : Tint{1.f,.63f,.15f};
+            else if (i == selected) color = highlight;
+            view.drawBlock(low, part.size, color, aspect);
         }
     }
 }

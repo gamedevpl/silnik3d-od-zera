@@ -10,13 +10,15 @@
 struct Node {
     std::string model;
     Vec3 position;
+    int id = 0;
+    int light = 0;
 };
 using Layout = std::vector<Node>;
 
 inline Layout readScene(std::istream& in) {
     std::string tag;
     int version;
-    if (!(in >> tag >> version) || tag != "scene" || version != 1)
+    if (!(in >> tag >> version) || tag != "scene" || (version != 1 && version != 2))
         throw std::runtime_error("Expected scene 1");
     Layout objects;
     Node node;
@@ -24,6 +26,11 @@ inline Layout readScene(std::istream& in) {
         auto& p = node.position;
         if (!(in >> p.x >> p.y >> p.z))
             throw std::runtime_error("Missing XYZ: " + node.model);
+        if (version == 1) node.id = int(objects.size()) + 1;
+        else if (!(in >> node.id >> node.light) || node.id <= 0 || node.light < 0 || node.light > 2)
+            throw std::runtime_error("Invalid instance");
+        for (const auto& other : objects)
+            if (other.id == node.id) throw std::runtime_error("Repeated instance ID");
         objects.push_back(node);
     }
     if (in.bad()) throw std::runtime_error("Scene read failed");
@@ -32,11 +39,11 @@ inline Layout readScene(std::istream& in) {
 
 inline void writeScene(std::ostream& out, const Layout& objects) {
     out << std::setprecision(std::numeric_limits<double>::max_digits10);
-    out << "scene 1\n";
+    out << "scene 2\n";
     for (const auto& node : objects) {
         const auto& p = node.position;
         out << node.model << ' ' << p.x << ' '
-            << p.y << ' ' << p.z << '\n';
+            << p.y << ' ' << p.z << ' ' << node.id << ' ' << node.light << '\n';
     }
     if (!out) throw std::runtime_error("Scene write failed");
 }

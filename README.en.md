@@ -1,11 +1,11 @@
-# E17 · One drag, one undo
+# E18 · Two lamps
 
-Drag the column three steps, undo once, then redo. Try a new gesture after undo.
+Duplicate the lamp. Changing the copy should leave the original amber. Compare their IDs and shared model name.
 
-`git clone -b e17-start https://github.com/gamedevpl/silnik3d-od-zera.git`
+`git clone -b e18-start https://github.com/gamedevpl/silnik3d-od-zera.git`
 
-`python3 check.py` · `history.hpp` · `git diff origin/e17-solution -- history.hpp`
+`python3 check.py` · `instances_edit.hpp` · `git diff origin/e18-solution -- instances_edit.hpp`
 
 Build the viewer with `cmake -S . -B build`, `cmake --build build --target scene-view`, `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). C++17, OpenGL, OpenAL, GLFW; Linux: X11 development headers.
 
-2 gallery · click · drag the red X handle · U undo · Y redo.
+4 lamps · select lamp · D duplicate · C change bulb · S save.
