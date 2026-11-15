@@ -2,7 +2,8 @@ const horizon=.43, eye=4.15;
 const colors=['#34e4d0','#f96198','#f6c547','#7d91ff','#d372f8','#88e26b'];
 function camera(s,{LAP,road,slope}){
  const z=s.distance-s.laps*LAP-9.2;
- return [s.x*.87+road(z),z,slope(z),s.lean*.15];
+ const pan=s.previewPan??0;
+ return [s.x*.87+road(z)+pan,z,slope(z)-pan/48,s.lean*.15];
 }
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;

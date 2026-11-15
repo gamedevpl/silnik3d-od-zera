@@ -1,4 +1,4 @@
-import {renderer} from './renderer.js?v=core1';
+import {renderer} from './renderer.js?v=play2';
 import {loadRace} from './race.js?v=core1';
 import {Sound} from './audio.js?v=grid2';
 
@@ -63,7 +63,7 @@ function panel(){
  if(best)info+=' '+tr('record')+' '+time(best)+'.';
  if(mode==='loading')label=tr('loading');
  if(mode==='paused'){heading=tr('paused');label=tr(coarse?'tapResume':'resumeKey');}
- $('#title').textContent=heading;$('#info').textContent=info;$('#start').textContent=label;$('#start').disabled=mode==='loading';
+ $('#title').textContent=heading;$('#info').textContent=info;$('#start').setAttribute('aria-label',label);$('#start').title=label;$('#start').disabled=mode==='loading';
  updateHUD();
 }
 const play=$('.play');
@@ -142,6 +142,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 window.addEventListener('blur',pause);
 const held=k=>buttonKeys.has(k)||[...pointers.values()].includes(k)||[...keys].some(code=>map[code]===k);
 let nextHud=0,frameCount=0,windowStart=0;
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+let previewTime=0,lastPreview=0;
 function tick(now){
  const dt=Math.min(.25,Math.max(0,(now-last)/1000));last=now;
  if(mode==='run'){
@@ -161,7 +163,19 @@ function tick(now){
    if(ms>26)engine.reduceLoad(ms);
    frameCount=0;windowStart=now;
   }
- }else{windowStart=0;frameCount=0;}
+ }else{
+  windowStart=0;frameCount=0;
+  if(mode==='menu'&&!document.hidden){
+   if(reducedMotion.matches){
+    if(previewTime){draw(race);previewTime=0;}
+    lastPreview=0;
+   }else if(now-lastPreview>=50){
+    previewTime+=lastPreview?Math.min(.1,(now-lastPreview)/1000):0;
+    lastPreview=now;
+    draw({...race,elapsed:previewTime,previewPan:.65*Math.sin(previewTime*.32)});
+   }
+  }
+ }
  requestAnimationFrame(tick);
 }
 panel();
