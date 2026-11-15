@@ -4,6 +4,7 @@
 #include "scene_models.hpp"
 #include "picking.hpp"
 #include "history.hpp"
+#include "preview.hpp"
 #include "instances_edit.hpp"
 #include <filesystem>
 #include <iostream>
@@ -16,6 +17,7 @@ struct Browser {
     Models models;
     Layout nodes;
     WorkshopView view;
+    Preview preview;
     History history;
     int selected = -1;
     bool dragging = false;
@@ -34,6 +36,7 @@ struct Browser {
         document = file;
         nodes.swap(fresh);
         history = {};
+        preview.stop();
         selected = -1;
         dragging = false;
     }
@@ -53,7 +56,7 @@ static void motion(GLFWwindow* w, double x, double y) {
     b.mouseY = y;
     int width, height;
     glfwGetWindowSize(w, &width, &height);
-    if (!b.dragging || width <= 0 || height <= 0) return;
+    if (b.preview.running || !b.dragging || width <= 0 || height <= 0) return;
     auto ray = mouseRay(b, width, height);
     if (std::abs(ray.direction.z) < 1e-10) return;
     double delta = planeX(ray, b.handle().z) - b.grabX;
@@ -64,6 +67,7 @@ static void motion(GLFWwindow* w, double x, double y) {
 static void mouseButton(GLFWwindow* w, int button, int action, int) {
     if (button != GLFW_MOUSE_BUTTON_LEFT) return;
     auto& b = *static_cast<Browser*>(glfwGetWindowUserPointer(w));
+    if (b.preview.running) return;
     if (action == GLFW_RELEASE) { b.history.release(); b.dragging = false; return; }
     int width, height;
     glfwGetWindowSize(w, &width, &height);
@@ -83,7 +87,8 @@ static void mouseButton(GLFWwindow* w, int button, int action, int) {
 }
 
 static void drawEditor(Browser& b, double aspect) {
-    drawScene(worldLayout(b.nodes),b.models,b.view,aspect,b.selected);
+    b.preview.tick(b.nodes,glfwGetTime());
+    drawScene(worldLayout(b.preview.active(b.nodes)),b.models,b.view,aspect,b.selected);
     if (b.selected >= 0 && !b.nodes[b.selected].parent) {
         glDisable(GL_DEPTH_TEST);
         b.view.drawBlock(b.handle(),b.handleSize,{1.f,.30f,.18f},aspect);
@@ -95,7 +100,13 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
     if (action != GLFW_PRESS) return;
     auto& b = *static_cast<Browser*>(glfwGetWindowUserPointer(w));
     try {
-        if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
+        if (key == GLFW_KEY_P) {
+            if (b.preview.running) b.preview.stop();
+            else if (!b.dragging) { b.selected=-1; b.preview.play(b.nodes,glfwGetTime()); }
+        } else if (b.preview.running) return;
+        else if (key == GLFW_KEY_LEFT) b.view.eye.move(-.1,0);
+        else if (key == GLFW_KEY_RIGHT) b.view.eye.move(.1,0);
+        else if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
         else if (key == GLFW_KEY_2) b.open(b.directory / "gallery.scene");
         else if (key == GLFW_KEY_3) b.open(b.directory / "reordered.scene");
         else if (key == GLFW_KEY_5) b.open(b.directory / "arm.scene");
@@ -113,7 +124,7 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
             if (!out) throw std::runtime_error("Cannot save copy.scene");
             b.open("copy.scene");
         } else if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(w,1);
-        glfwSetWindowTitle(w,b.document.filename().string().c_str());
+        glfwSetWindowTitle(w,(b.document.filename().string() + (b.preview.running ? " | PLAY" : " | EDIT")).c_str());
     } catch (const std::exception& e) {
         glfwSetWindowTitle(w,e.what());
         std::cerr << e.what() << '\n';
