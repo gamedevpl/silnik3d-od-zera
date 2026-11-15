@@ -1,6 +1,6 @@
 #pragma once
 #include "lens.hpp"
-#include "models.hpp"
+#include "hierarchy.hpp"
 #include <algorithm>
 #include <optional>
 
@@ -38,7 +38,8 @@ inline int pick(const Layout& nodes, const Models& models, Ray ray) {
     int selected = -1;
     for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
         const auto& node = nodes[i];
-        for (const auto& part : models.at(node.model)) {
+        for (const auto& raw : models.at(node.model)) {
+            auto part = oriented(raw,node.turns);
             auto hit = boxHit(ray, offset(node.position, part.low), part.size);
             if (hit && *hit < closest) {
                 closest = *hit;

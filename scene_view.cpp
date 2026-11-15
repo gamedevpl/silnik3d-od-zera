@@ -30,6 +30,7 @@ struct Browser {
         auto fresh = readScene(in);
         for (const auto& node : fresh)
             if (!models.count(node.model)) throw std::runtime_error("Unknown model: " + node.model);
+        worldLayout(fresh);
         document = file;
         nodes.swap(fresh);
         history = {};
@@ -68,13 +69,13 @@ static void mouseButton(GLFWwindow* w, int button, int action, int) {
     glfwGetWindowSize(w, &width, &height);
     if (width <= 0 || height <= 0) return;
     auto ray = mouseRay(b, width, height);
-    if (b.selected >= 0 && boxHit(ray, b.handle(), b.handleSize) && std::abs(ray.direction.z) > 1e-10) {
+    if (b.selected >= 0 && !b.nodes[b.selected].parent && boxHit(ray, b.handle(), b.handleSize) && std::abs(ray.direction.z) > 1e-10) {
         b.dragging = true;
         b.initialX = b.nodes[b.selected].position.x;
         b.history.begin(b.selected, b.initialX);
         b.grabX = planeX(ray, b.handle().z);
     } else {
-        b.selected = pick(b.nodes, b.models, ray);
+        b.selected = pick(worldLayout(b.nodes), b.models, ray);
     }
     auto title = b.document.filename().string();
     if (b.selected >= 0) title += " | " + b.nodes[b.selected].model;
@@ -82,8 +83,8 @@ static void mouseButton(GLFWwindow* w, int button, int action, int) {
 }
 
 static void drawEditor(Browser& b, double aspect) {
-    drawScene(b.nodes,b.models,b.view,aspect,b.selected);
-    if (b.selected >= 0) {
+    drawScene(worldLayout(b.nodes),b.models,b.view,aspect,b.selected);
+    if (b.selected >= 0 && !b.nodes[b.selected].parent) {
         glDisable(GL_DEPTH_TEST);
         b.view.drawBlock(b.handle(),b.handleSize,{1.f,.30f,.18f},aspect);
         glEnable(GL_DEPTH_TEST);
@@ -97,6 +98,8 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
         if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
         else if (key == GLFW_KEY_2) b.open(b.directory / "gallery.scene");
         else if (key == GLFW_KEY_3) b.open(b.directory / "reordered.scene");
+        else if (key == GLFW_KEY_5) b.open(b.directory / "arm.scene");
+        else if (key == GLFW_KEY_T && b.selected >= 0) ++b.nodes[b.selected].turns;
         else if (key == GLFW_KEY_4) b.open(b.directory / "lamps.scene");
         else if (key == GLFW_KEY_D && b.selected >= 0) b.selected = duplicate(b.nodes,b.selected);
         else if (key == GLFW_KEY_C && b.selected >= 0) changeLight(b.nodes,b.nodes[b.selected].id);

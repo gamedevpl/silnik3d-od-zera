@@ -1,18 +1,20 @@
-#include "instances_edit.hpp"
-#include <sstream>
+#include "hierarchy.hpp"
 #include <iostream>
 int main() {
-    Layout lamps{{"lamp",{-1,0,0},7,1},{"plinth",{0,0,0},32,0}};
-    int copy=duplicate(lamps,0);
-    changeLight(lamps,lamps[copy].id);
-    std::cout<<"bulbs: "<<lamps[0].light<<" / "<<lamps[copy].light<<"\n";
-    std::cout<<"IDs: "<<lamps[0].id<<" / "<<lamps[copy].id<<"\n";
-    if (lamps[copy].id==7 || lamps[copy].id==32 || lamps[0].light!=1 || lamps[copy].light!=2) return 1;
-    Layout sparse{{"lamp",{},3,1},{"lamp",{},8,1}};
-    int third=duplicate(sparse,0);
-    changeLight(sparse,sparse.at(third).id);
-    if (sparse.at(third).id==8 || sparse[0].light!=1 || sparse.at(third).light!=2) return 1;
-    int more=duplicate(lamps,copy);
-    std::stringstream file; writeScene(file,lamps); auto back=readScene(file);
-    return back[more].id!=back[copy].id && back[0].model==back[more].model && back[copy].light==2 ? 0 : 1;
+    Layout local{{"head",{2,0,0},8,1,7,0},{"base",{1,0,1},3,0,0,1},{"boom",{0,2,0},7,0,3,0}};
+    auto head=worldLayout(local).front();
+    auto aim=turnY({.5,-1,0},head.turns);
+    std::cout<<"head X Z: "<<head.position.x<<" "<<head.position.z<<"\n";
+    std::cout<<"aim X Z: "<<aim.x<<" "<<aim.z<<"\n";
+    if (head.position.x!=1 || head.position.z!=-1 || head.position.y!=2 || aim.z!=-.5) return 1;
+    local[2].turns=1;
+    auto rotated=worldLayout(local).front();
+    auto twice=turnY({.5,-1,0},rotated.turns);
+    if (twice.x!=-.5 || twice.z!=0) return 1;
+    local[2].turns=0;
+    local[1].turns=-1; head=worldLayout(local).front();
+    if(head.position.z!=3) return 1;
+    local[1].parent=8;
+    try { worldLayout(local); return 1; } catch(const std::runtime_error&) {}
+    return 0;
 }

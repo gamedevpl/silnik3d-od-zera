@@ -1,11 +1,11 @@
-# E18 · Two lamps
+# E19 · The hinged spotlight
 
-Duplicate the lamp. Changing the copy should leave the original amber. Compare their IDs and shared model name.
+Move the base, then turn it a quarter turn. Compare the head with the end of the arm and its footprint on the floor.
 
-`git clone -b e18-start https://github.com/gamedevpl/silnik3d-od-zera.git`
+`git clone -b e19-start https://github.com/gamedevpl/silnik3d-od-zera.git`
 
-`python3 check.py` · `instances_edit.hpp` · `git diff origin/e18-solution -- instances_edit.hpp`
+`python3 check.py` · `hierarchy.hpp` · `git diff origin/e19-solution -- hierarchy.hpp`
 
 Build the viewer with `cmake -S . -B build`, `cmake --build build --target scene-view`, `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). C++17, OpenGL, OpenAL, GLFW; Linux: X11 development headers.
 
-4 lamps · select lamp · D duplicate · C change bulb · S save.
+5 arm · click base · drag X · T rotate 90° · S save.
