@@ -88,6 +88,10 @@ h1 .sub{display:block;font-size:.4em;letter-spacing:0;color:var(--muted);font-we
 .scene .bubble:empty{display:none}
 @media (max-width:900px){.hero .wrap{grid-template-columns:1fr;gap:28px;padding-top:24px;padding-bottom:44px}.hero .scene-col{order:-1}}
 
+.flight-link{display:flex;align-items:center;gap:14px;margin-top:14px;padding:8px 12px 8px 8px;border:1px solid var(--seam);border-radius:10px;background:#1b202a;color:var(--cream)}
+.flight-link:hover,.flight-link:focus-visible{border-color:var(--amber);text-decoration:none}
+.flight-link img{width:80px;height:44px;object-fit:cover;border-radius:4px;image-rendering:pixelated}
+.flight-link b{margin-left:auto;color:var(--turquoise)}
 /* sections */
 section{padding:64px 0;border-top:1px solid var(--panel-border)}
 h2{font-size:32px;margin:0 0 8px;letter-spacing:-.6px;font-weight:700}
@@ -286,6 +290,7 @@ footer .right a{color:var(--muted)}
         <div class="shot face pix" id="face" role="img" aria-label="gamedev.pl"></div>
         <div class="bubble" id="heroBubble"></div>
       </div>
+      <a class="flight-link" href="demko/"><img src="demko/canal.png" alt="" width="80" height="44"><span data-t="flyDemo">Wsiądź do statku z filmu</span><b aria-hidden="true">↗</b></a>
     </div>
   </div>
 </div>

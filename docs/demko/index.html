@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Neon Canal · C++ 3D Engine From Scratch</title><meta name="description" content="Race six rival pilots around an endless neon circuit.">
+<meta property="og:title" content="Neon Canal"><meta property="og:type" content="website"><meta property="og:image" content="https://gamedevpl.github.io/silnik3d-od-zera/demko/canal.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="style.css?v=input1"></head>
+<body><main>
+<div class="screen"><img src="canal.png" width="640" height="400" alt=""><canvas width="640" height="400" aria-label="Race course"></canvas></div>
+<header>
+ <div class="brand"><a href="../" data-pl="← Warsztat">← Workshop</a><h1 data-pl="Neonowy kanał">Neon Canal</h1></div>
+ <nav><a class="source" href="https://github.com/gamedevpl/silnik3d-od-zera/tree/main/demko" target="_blank" rel="noopener" data-pl="Źródła C++ na GitHubie ↗">C++ source on GitHub ↗</a><button id="lang" type="button" aria-label="Polski">PL</button></nav>
+ <div class="settings"><button id="sound" aria-pressed="true">♫ Sound</button><button id="pause" disabled>Ⅱ Pause</button></div>
+</header>
+<div class="play" tabindex="-1">
+<div class="hud" hidden><span id="position"></span><span id="shield"></span><span id="lap"></span></div>
+<div id="radar" hidden aria-hidden="true"></div><div id="meter" hidden><i></i></div><div id="flash" aria-live="polite"></div>
+<div class="overlay"><div class="card">
+<h2 id="title">Neon Grand Prix</h2><p id="info"></p>
+<button id="start" disabled>Start</button>
+<p class="source-note" data-pl="Symulacja wyścigu, tor i statki powstają w C++.">The race simulation, track and ships are built in C++.</p>
+<p class="gesture" data-pl="Przeciągaj w lewo i prawo, żeby skręcać. Na gładziku możesz też przesuwać dwoma palcami.">Drag left or right to steer, or swipe sideways with two fingers on a trackpad.</p>
+<p class="keys" data-pl="← → lub A/D sterowanie · ↑ / W dopalacz · ↓ / S hamulec · Spacja strzela · R rakieta · P pauzuje">← → or A/D steer · ↑ / W boost · ↓ / S airbrake · Space fires · R rocket · P pauses</p>
+</div></div></div>
+<div class="controls" hidden><div class="wheel"><button data-hold="left" aria-label="Steer left">◀</button><button data-hold="right" aria-label="Steer right">▶</button></div>
+<button data-hold="boost" data-pl="Dopalacz">Boost</button><button data-hold="brake" data-pl="Hamulec">Airbrake</button><button id="fire" data-pl="Strzał">Fire</button><button id="rocket">Rocket</button></div>
+
+<noscript>Enable JavaScript to play.</noscript>
+</main><script type="module" src="app.js?v=input1"></script></body></html>
