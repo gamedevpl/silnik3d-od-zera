@@ -1,7 +1,6 @@
-import {visible,LAP,road,slope} from './race.js?v=grid2';
 const horizon=.43, eye=4.15;
 const colors=['#34e4d0','#f96198','#f6c547','#7d91ff','#d372f8','#88e26b'];
-function camera(s){
+function camera(s,{LAP,road,slope}){
  const z=s.distance-s.laps*LAP-9.2;
  return [s.x*.87+road(z),z,slope(z),s.lean*.15];
 }
@@ -60,13 +59,11 @@ function program(gl,vs,fs){
  gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));
  return p;
 }
-async function gpu(canvas){
+function gpu(canvas,simulation){
+ const {LAP,road,visible}=simulation;
  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
- const bin=await fetch('flight.wasm?v=grid2');
- if(!bin.ok)throw Error('WASM '+bin.status);
- const {instance}=await WebAssembly.instantiate(await bin.arrayBuffer(),{wasi_snapshot_preview1:{fd_close:()=>8,fd_write:()=>8,fd_seek:()=>8,clock_time_get:()=>0}});
- const engine=instance.exports;engine._initialize();
+ const engine=simulation.geometry;
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
  const u=locs(world,['cam','scale','moving','pass','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
@@ -104,14 +101,14 @@ async function gpu(canvas){
   gl.enableVertexAttribArray(tint);gl.vertexAttribPointer(tint,4,gl.UNSIGNED_BYTE,true,16,12);
  }
  return s=>{
-  const cam=camera(s);
+  const cam=camera(s,simulation);
   gl.viewport(0,0,canvas.width,canvas.height);gl.disable(gl.DEPTH_TEST);gl.useProgram(sky);
   gl.disableVertexAttribArray(tint);gl.disableVertexAttribArray(pos);
   gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.enableVertexAttribArray(point);gl.vertexAttribPointer(point,2,gl.FLOAT,false,0,0);
   const framing=Math.min(1,canvas.width/canvas.height);
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
-  const list=visible(s);
+  const list=visible();
   const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),256);
   list.forEach((o,i)=>data.set(o,4*i));
   const n=engine.actors(s.elapsed%240,s.distance-s.laps*LAP,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
@@ -133,11 +130,12 @@ async function gpu(canvas){
 }
 
 // A lightweight chase view also keeps the course playable when a browser disables WebGL.
-function canvasFlight(canvas){
+function canvasFlight(canvas,simulation){
+ const {LAP,road,visible}=simulation;
  const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,span=Math.min(w,h),f=span*.76;
  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#161b3d');sky.addColorStop(.43,'#9c6177');sky.addColorStop(.44,'#333448');sky.addColorStop(1,'#101e32');
  return s=>{
-  const cam=camera(s);
+  const cam=camera(s,simulation);
   const pt=(x,y,z)=>{const d=Math.max(.4,z-cam[1]);return [w/2+f*(x+road(z)-cam[0]-d*cam[2])/d,h*horizon-f*(y-eye)/d];};
   function poly(points,color,stroke=false){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();if(stroke){ctx.strokeStyle=color;ctx.stroke();}else{ctx.fillStyle=color;ctx.fill();}}
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
@@ -170,7 +168,7 @@ function canvasFlight(canvas){
    }
    if(k%2===0){ctx.lineWidth=Math.max(1,f*.17/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),4+7*Math.sin(i*Math.PI/6),z)),'#e7aa87',true);}
   }
-  for(const [x,z,kind,age] of visible(s).sort((a,b)=>b[1]-a[1])){
+  for(const [x,z,kind,age] of visible().sort((a,b)=>b[1]-a[1])){
    if(z<=cam[1]+1)continue;
    const [cx,cy]=pt(x,1.85,z),r=f/(z-cam[1]);
    if(kind>=6){
@@ -197,7 +195,7 @@ function canvasFlight(canvas){
   }
  };
 }
-export async function renderer(canvas){
+export async function renderer(canvas,simulation){
  const screen=canvas.parentElement;
  const budgets=[640*400,480*300,320*200];
  let tier=0,draw,lastScene,backend='webgl';
@@ -208,18 +206,18 @@ export async function renderer(canvas){
   const w=Math.max(1,Math.round(width*scale)),h=Math.max(1,Math.round(height*scale));
   if(w===canvas.width&&h===canvas.height)return;
   canvas.width=w;canvas.height=h;
-  if(backend==='canvas')draw=canvasFlight(canvas);
+  if(backend==='canvas')draw=canvasFlight(canvas,simulation);
   if(lastScene)draw(lastScene);
  }
  function simplify(){
   if(backend==='canvas')return;
   const fresh=canvas.cloneNode(false);
   canvas.replaceWith(fresh);canvas=fresh;backend='canvas';tier=0;
-  draw=canvasFlight(canvas);resize();
+  draw=canvasFlight(canvas,simulation);resize();
   screen.dataset.renderer=backend;
   if(lastScene)draw(lastScene);
  }
- try{draw=await gpu(canvas);canvas.addEventListener('webglcontextlost',simplify);}
+ try{if(!simulation.geometry)throw Error('WebAssembly unavailable');draw=gpu(canvas,simulation);canvas.addEventListener('webglcontextlost',simplify);}
  catch(e){console.warn('Canal renderer:',e.message);simplify();}
  const observer=new ResizeObserver(resize);
  observer.observe(screen);resize();

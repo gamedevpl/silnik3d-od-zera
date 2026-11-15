@@ -1,5 +1,5 @@
-import {renderer} from './renderer.js?v=wide1';
-import {newRace,advance,shoot,GRID,LAP} from './race.js?v=grid2';
+import {renderer} from './renderer.js?v=core1';
+import {loadRace} from './race.js?v=core1';
 import {Sound} from './audio.js?v=grid2';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -16,12 +16,15 @@ const words={
 };
 const read=k=>{try{return localStorage.getItem(k);}catch{return null;}};
 const save=(k,v)=>{try{localStorage.setItem(k,v);}catch{}};
-let en=read('lang')==='en',mode='loading',race=newRace(),draw,flash='',flashUntil=0,last=0;
+const simulation=await loadRace();
+const {reset,advance,shoot,LAP}=simulation;
+screen.dataset.simulation=simulation.backend;
+let en=read('lang')==='en',mode='loading',race=reset(),draw,flash='',flashUntil=0,last=0;
 let best=Number(read('neon.lap.v2'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
- $('#position').textContent=tr('position')+' '+race.rank+'/'+GRID;
+ $('#position').textContent=tr('position')+' '+race.rank+'/'+(race.rivals.length+1);
  $('#shield').textContent=tr('shield')+' '+race.shield+'/3';
  $('#lap').textContent=tr('lap')+' '+(race.laps+1)+' · '+time(race.elapsed-race.lapStart);
  $('#meter i').style.transform='scaleX('+race.energy/100+')';
@@ -30,7 +33,7 @@ function updateHUD(){
  updateRadar();
 }
 const radar=$('#radar');
-const dots=Array.from({length:GRID},(_,i)=>{
+const dots=Array.from({length:race.rivals.length+1},(_,i)=>{
  const dot=document.createElement('i');if(!i)dot.className='player';
  radar.append(dot);return dot;
 });
@@ -60,7 +63,7 @@ function clearInput(){keys.clear();touch.clear();document.querySelectorAll('.hel
 function pause(){if(mode!=='run')return;mode='paused';sound.pause();clearInput();panel();}
 function start(){
  if(mode==='loading')return;
- if(mode!=='paused'){race=newRace();flash='';}
+ if(mode!=='paused'){race=reset();flash='';}
  mode='run';last=performance.now();clearInput();sound.play();panel();
  $('#start').blur();
 }
@@ -72,7 +75,7 @@ function cue(k){
  if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v2',String(best));}
  if(['pad','hit','break','rail','repair','lap'].includes(k)){flash=k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
-function fire(rocket){if(mode==='run')shoot(race,rocket,cue);}
+function fire(rocket){if(mode==='run')shoot(rocket,cue);}
 $('#fire').onclick=()=>fire(false);$('#rocket').onclick=()=>fire(true);
 for(const b of document.querySelectorAll('[data-hold]')){
  b.onpointerdown=e=>{if(mode!=='run')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.hold);b.classList.add('held');};
@@ -98,12 +101,7 @@ function tick(now){
  const dt=Math.min(.25,Math.max(0,(now-last)/1000));last=now;
  if(mode==='run'){
   const input={steer:Number(held('right'))-Number(held('left')),boost:held('boost'),brake:held('brake')};
-  // Substeps keep collisions continuous even when a frame stalls.
-  let remaining=dt;
-  while(remaining>.000001){
-   const step=Math.min(remaining,1/90);if(held('fire'))fire(false);
-   advance(race,step,input,cue);remaining-=step;
-  }
+  advance(dt,input,held('fire'),cue);
   sound.tick(race.thrust);draw(race);
   if(now>=nextHud){updateHUD();nextHud=now+75;}
   if(!windowStart)windowStart=now;
@@ -117,5 +115,5 @@ function tick(now){
  requestAnimationFrame(tick);
 }
 panel();
-const engine=await renderer(canvas);draw=engine.draw;screen.dataset.renderer=engine.backend;
+const engine=await renderer(canvas,simulation);draw=engine.draw;screen.dataset.renderer=engine.backend;
 draw(race);screen.classList.add('ready');mode='menu';panel();requestAnimationFrame(tick);

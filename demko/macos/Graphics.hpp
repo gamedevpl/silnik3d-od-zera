@@ -1,7 +1,7 @@
 #pragma once
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
-#include "race.hpp"
+#include "../race.hpp"
 #include "../geometry_api.hpp"
 
 class Graphics {

@@ -1,6 +1,6 @@
 #pragma once
 #import <AVFoundation/AVFoundation.h>
-#include "race.hpp"
+#include "../race.hpp"
 #include <atomic>
 #include <memory>
 

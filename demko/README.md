@@ -19,12 +19,12 @@ Na telefonie można trzymać skręt i dopalacz dwoma palcami. Start uruchamia or
 ## Kod
 
 - [Modele statków, pasy i geometria toru w C++](demo.cpp)
-- [Fizyka wyścigu, rywale i kolizje](../docs/demko/race.js)
+- [Fizyka wyścigu, rywale i kolizje](race.hpp)
 - [WebGL i zapasowy widok Canvas 2D](../docs/demko/renderer.js)
 - [Sterowanie i interfejs](../docs/demko/app.js)
 - [Odtwarzanie muzyki i synteza efektów](../docs/demko/audio.js)
 
-Ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Gotowy moduł jest w `docs/demko/flight.wasm`. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.
+Ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Skrypt kompiluje symulację i geometrię do jednego modułu WebAssembly. Generuje też z tego samego C++ awaryjną wersję symulacji dla przeglądarek z wyłączonym WebAssembly. Wymaga do tego narzędzia `wasm2js` z Binaryen 133 w PATH (lub ścieżki w `WASM2JS`). Gotowy moduł gry jest w `docs/demko/flight.wasm`. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.
 
 ## Wersja natywna na macOS
 
@@ -35,4 +35,6 @@ Na Macu z Metal i macOS 13 lub nowszym zbuduj aplikację z katalogu głównego r
 open 'build/macos/Neonowy kanał.app'
 ```
 
-Enter rozpoczyna wyścig. Sterowanie jest takie jak w tabeli powyżej, a M przełącza dźwięk. Aplikacja zawiera muzykę, działa offline i zapisuje rekord lokalnie. Używa tych samych modeli C++ co wersja WWW. Reguły wyścigu są w [race.hpp](macos/race.hpp), za grafikę odpowiada Metal, a za dźwięk AVFoundation.
+Enter rozpoczyna wyścig. Sterowanie jest takie jak w tabeli powyżej, a M przełącza dźwięk. Aplikacja zawiera muzykę, działa offline i zapisuje rekord lokalnie. Używa tej samej symulacji wyścigu i tych samych modeli C++ co wersja WWW. Reguły wyścigu są w [race.hpp](race.hpp), za grafikę odpowiada Metal, a za dźwięk AVFoundation.
+
+Test porównujący pięć okrążeń z wersją sprzed przeniesienia reguł do C++ uruchom przez `node --test demko/tests/endless.mjs`. Testuje oba warianty przeglądarkowe.
