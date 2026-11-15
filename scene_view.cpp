@@ -6,6 +6,7 @@
 #include "history.hpp"
 #include "preview.hpp"
 #include "floor_map.hpp"
+#include "framing.hpp"
 #include "instances_edit.hpp"
 #include <filesystem>
 #include <iostream>
@@ -18,6 +19,7 @@ struct Browser {
     Models models;
     Layout nodes;
     WorkshopView view;
+    Frame frame;
     FloorMap floorMap;
     fs::path resources, lastPack;
     Preview preview;
@@ -57,7 +59,7 @@ static void openPackage(Browser& b, const fs::path& folder) {
     fresh.floorMap.load(folder);
     if(b.floorMap.texture) glDeleteTextures(1,&b.floorMap.texture);
     b.models=std::move(fresh.models); b.nodes=std::move(fresh.nodes); b.document=fresh.document;
-    b.floorMap=fresh.floorMap; b.resources=folder; b.view.eye=eye;
+    b.floorMap=fresh.floorMap; b.resources=folder; b.view.eye=eye; b.frame.remember(eye.yaw,eye.radius);
     b.selected=-1; b.dragging=false; b.history={}; b.preview.stop();
 }
 
@@ -128,7 +130,24 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
             if (b.preview.running) b.preview.stop();
             else if (!b.dragging) { b.selected=-1; b.preview.play(b.nodes,glfwGetTime()); }
         } else if (b.preview.running) return;
-        else if (key == GLFW_KEY_E) {
+        else if (key == GLFW_KEY_N) {
+            b.nodes.clear(); b.selected=-1; b.history={}; b.dragging=false; b.document="untitled.scene";
+        } else if (key == GLFW_KEY_G || key == GLFW_KEY_A || key == GLFW_KEY_L || key == GLFW_KEY_B) {
+            const char* model=key==GLFW_KEY_G ? "gallery" : key==GLFW_KEY_A ? "sculpture" : key==GLFW_KEY_L ? "lamp" : "plinth";
+            b.nodes.push_back({model,{0,0,0},nextId(b.nodes),key==GLFW_KEY_L ? 1 : 0});
+            b.selected=int(b.nodes.size())-1;
+        } else if (key == GLFW_KEY_V) b.frame.remember(b.view.eye.yaw,b.view.eye.radius);
+        else if (key == GLFW_KEY_H) b.frame.recall(b.view.eye.yaw,b.view.eye.radius);
+        else if (key == GLFW_KEY_EQUAL || key == GLFW_KEY_MINUS) b.view.eye.move(0,key==GLFW_KEY_EQUAL ? -.6 : .6);
+        else if (b.selected>=0 && (key==GLFW_KEY_COMMA || key==GLFW_KEY_PERIOD ||
+                 key==GLFW_KEY_LEFT_BRACKET || key==GLFW_KEY_RIGHT_BRACKET || key==GLFW_KEY_UP || key==GLFW_KEY_DOWN)) {
+            auto& p=b.nodes[b.selected].position;
+            if(key==GLFW_KEY_COMMA || key==GLFW_KEY_PERIOD) {
+                b.history.begin(b.selected,p.x); p.x+=key==GLFW_KEY_COMMA ? -.5 : .5;
+                b.history.sample(p.x); b.history.release();
+            } else if(key==GLFW_KEY_UP || key==GLFW_KEY_DOWN) p.y+=key==GLFW_KEY_UP ? .25 : -.25;
+            else p.z+=key==GLFW_KEY_LEFT_BRACKET ? -.5 : .5;
+        } else if (key == GLFW_KEY_E) {
             b.lastPack=exportGallery(b.nodes,b.view.eye.yaw,b.view.eye.radius,b.resources,fs::current_path());
             glfwSetWindowTitle(w,("Export: "+b.lastPack.filename().string()).c_str()); return;
         } else if (key == GLFW_KEY_F && !b.lastPack.empty()) openPackage(b,b.lastPack);
@@ -185,6 +204,7 @@ int main(int argc, char** argv) {
     } catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; glfwTerminate(); return 1; }
     glfwSwapInterval(1);
     glfwSetWindowUserPointer(w,&b);
+    if (argc==1) { b.nodes.clear(); b.document="untitled.scene"; }
     glfwSetKeyCallback(w,input);
     glfwGetCursorPos(w,&b.mouseX,&b.mouseY);
     glfwSetCursorPosCallback(w,motion);
