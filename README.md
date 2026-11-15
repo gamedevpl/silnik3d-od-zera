@@ -1,7 +1,7 @@
-# E15 · Pierwszy plik sceny
+# E16 · Co jest pod kursorem?
 
-Uruchom `python3 check.py`. Test zapisuje dwa obiekty do strumienia tekstowego i odczytuje je tak samo jak plik. W kopii oczekuje regału w (−3,70, 0, −2,87) i rzeźby w (1,25, 0,58, −0,75). Na gałęzi e15-start zapis zamienia dwie współrzędne. Obejrzyj wynik, popraw writeScene w layout.hpp i ponów próbę. Rozwiązanie jest na e15-solution.
+Kliknij rzeźbę na tle lewej kolumny w galerii (2). Otwórz ten sam układ z inną kolejnością wierszy (3). Kliknij dokładnie to samo miejsce. W obu próbach ma zaświecić się rzeźba. W otworze w rzeźbie można zaznaczyć widoczną za nim kolumnę.
 
-Zbuduj `cmake -S . -B build` i `cmake --build build --target scene-view`. Uruchom `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). Potrzebujesz CMake, kompilatora C++17, OpenGL 3.3 oraz bibliotek wymaganych przez GLFW i OpenAL. Na Linuksie do kompilacji GLFW potrzebne są nagłówki deweloperskie X11.
+Na gałęzi `e16-start` uruchom `python3 check.py`. Popraw wybór trafienia w `pick` w pliku `picking.hpp`. Znaczenie ma głębokość trafienia w konkretną część modelu. Porównaj z `e16-solution`.
 
-1 otwiera warsztat, 2 galerię. Edytuj assets/scenes/gallery.scene, zapisz i naciśnij R w oknie, aby ponownie wczytać aktywny dokument. S zapisuje kopię do copy.scene w katalogu roboczym i otwiera ją. Plik zaczyna się od scene 1. Każdy kolejny obiekt podaje nazwę modelu i jego X Y Z. Możesz też przekazać własny plik jako argument. Modele składają się z prostopadłościanów. Cel engine nadal uruchamia grę z E14.
+Do uruchomienia okna potrzebujesz CMake, C++17, OpenGL, GLFW (w repo) i OpenAL. Na Linuksie zainstaluj też nagłówki X11. Wykonaj `cmake -S . -B build` i `cmake --build build --target scene-view`. Uruchom `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). 1 otwiera warsztat, 2 i 3 galerię. Po zaznaczeniu przeciągnij czerwony uchwyt osi X i puść przycisk. Skok siatki wynosi pół jednostki. S zapisuje i otwiera kopię, R wczytuje ponownie. Cel engine nadal uruchamia grę.

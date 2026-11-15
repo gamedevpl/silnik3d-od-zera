@@ -1,6 +1,6 @@
 #pragma once
 #include "surface.hpp"
-#include "rotation.hpp"
+#include "lens.hpp"
 #include <algorithm>
 
 struct OrbitCamera {
@@ -13,10 +13,10 @@ struct OrbitCamera {
     }
 
     ClipPoint project(Vec3 world, double aspect) const {
-        Vec3 eye = aboutX(aboutY(world, -yaw), .25);
+        Vec3 eye = aboutX(aboutY(world, -yaw), lens::tilt);
         const double distance = radius - eye.z;
-        constexpr double near = .1, far = 40;
-        const double focal = 1.0 / std::tan(radians(50) / 2);
+        constexpr double near = lens::nearPlane, far = lens::farPlane;
+        const double focal = lens::focal;
         const double z = ((far+near)*distance - 2*far*near)/(far-near);
         return {float(focal*eye.x/aspect), float(focal*eye.y),
                 float(z), float(distance)};

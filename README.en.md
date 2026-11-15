@@ -1,7 +1,7 @@
-# E15 · The first scene file
+# E16 · What is under the cursor?
 
-Run `python3 check.py`. It saves two objects and reads their text back. The shelf should return to (−3.70, 0, −2.87) and the sculpture to (1.25, 0.58, −0.75). On e15-start two coordinates change places during saving. Read the output, edit writeScene in layout.hpp and run the test again. Compare with e15-solution.
+Open the gallery with 2. Click the sculpture in front of the left column. Press 3 and click the same pixel. Only the order of the rows has changed. Both clicks should select the sculpture. Click through a hole in the sculpture and you can select the visible column instead.
 
-Build with `cmake -S . -B build` and `cmake --build build --target scene-view`. Run `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). Requires CMake, C++17, OpenGL 3.3, GLFW platform dependencies and OpenAL. Linux builds of GLFW require X11 development headers.
+Run `python3 check.py` on `e16-start`. Fix hit selection in `pick` in `picking.hpp`. Compare the depth for each intersected model part. Compare your result with `e16-solution`.
 
-Press 1 for the workshop or 2 for the gallery. Edit assets/scenes/gallery.scene and press R to reload the current document. S saves and opens copy.scene in your working directory. The first line is scene 1. Each object then supplies a model name and its X Y Z position. You can also pass a custom scene path on the command line. All models consist of boxes. The engine target still runs the E14 game.
+Build with `cmake -S . -B build` and `cmake --build build --target scene-view`. Run `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). Requires C++17, CMake, OpenGL, bundled GLFW and OpenAL. On Linux install X11 development headers as well. Press 1 for the workshop or 2/3 for the gallery. Click an object and drag its red X handle. Release to stop. Grid spacing is half a world unit. S saves and opens a copy, R reloads it.
