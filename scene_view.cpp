@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "scene_models.hpp"
 #include "picking.hpp"
+#include "history.hpp"
 #include <filesystem>
 #include <iostream>
 
@@ -14,6 +15,7 @@ struct Browser {
     Models models;
     Layout nodes;
     WorkshopView view;
+    History history;
     int selected = -1;
     bool dragging = false;
     double initialX = 0, grabX = 0;
@@ -29,6 +31,7 @@ struct Browser {
             if (!models.count(node.model)) throw std::runtime_error("Unknown model: " + node.model);
         document = file;
         nodes.swap(fresh);
+        history = {};
         selected = -1;
         dragging = false;
     }
@@ -53,12 +56,13 @@ static void motion(GLFWwindow* w, double x, double y) {
     if (std::abs(ray.direction.z) < 1e-10) return;
     double delta = planeX(ray, b.handle().z) - b.grabX;
     b.nodes[b.selected].position.x = snapX(b.initialX + delta);
+    b.history.sample(b.nodes[b.selected].position.x);
 }
 
 static void mouseButton(GLFWwindow* w, int button, int action, int) {
     if (button != GLFW_MOUSE_BUTTON_LEFT) return;
     auto& b = *static_cast<Browser*>(glfwGetWindowUserPointer(w));
-    if (action == GLFW_RELEASE) { b.dragging = false; return; }
+    if (action == GLFW_RELEASE) { b.history.release(); b.dragging = false; return; }
     int width, height;
     glfwGetWindowSize(w, &width, &height);
     if (width <= 0 || height <= 0) return;
@@ -66,6 +70,7 @@ static void mouseButton(GLFWwindow* w, int button, int action, int) {
     if (b.selected >= 0 && boxHit(ray, b.handle(), b.handleSize) && std::abs(ray.direction.z) > 1e-10) {
         b.dragging = true;
         b.initialX = b.nodes[b.selected].position.x;
+        b.history.begin(b.selected, b.initialX);
         b.grabX = planeX(ray, b.handle().z);
     } else {
         b.selected = pick(b.nodes, b.models, ray);
@@ -91,6 +96,8 @@ static void input(GLFWwindow* w, int key, int, int action, int) {
         if (key == GLFW_KEY_1) b.open(b.directory / "workshop.scene");
         else if (key == GLFW_KEY_2) b.open(b.directory / "gallery.scene");
         else if (key == GLFW_KEY_3) b.open(b.directory / "reordered.scene");
+        else if (key == GLFW_KEY_U) b.history.undo(b.nodes);
+        else if (key == GLFW_KEY_Y) b.history.redo(b.nodes);
         else if (key == GLFW_KEY_R) b.open(b.document);
         else if (key == GLFW_KEY_S) {
             std::ofstream out("copy.scene");

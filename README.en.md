@@ -1,9 +1,11 @@
-# E16 · What is under the cursor?
+# E17 · One drag, one undo
 
-Open the gallery with 2. Click the sculpture in front of the left column. Press 3 and click the same pixel. Only the order of the rows has changed. Both clicks should select the sculpture. Click through a hole in the sculpture and you can select the visible column instead.
+Drag the column three steps, undo once, then redo. Try a new gesture after undo.
 
-Run `python3 check.py` on `e16-start`. Fix hit selection in `pick` in `picking.hpp`. Compare the depth for each intersected model part. Compare your result with `e16-solution`.
+`git clone -b e17-start https://github.com/gamedevpl/silnik3d-od-zera.git`
 
-Build with `cmake -S . -B build` and `cmake --build build --target scene-view`. Run `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). Requires C++17, CMake, OpenGL, bundled GLFW and OpenAL. On Linux install X11 development headers as well. Press 1 for the workshop or 2/3 for the gallery. Click an object and drag its red X handle. Release to stop. Grid spacing is half a world unit. S saves and opens a copy, R reloads it.
+`python3 check.py` · `history.hpp` · `git diff origin/e17-solution -- history.hpp`
 
-The probe uses 800×450. Its beam pixel (365,130) and gap pixel (375,130) map to (438,156) and (450,156) in the default 960×540 window.
+Build the viewer with `cmake -S . -B build`, `cmake --build build --target scene-view`, `./build/scene-view` (Visual Studio: build/Debug/scene-view.exe). C++17, OpenGL, OpenAL, GLFW; Linux: X11 development headers.
+
+2 gallery · click · drag the red X handle · U undo · Y redo.
