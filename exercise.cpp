@@ -16,9 +16,17 @@ int main() {
         };
         auto front = at(365,130);
         std::cout << file << ": " << front << '\n';
-        passed &= front == "sculpture" && at(375,130) == "pillar";
-        passed &= at(400,0) == "sky";
+        passed &= front == "sculpture";
+        for (auto sample : {std::pair<int,const char*>{375,"pillar"}, {400,"sky"}}) {
+            auto actual = at(sample.first, sample.first == 375 ? 130 : 0);
+            if (actual != sample.second && front == "sculpture") {
+                std::cerr << file << " pixel X=" << sample.first << ": expected "
+                          << sample.second << ", got " << actual << '\n';
+            }
+            passed &= actual == sample.second;
+        }
     }
+    if (!passed) return 1;
     // The long beam enters the ray first even though its centre is farther away.
     Models testParts;
     testParts["long"] = {{{-1,-1,-15},{2,2,14},{1,1,1}}};
@@ -27,11 +35,20 @@ int main() {
     Ray straight{{0,0,0},{0,0,-1}};
     for (int pass = 0; pass < 2; ++pass) {
         int index = pick(stacked, testParts, straight);
-        passed &= index >= 0 && stacked.at(index).model == "long";
+        auto name = index < 0 ? std::string("sky") : stacked.at(index).model;
+        if (name != "long") {
+            std::cerr << "Overlapping boxes: expected long (front at t=1), got " << name << '\n';
+            passed = false;
+        }
         std::reverse(stacked.begin(), stacked.end());
     }
-    passed &= snapX(.24) == 0 && snapX(.26) == .5;
-    passed &= snapX(-.24) == 0 && snapX(-.26) == -.5;
-    passed &= snapX(.74) == .5 && snapX(-.76) == -1;
+    for (auto [x, expected] : {std::pair<double,double>{.24,0}, {.26,.5},
+                               {-.24,0}, {-.26,-.5}, {.74,.5}, {-.76,-1}}) {
+        const auto actual = snapX(x);
+        if (actual != expected) {
+            std::cerr << "snapX(" << x << "): expected " << expected << ", got " << actual << '\n';
+            passed = false;
+        }
+    }
     return passed ? 0 : 1;
 }
