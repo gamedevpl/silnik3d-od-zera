@@ -14,4 +14,4 @@ Companion demo for our video essay on light and shadow in games. One scene, fort
 
 MIT (`LICENSE`). All code is our own. No id Software code is included; techniques are reimplemented from published papers (Williams 1978, Crow 1977, Heidmann 1991, Everitt & Kilgard 2002, Kajiya 1986, Bitterli et al. 2020 and others). Geometry and textures are procedural; no assets from any commercial game. Game and company names belong to their owners; this project is not affiliated with or endorsed by any of them.
 
-`docs/lumen-lab/` holds the copy served by GitHub Pages; keep both in sync.
+`docs/lumen-lab/` holds the copy served by GitHub Pages; keep both in sync. The page UI is `src/app.js` + `src/scenes.js` (scene names, notes, film chapter times). The mascot chat (`src/assistant.js`) uses the site's shared panel `docs/ask/` and genaicode/browser from `docs/vendor/`, so it only works from the `docs/` copy, and only in browsers with a built-in language model.
