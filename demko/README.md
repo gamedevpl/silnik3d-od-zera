@@ -25,3 +25,14 @@ Na telefonie można trzymać skręt i dopalacz dwoma palcami. Start uruchamia or
 - [Odtwarzanie muzyki i synteza efektów](../docs/demko/audio.js)
 
 Ustaw `WASI_SDK_PATH` na katalog WASI SDK 34 i uruchom `./demko/build.sh` z katalogu głównego. Gotowy moduł jest w `docs/demko/flight.wasm`. Do lokalnej gry uruchom `python3 -m http.server --directory docs 8000` i otwórz `/demko/`.
+
+## Wersja natywna na macOS
+
+Na Macu z Metal i macOS 13 lub nowszym zbuduj aplikację z katalogu głównego repozytorium. Kompilacja wymaga Apple Command Line Tools.
+
+```sh
+./demko/macos/build.sh
+open 'build/macos/Neonowy kanał.app'
+```
+
+Enter rozpoczyna wyścig. Sterowanie jest takie jak w tabeli powyżej, a M przełącza dźwięk. Aplikacja zawiera muzykę, działa offline i zapisuje rekord lokalnie. Używa tych samych modeli C++ co wersja WWW. Reguły wyścigu są w [race.hpp](macos/race.hpp), za grafikę odpowiada Metal, a za dźwięk AVFoundation.
