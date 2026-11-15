@@ -13,7 +13,6 @@ struct History {
     }
     void sample(double x) {
         if (!active || x == active->after) return;
-        active->before = active->after;
         active->after = x;
     }
     void release() {
