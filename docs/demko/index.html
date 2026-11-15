@@ -1,16 +1,26 @@
 <!doctype html><html lang="pl"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Neonowy kanał · Silnik 3D od zera</title><meta name="description" content="Przeleć przez neonowy kanał. Ścigaj się z sześcioma pilotami na neonowym torze bez końca.">
 <meta property="og:title" content="Neonowy kanał"><meta property="og:type" content="website"><meta property="og:image" content="https://gamedevpl.github.io/silnik3d-od-zera/demko/canal.png"><meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="style.css?v=grid2"></head>
-<body><main><header><a href="../" data-en="← Back to the workshop">← Do warsztatu</a><a class="source" href="https://github.com/gamedevpl/silnik3d-od-zera/tree/main/demko" data-en="Source on GitHub ↗">Kod na GitHubie ↗</a><button id="lang" type="button">EN</button></header>
-<div class="heading"><h1 data-en="Neon canal">Neonowy kanał</h1><div><button id="sound" aria-pressed="true">♫ Dźwięk</button> <button id="pause" disabled>Ⅱ Pauza</button></div></div>
-<div class="screen"><img src="canal.png" width="480" height="300" alt=""><canvas width="640" height="400" aria-label="Tor / Race course"></canvas>
+<link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="style.css?v=wide1"></head>
+<body><main>
+<div class="screen"><img src="canal.png" width="640" height="400" alt=""><canvas width="640" height="400" aria-label="Tor / Race course"></canvas></div>
+<header>
+ <div class="brand"><a href="../" data-en="← Workshop">← Warsztat</a><h1 data-en="Neon canal">Neonowy kanał</h1></div>
+ <nav><a class="source" href="https://github.com/gamedevpl/silnik3d-od-zera/tree/main/demko" target="_blank" rel="noopener" data-en="C++ source on GitHub ↗">Źródła C++ na GitHubie ↗</a><button id="lang" type="button">EN</button></nav>
+ <div class="settings"><button id="sound" aria-pressed="true">♫ Dźwięk</button><button id="pause" disabled>Ⅱ Pauza</button></div>
+</header>
+<div class="play">
 <div class="hud" hidden><span id="position"></span><span id="shield"></span><span id="lap"></span></div>
 <div id="radar" hidden aria-hidden="true"></div><div id="meter" hidden><i></i></div><div id="flash" aria-live="polite"></div>
-<div class="overlay"><div class="card"><h2 id="title">Neon Grand Prix</h2><p id="info"></p><button id="start" disabled>Start</button></div></div></div>
-<div class="controls"><div class="wheel"><button data-hold="left" aria-label="W lewo / Left">◀</button><button data-hold="right" aria-label="W prawo / Right">▶</button></div>
-<button data-hold="boost" data-en="Boost">Dopalacz</button><button data-hold="brake" data-en="Airbrake">Hamulec</button><button id="fire" data-en="Fire">Strzał</button><button id="rocket">Rakieta</button></div>
+<div class="overlay"><div class="card">
+<h2 id="title">Neon Grand Prix</h2><p id="info"></p>
+<button id="start" disabled>Start</button>
+<p class="source-note" data-en="The track and ship geometry are generated in C++.">Geometria toru i statków powstaje w C++.</p>
 <p class="keys" data-en="← → or A/D steer · ↑ / W boost · ↓ / S airbrake · Space fires · R rocket · P pauses">← → lub A/D sterowanie · ↑ / W dopalacz · ↓ / S hamulec · Spacja strzela · R rakieta · P pauzuje</p>
+</div></div></div>
+<div class="controls" hidden><div class="wheel"><button data-hold="left" aria-label="W lewo / Left">◀</button><button data-hold="right" aria-label="W prawo / Right">▶</button></div>
+<button data-hold="boost" data-en="Boost">Dopalacz</button><button data-hold="brake" data-en="Airbrake">Hamulec</button><button id="fire" data-en="Fire">Strzał</button><button id="rocket">Rakieta</button></div>
+
 <noscript>Włącz JavaScript, aby uruchomić grę.</noscript>
-</main><script type="module" src="app.js?v=grid2"></script></body></html>
+</main><script type="module" src="app.js?v=wide1"></script></body></html>

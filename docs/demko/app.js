@@ -1,4 +1,4 @@
-import {renderer} from './renderer.js?v=grid2';
+import {renderer} from './renderer.js?v=wide1';
 import {newRace,advance,shoot,GRID,LAP} from './race.js?v=grid2';
 import {Sound} from './audio.js?v=grid2';
 
@@ -47,6 +47,7 @@ function panel(){
  $('#lang').textContent=en?'PL':'EN';$('#lang').setAttribute('aria-label',en?'Polski':'English');
  $('#sound').textContent=tr(sound.muted?'muted':'sound');$('#sound').setAttribute('aria-pressed',String(!sound.muted));
  $('#pause').disabled=!['run','paused'].includes(mode);$('#pause').textContent=tr(mode==='paused'?'resume':'pause');
+ $('.controls').hidden=mode!=='run';
  $('.overlay').hidden=mode==='run';$('.hud').hidden=radar.hidden=$('#meter').hidden=['loading','menu'].includes(mode);
  let heading='Neon Grand Prix',info=tr('brief'),label=tr('start');
  if(best)info+=' '+tr('record')+' '+time(best)+'.';
@@ -108,11 +109,8 @@ function tick(now){
   if(!windowStart)windowStart=now;
   frameCount++;
   if(now-windowStart>=850){
-   const ms=(now-windowStart)/frameCount,screenCanvas=$('canvas');
-   if(screen.dataset.renderer==='webgl'&&ms>26&&screenCanvas.width>320){
-    screenCanvas.width=screenCanvas.width===640?480:320;screenCanvas.height=screenCanvas.width*5/8;
-   }
-   else if(engine.backend==='webgl'&&ms>31&&screenCanvas.width===320)engine.simplify();
+   const ms=(now-windowStart)/frameCount;
+   if(ms>26)engine.reduceLoad(ms);
    frameCount=0;windowStart=now;
   }
  }else{windowStart=0;frameCount=0;}

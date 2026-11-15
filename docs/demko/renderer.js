@@ -33,9 +33,9 @@ void main(){
 }`;
 const skyVertex='attribute vec2 point;varying vec2 uv;void main(){uv=point;gl_Position=vec4(point,0.,1.);}';
 const skyFragment=`
-precision highp float;varying vec2 uv;uniform vec4 cam;uniform float aspect,time;
+precision highp float;varying vec2 uv;uniform vec4 cam;uniform float aspect,time,framing;
 void main(){
- float x=uv.x*aspect,y=uv.y-.14+cam.w*x;
+ float x=uv.x*aspect/framing,y=(uv.y-.14)/framing+cam.w*x;
  bool water=y<0.;float sy=abs(y);
  if(water)x+=.010*sin(y*75.+time*2.)*min(1.,-y*3.);
  vec2 p=vec2(x-(.48-cam.z*1.3),sy-.36);
@@ -69,7 +69,7 @@ async function gpu(canvas){
  const engine=instance.exports;engine._initialize();
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
- const u=locs(world,['cam','scale','moving','pass','shadowOpacity']),v=locs(sky,['cam','aspect','time']);
+ const u=locs(world,['cam','scale','moving','pass','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  const dynamic=gl.createBuffer();
@@ -108,14 +108,15 @@ async function gpu(canvas){
   gl.viewport(0,0,canvas.width,canvas.height);gl.disable(gl.DEPTH_TEST);gl.useProgram(sky);
   gl.disableVertexAttribArray(tint);gl.disableVertexAttribArray(pos);
   gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.enableVertexAttribArray(point);gl.vertexAttribPointer(point,2,gl.FLOAT,false,0,0);
-  gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
+  const framing=Math.min(1,canvas.width/canvas.height);
+  gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
   const list=visible(s);
   const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),256);
   list.forEach((o,i)=>data.set(o,4*i));
   const n=engine.actors(s.elapsed%240,s.distance-s.laps*LAP,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
   gl.useProgram(world);gl.uniform4fv(u.cam,cam);
-  const focus=1.55-.12*s.thrust;gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
+  const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
    if(pass!==0)gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -133,20 +134,20 @@ async function gpu(canvas){
 
 // A lightweight chase view also keeps the course playable when a browser disables WebGL.
 function canvasFlight(canvas){
- const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,f=h*.76;
+ const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,span=Math.min(w,h),f=span*.76;
  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#161b3d');sky.addColorStop(.43,'#9c6177');sky.addColorStop(.44,'#333448');sky.addColorStop(1,'#101e32');
  return s=>{
   const cam=camera(s);
   const pt=(x,y,z)=>{const d=Math.max(.4,z-cam[1]);return [w/2+f*(x+road(z)-cam[0]-d*cam[2])/d,h*horizon-f*(y-eye)/d];};
   function poly(points,color,stroke=false){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();if(stroke){ctx.strokeStyle=color;ctx.stroke();}else{ctx.fillStyle=color;ctx.fill();}}
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-  const sunX=w*.66-cam[2]*f;
-  ctx.fillStyle='#ffdc9f';ctx.beginPath();ctx.arc(sunX,h*.26,h*.065,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#ffcd96';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sunX,h*.26,h*.13,h*.018,-.2,0,Math.PI*2);ctx.stroke();
+  const sunX=w*.5+span*.256-cam[2]*f;
+  ctx.fillStyle='#ffdc9f';ctx.beginPath();ctx.arc(sunX,h*horizon-span*.17,span*.065,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#ffcd96';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sunX,h*horizon-span*.17,span*.13,span*.018,-.2,0,Math.PI*2);ctx.stroke();
   // Paint distant reflections under the track before its near structures.
   ctx.save();ctx.beginPath();ctx.rect(0,h*horizon,w,h*(1-horizon));ctx.clip();
-  ctx.fillStyle='#87726d';ctx.beginPath();ctx.ellipse(sunX,h*(2*horizon-.26),h*.063,h*.061,0,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#b39370';ctx.beginPath();ctx.ellipse(sunX,h*(2*horizon-.26),h*.128,h*.014,.2,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#87726d';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.063,span*.061,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#b39370';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.128,span*.014,.2,0,Math.PI*2);ctx.stroke();
   for(let k=Math.floor((cam[1]+144)/12);k*12>cam[1]+1;k--){
    const z=k*12;
    for(const side of [-1,1]){
@@ -197,16 +198,35 @@ function canvasFlight(canvas){
  };
 }
 export async function renderer(canvas){
- let draw,lastScene,backend='webgl';
+ const screen=canvas.parentElement;
+ const budgets=[640*400,480*300,320*200];
+ let tier=0,draw,lastScene,backend='webgl';
+ function resize(){
+  const {width,height}=screen.getBoundingClientRect();
+  if(!width||!height)return;
+  const scale=Math.min(window.devicePixelRatio||1,Math.sqrt(budgets[tier]/(width*height)));
+  const w=Math.max(1,Math.round(width*scale)),h=Math.max(1,Math.round(height*scale));
+  if(w===canvas.width&&h===canvas.height)return;
+  canvas.width=w;canvas.height=h;
+  if(backend==='canvas')draw=canvasFlight(canvas);
+  if(lastScene)draw(lastScene);
+ }
  function simplify(){
   if(backend==='canvas')return;
-  backend='canvas';
-  const fresh=canvas.cloneNode(false);fresh.width=640;fresh.height=400;
-  canvas.replaceWith(fresh);draw=canvasFlight(fresh);
-  fresh.parentElement.dataset.renderer=backend;
+  const fresh=canvas.cloneNode(false);
+  canvas.replaceWith(fresh);canvas=fresh;backend='canvas';tier=0;
+  draw=canvasFlight(canvas);resize();
+  screen.dataset.renderer=backend;
   if(lastScene)draw(lastScene);
  }
  try{draw=await gpu(canvas);canvas.addEventListener('webglcontextlost',simplify);}
  catch(e){console.warn('Canal renderer:',e.message);simplify();}
- return {draw:s=>{lastScene=s;draw(s);},simplify,get backend(){return backend;}};
+ const observer=new ResizeObserver(resize);
+ observer.observe(screen);resize();
+ function reduceLoad(ms){
+  if(backend!=='webgl')return;
+  if(tier<budgets.length-1){tier++;resize();}
+  else if(ms>31)simplify();
+ }
+ return {draw:s=>{lastScene=s;draw(s);},reduceLoad,get backend(){return backend;}};
 }
