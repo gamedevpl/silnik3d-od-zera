@@ -109,7 +109,10 @@ window.SERIES = {
       episodes:[], next:[
         { n:15, slug:"e15", demo:"editor",
           pl:{ t:"Pierwszy plik sceny", q:"Które trzy liczby decydują, gdzie po otwarciu stanie obiekt?" },
-          en:{ t:"The first scene file", q:"Which three numbers put an object back in place when you reopen a scene?" } }
+          en:{ t:"The first scene file", q:"Which three numbers put an object back in place when you reopen a scene?" } },
+        { n:16, slug:"e16", demo:"editor",
+          pl:{ t:"Co jest pod kursorem?", q:"Czemu ten sam klik wybiera raz rzeźbę, a raz kolumnę?" },
+          en:{ t:"What is under the cursor?", q:"Why does the same click sometimes select the column behind the sculpture?" } }
       ] }
   ],
   upcoming:[]

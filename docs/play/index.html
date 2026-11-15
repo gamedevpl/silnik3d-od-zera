@@ -174,8 +174,11 @@ const controls = pl
   : "WASD · drive   E · pick up / drop   B · outlines   R · reset";
 if (["ep11","ep12","ep13","ep14"].includes(ep)) bar.textContent = controls;
 const sceneControls = pl ? "1 warsztat · 2 galeria · S zapisz kopię · R odczytaj" : "1 workshop · 2 gallery · S save copy · R reload";
+const pickControls = pl ? "2 / 3 galeria · klik wybiera · przeciągnij czerwony uchwyt X" : "2 / 3 gallery · click to select · drag the red X handle";
+if (ep === "ep16") bar.textContent = pickControls;
 if (ep === "ep15") bar.textContent = sceneControls;
 function gameTitle(t) {
+  if (ep === "ep16") return t + " · " + pickControls;
   if (ep === "ep15") return t + " · " + sceneControls;
   if (ep === "ep14" && t === "Night Shift | Upper floor | R: next shift")
     return pl ? "Górne piętro · R rozpoczyna następną zmianę" : "Upper floor · R starts the next shift";
