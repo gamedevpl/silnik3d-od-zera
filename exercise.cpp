@@ -19,6 +19,19 @@ int main() {
         passed &= front == "sculpture" && at(375,130) == "pillar";
         passed &= at(400,0) == "sky";
     }
+    // The long beam enters the ray first even though its centre is farther away.
+    Models testParts;
+    testParts["long"] = {{{-1,-1,-15},{2,2,14},{1,1,1}}};
+    testParts["short"] = {{{-1,-1,-4},{2,2,1},{1,1,1}}};
+    Layout stacked{{"long",{}},{"short",{}}};
+    Ray straight{{0,0,0},{0,0,-1}};
+    for (int pass = 0; pass < 2; ++pass) {
+        int index = pick(stacked, testParts, straight);
+        passed &= index >= 0 && stacked.at(index).model == "long";
+        std::reverse(stacked.begin(), stacked.end());
+    }
+    passed &= snapX(.24) == 0 && snapX(.26) == .5;
+    passed &= snapX(-.24) == 0 && snapX(-.26) == -.5;
     passed &= snapX(.74) == .5 && snapX(-.76) == -1;
     return passed ? 0 : 1;
 }
