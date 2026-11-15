@@ -1,59 +1,28 @@
-<!doctype html>
-<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lumen Lab</title>
-<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#c{width:100vw;height:100vh;display:block}
-#ov{position:fixed;inset:0;pointer-events:none;font-family:'Proxima Nova',Inter,system-ui,sans-serif;color:#fff;--u:calc(100vw/1080)}
-#ov .title{position:absolute;left:0;right:0;top:8%;text-align:center;font-family:'Archivo Black';font-weight:400;text-transform:uppercase;font-size:calc(96*var(--u));line-height:1.08;color:#f0f4f8;-webkit-text-stroke:calc(9*var(--u)) #0f1418;paint-order:stroke fill;padding:0 5%}
-#ov .title em{font-style:normal;color:#f2b84b}
-#ov .cap{position:absolute;left:6%;right:6%;top:73%;text-align:center;font-family:Inter;font-weight:700;font-size:calc(58*var(--u));line-height:1.3;color:#f0f4f8}
-#ov .cap span{background:rgba(15,20,24,.82);padding:.14em .45em;border-radius:calc(10*var(--u));box-decoration-break:clone;-webkit-box-decoration-break:clone}
-#ov .smascot{position:absolute;left:calc(58*var(--u));bottom:16%;width:calc(170*var(--u));transform-origin:50% 100%}
-#ov .code{position:absolute;left:5%;right:5%;top:8%;background:rgba(12,14,18,.9);border-radius:calc(20*var(--u));padding:calc(26*var(--u)) calc(30*var(--u));font:500 calc(30*var(--u))/1.35 'DejaVu Sans Mono',monospace;white-space:pre;color:#d7dde6}
-#ov .code b{color:#ff5a4d;font-weight:700}
-#ov .code i{display:block;font:600 calc(24*var(--u)) 'Proxima Nova',sans-serif;color:#9aa4b2;margin-top:calc(14*var(--u));white-space:normal}
-#ov .badge{position:absolute;left:5%;top:5%;background:rgba(12,14,18,.82);border-radius:calc(12*var(--u));padding:.25em .6em;font-weight:600;font-size:calc(44*var(--u))}
-
-/* 16:9 long-form overlays in the "What Games Call It" brand kit (ops tools/media/long-form/brand); unit = 1px at 1920x1080 */
-#ov{--v:calc(100vh/1080);--ink:#0f1418;--paper:#f0f4f8;--mint:#00e4ac;--amber:#f2b84b;--slate:#94a3b8}
-#ov.long{font-family:Inter,sans-serif;font-weight:600;color:var(--paper)}
-#ov .full{position:absolute;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center}
-#ov .full img{width:100%;height:100%;object-fit:contain}
-#ov .full .foot{position:absolute;left:0;right:0;bottom:0;height:3.2%;background:var(--ink)}
-#ov .photo{position:absolute;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;gap:calc(70*var(--v))}
-#ov .photo img{max-height:78%;max-width:56%;border-radius:calc(8*var(--v))}
-#ov .photo .side{max-width:34%;font-family:'Archivo Black';font-weight:400;text-transform:uppercase;font-size:calc(60*var(--v));line-height:1.1}
-#ov .photo .side small{display:block;font-family:Inter;font-weight:600;text-transform:none;font-size:calc(34*var(--v));color:var(--amber);margin-top:calc(18*var(--v))}
-#ov .credit{position:absolute;right:calc(58*var(--v));bottom:calc(50*var(--v));font:700 calc(22*var(--v)) 'JetBrains Mono';color:var(--slate);background:rgba(15,20,24,.78);padding:.45em .8em;border-radius:calc(8*var(--v))}
-#ov .bigcard{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:calc(68*var(--v));line-height:1.25;padding:0 10%}
-#ov .bigcard.dim{background:rgba(15,20,24,.62)} #ov .bigcard.solid{background:var(--ink)}
-#ov .bigcard small{display:block;font-weight:600;font-size:calc(40*var(--v));color:var(--slate);margin-top:calc(24*var(--v))}
-#ov .bigcard em{font-style:normal;color:var(--amber)}
-#ov .bigcard s,#ov .bigcard .tag{display:inline-block;font:700 calc(36*var(--v)) 'JetBrains Mono';text-decoration:none;background:rgba(240,244,248,.12);color:var(--paper);padding:.3em .7em;border-radius:calc(8*var(--v));margin-bottom:calc(26*var(--v));letter-spacing:.06em}
-#ov .bigcard .tag.on{background:var(--amber);color:var(--ink)}
-#ov .bigcard.kc>div{font:400 calc(124*var(--v))/1.08 'Archivo Black';text-transform:uppercase;letter-spacing:.01em} #ov .bigcard.kc em{display:block;font-weight:700;font-size:calc(72*var(--v));margin-top:calc(30*var(--v));line-height:1.2} #ov .bigcard.kc small{font-size:calc(46*var(--v))} #ov .bigcard.kc.dim{background:rgba(10,14,18,.82)} #ov .bigcard.kc{text-shadow:0 calc(3*var(--v)) calc(18*var(--v)) rgba(0,0,0,.7)}
-#ov .bigtitle{font-family:'Archivo Black';font-weight:400;text-transform:uppercase;font-size:calc(144*var(--v));line-height:1.08;-webkit-text-stroke:calc(5*var(--v)) var(--ink);paint-order:stroke fill}
-#ov .bigtitle em{color:var(--amber)} #ov .bigtitle+small{font-size:calc(56*var(--v));color:var(--paper)}
-#ov .modecard{position:absolute;right:calc(58*var(--v));top:calc(50*var(--v));width:calc(540*var(--v));background:rgba(15,20,24,.82);border-radius:calc(8*var(--v));padding:calc(18*var(--v)) calc(24*var(--v));font-size:calc(25*var(--v));line-height:1.4;font-weight:600}
-#ov .modecard h4{margin:0 0 calc(8*var(--v));font:700 calc(28*var(--v)) 'JetBrains Mono';color:var(--amber);text-transform:uppercase}
-#ov .modecard div{display:flex;gap:.6em} #ov .modecard b{font:700 calc(21*var(--v))/1.65 'JetBrains Mono';color:var(--slate);min-width:5.6em;text-transform:uppercase}
-#ov .modecard .bad{color:#ff5a5a}
-#ov .lower{position:absolute;left:calc(58*var(--v));bottom:calc(58*var(--v));max-width:68%;display:flex;flex-wrap:wrap;align-items:center;gap:calc(14*var(--v));font-weight:600;font-size:calc(44*var(--v));line-height:1.2;text-shadow:0 calc(3*var(--v)) calc(10*var(--v)) rgba(0,0,0,.7)}
-#ov .lower span{background:rgba(15,20,24,.78);padding:.28em .6em;border-radius:calc(8*var(--v))}
-#ov .lower .tag{font:700 calc(36*var(--v)) 'JetBrains Mono';background:rgba(15,20,24,.78);color:var(--paper);padding:.35em .6em;border-radius:calc(8*var(--v));letter-spacing:.04em;text-shadow:none}
-#ov .lower .tag.on{background:var(--amber);color:var(--ink)}
-#ov .lower small{flex-basis:100%;font-weight:600;color:var(--amber);font-size:.72em}
-#ov .lower small i{font-style:normal;background:rgba(15,20,24,.78);padding:.25em .6em;border-radius:calc(8*var(--v))}
-#ov .cornerchip{position:absolute;left:calc(58*var(--v));top:calc(50*var(--v));font:700 calc(26*var(--v)) 'JetBrains Mono';color:var(--mint);background:rgba(15,20,24,.78);padding:.3em .55em;border-radius:calc(8*var(--v))}
-#ov .counter{position:absolute;left:calc(58*var(--v));top:calc(112*var(--v));background:var(--amber);color:var(--ink);border-radius:calc(8*var(--v));padding:.3em .55em;font:700 calc(30*var(--v)) 'JetBrains Mono'}
-#ov .codebox{position:absolute;inset:0;background:var(--ink);display:flex;flex-direction:column;justify-content:center;padding:0 9%}
-#ov .codebox pre{margin:0;font:500 calc(34*var(--v))/1.45 'JetBrains Mono';color:#d7dde6;white-space:pre}
-#ov .codebox pre b{color:var(--amber);font-weight:700} #ov .codebox i{font:700 calc(24*var(--v)) 'JetBrains Mono';font-style:normal;color:var(--slate);margin-top:calc(30*var(--v))}
-#ov .chapter{position:absolute;inset:0;background:rgba(15,20,24,.55)}
-#ov .chapter .in{position:absolute;left:calc(96*var(--v));bottom:calc(173*var(--v));right:calc(420*var(--v))}
-#ov .chapter .num{font:700 calc(33*var(--v)) 'JetBrains Mono';color:var(--amber)}
-#ov .chapter .word{font-family:'Archivo Black';font-weight:400;text-transform:uppercase;font-size:calc(150*var(--v));line-height:1.05;-webkit-text-stroke:calc(6*var(--v)) var(--ink);paint-order:stroke fill;margin:calc(10*var(--v)) 0 calc(18*var(--v))}
-#ov .chapter .sent{font-weight:600;font-size:calc(56*var(--v));line-height:1.15;text-shadow:0 calc(3*var(--v)) calc(10*var(--v)) rgba(0,0,0,.7)}
-#ov .gamefoot{position:absolute;inset:0;background:var(--ink)} #ov .gamefoot video,#ov .gamefoot img{width:100%;height:100%;object-fit:contain}
-#ov .cornerchip.game{color:var(--paper);background:rgba(15,20,24,.82)}
-#ov .mascot{position:absolute;transform-origin:50% 100%}
-</style></head>
-<body><canvas id="c"></canvas><div id="ov"></div><script type="module" src="src/main.js"></script><script type="module" src="src/gallery.js"></script></body></html>
+<!doctype html><html lang="pl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lumen Lab · 40 lat światła i cienia w grach</title>
+<meta name="description" content="Czterdzieści lat sztuczek ze światłem i cieniem w grach, na żywo w jednym silniku WebGL2. Demo do filmu „Ujarzmić fotony”.">
+<meta property="og:title" content="Lumen Lab"><meta property="og:type" content="website">
+<link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="../ask/ask.css"><link rel="stylesheet" href="style.css?v=2"></head>
+<body><main>
+<canvas id="c" aria-label="Scena demo"></canvas><div id="ov"></div>
+<header>
+ <div class="brand"><a href="../" data-pl="← Warsztat" data-en="← Workshop">← Warsztat</a><h1>Lumen <em>Lab</em></h1></div>
+ <nav><a class="source" href="https://github.com/gamedevpl/silnik3d-od-zera/tree/main/lumen-lab" target="_blank" rel="noopener" data-pl="Kod na GitHubie ↗" data-en="Source on GitHub ↗">Kod na GitHubie ↗</a><button id="lang" type="button">EN</button></nav>
+</header>
+<div class="stage">
+ <section class="card" aria-live="polite">
+  <p class="kicker"><span id="chapNo"></span> · <span id="chapName"></span></p>
+  <h2 id="sceneName"></h2>
+  <p id="sceneNote"></p>
+  <div class="row"><button id="prev" type="button" aria-label="Poprzednia scena">◀</button><span id="count"></span><button id="next" type="button" aria-label="Następna scena">▶</button><button id="pause" type="button"></button></div>
+  <div id="chips" class="chips"></div>
+  <p class="film" id="film"></p>
+ </section>
+</div>
+<footer><div id="chapters" class="chapters" role="tablist"></div></footer>
+<div id="nogl" hidden><b>WebGL2</b><span data-pl="Ta przeglądarka nie obsługuje WebGL2, więc sceny się nie uruchomią." data-en="This browser has no WebGL2, so the scenes cannot run.">Ta przeglądarka nie obsługuje WebGL2, więc sceny się nie uruchomią.</span></div>
+<noscript>Włącz JavaScript, żeby zobaczyć sceny.</noscript>
+</main>
+<script type="module" src="src/main.js"></script><script type="module" src="src/app.js"></script>
+<script type="module">if ("LanguageModel" in self || self.__silnikModel) import("./src/assistant.js").catch(() => {});</script></body></html>
