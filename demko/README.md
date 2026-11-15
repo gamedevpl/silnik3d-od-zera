@@ -14,7 +14,7 @@ Tuck in behind a rival to gain speed and recharge your boost, then pull out to p
 | Space / R | Fire the cannon / launch a rocket |
 | P or Esc | Pause or resume |
 
-On a touchscreen, hold steer and boost with two fingers. The game opens in English. Select **PL** in the browser to switch to Polish.
+Press **Space**, click the race view or tap it to start or resume. During the race, drag sideways to steer. On a trackpad, a horizontal two-finger swipe also steers. On a touchscreen, steer with one thumb and hold **Boost** with the other. The game opens in English. Select **PL** in the browser to switch to Polish.
 
 Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. Engine and weapon sounds respond to your inputs independently of the music.
 

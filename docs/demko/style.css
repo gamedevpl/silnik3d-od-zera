@@ -19,14 +19,15 @@ nav,.settings,.controls,.wheel{display:flex;align-items:center;gap:8px}
 nav .source{font-size:15px;padding:5px}.source:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #91ffde;outline-offset:2px}
 button{font:inherit;color:#f8f1e4;border:1px solid #76818f80;border-radius:6px;padding:7px 13px;min-height:38px;background:#121c2cdd;cursor:pointer;touch-action:manipulation;user-select:none}
 button:hover{border-color:#93d5c6}button:active,button.held{color:#142635;background:#95edce}button:disabled{opacity:.5}
-.play{position:relative;min-height:0;pointer-events:none}
-.overlay{position:absolute;inset:0;display:flex;align-items:flex-end;overflow:auto;pointer-events:auto;
- background:linear-gradient(90deg,#0c1421d9,transparent 60%),linear-gradient(0deg,#0b101cdb,transparent 46%)}
-.card{margin:auto var(--right) 0 var(--left);padding-block:18px max(24px,env(safe-area-inset-bottom));max-width:410px}
+.play{position:relative;min-height:0;outline:none}
+.play.driving{touch-action:none;user-select:none;cursor:grab}.play.dragging{cursor:grabbing}
+.overlay{position:absolute;inset:0;display:flex;align-items:safe center;justify-content:center;overflow:auto;text-align:center;cursor:pointer;
+ background:radial-gradient(ellipse at center,#0c1421ea 5%,#0c1421a8 45%,#0c14212b)}
+.card{margin:auto var(--right) auto var(--left);padding-block:16px;max-width:480px}
 .card h2{font-size:clamp(32px,4.2vw,67px);letter-spacing:-.05em;line-height:1;margin:0}
-.card p{margin:10px 0}.card #info{max-width:37ch;font-size:clamp(16px,1.5vw,20px)}
-#start{margin:6px 0 8px;min-width:112px;background:#91f6ce;color:#10251f;font-weight:bold;border:0}
-.source-note,.keys{font-size:14px;color:#d6e0df}.keys{color:#b2c1c5;max-width:50ch}
+.card p{margin:10px auto}.card #info{max-width:37ch;font-size:clamp(16px,1.5vw,20px)}
+#start{margin:6px 0 8px;min-width:160px;min-height:48px;background:#91f6ce;color:#10251f;font-weight:bold;border:0}
+.gesture,.source-note,.keys{font-size:14px;color:#d6e0df}.keys{color:#b2c1c5;max-width:50ch}
 .hud{display:flex;justify-content:space-between;align-items:start;gap:4px;padding:2px var(--right) 0 var(--left)}
 .hud span,#flash:not(:empty){font-weight:bold;background:#0d1828ce;border-radius:4px;padding:4px 8px}
 #position{color:#91ffdf}#shield{color:#ffc493}
@@ -38,12 +39,14 @@ button:hover{border-color:#93d5c6}button:active,button.held{color:#142635;backgr
 #radar .player{z-index:1;background:#74ffe4;width:7px;height:7px;clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%);border-radius:0}
 .controls{padding:4px var(--right) max(12px,env(safe-area-inset-bottom)) var(--left);background:linear-gradient(transparent,#101526bd)}
 .controls button{min-height:44px;touch-action:none}.wheel{margin-right:auto}.wheel button{min-width:48px}
+main{overscroll-behavior-x:contain}
+html:has(.driving){overscroll-behavior-x:none}
 noscript{position:absolute;bottom:0;background:#131c2b}
 @media(max-width:650px){
  header{display:grid;grid-template-columns:1fr auto;gap:7px;padding-bottom:6px}
  .brand{grid-row:1/3}.brand h1{font-size:25px}nav,.settings{justify-content:flex-end;gap:5px}
  header button{min-height:30px;padding:4px 9px;font-size:14px}nav .source{font-size:13px}
- .overlay{background:linear-gradient(0deg,#101623ed,transparent 68%)}
+ .overlay{background:#0c1421b8}
  .hud,#flash{font-size:13px}.card{padding-bottom:max(18px,env(safe-area-inset-bottom))}
  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
  .controls .wheel{display:contents}.controls [data-hold="brake"]{grid-column:3;grid-row:2}

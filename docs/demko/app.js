@@ -5,11 +5,11 @@ import {Sound} from './audio.js?v=grid2';
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
 const englishTitle=document.title;
-const keys=new Set(),touch=new Set(),sound=new Sound();
+const keys=new Set(),pointers=new Map(),buttonKeys=new Set(),sound=new Sound();
 const words={
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
  brief:['Sześciu rywali. Jedź w smudze za statkiem, a przed zakrętem wyjdź z niej na dopalaczu. Zielone strzałki dodają prędkości.','Six rivals. Slipstream behind a ship, then boost past it before the bend. Green chevrons give you a burst of speed.'],
- loading:['Ładowanie…','Loading…'],start:['Start','Start'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],
+ loading:['Ładowanie…','Loading…'],start:['Graj · spacja lub kliknięcie','Race · Space or click'],tapStart:['Dotknij, aby zagrać','Tap to race'],resumeKey:['Wznów · spacja lub kliknięcie','Resume · Space or click'],tapResume:['Dotknij, aby wznowić','Tap to resume'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],
  paused:['Pauza','Paused'],
  sound:['♫ Dźwięk','♫ Sound'],muted:['♫ Wyciszono','♫ Muted'],shield:['Osłona','Shield'],rocket:['Rakieta','Rocket'],
  hit:['Uderzenie','Shield hit'],break:['Trafienie','Direct hit'],
@@ -58,22 +58,31 @@ function panel(){
  $('#pause').disabled=!['run','paused'].includes(mode);$('#pause').textContent=tr(mode==='paused'?'resume':'pause');
  $('.controls').hidden=mode!=='run';
  $('.overlay').hidden=mode==='run';$('.hud').hidden=radar.hidden=$('#meter').hidden=['loading','menu'].includes(mode);
- let heading='Neon Grand Prix',info=tr('brief'),label=tr('start');
+ const coarse=matchMedia('(pointer: coarse)').matches;
+ let heading='Neon Grand Prix',info=tr('brief'),label=tr(coarse?'tapStart':'start');
  if(best)info+=' '+tr('record')+' '+time(best)+'.';
  if(mode==='loading')label=tr('loading');
- if(mode==='paused'){heading=tr('paused');label=tr('resume');}
+ if(mode==='paused'){heading=tr('paused');label=tr(coarse?'tapResume':'resumeKey');}
  $('#title').textContent=heading;$('#info').textContent=info;$('#start').textContent=label;$('#start').disabled=mode==='loading';
  updateHUD();
 }
-function clearInput(){keys.clear();touch.clear();document.querySelectorAll('.held').forEach(b=>b.classList.remove('held'));}
-function pause(){if(mode!=='run')return;mode='paused';sound.pause();clearInput();panel();}
+const play=$('.play');
+let drag=null, wheelUntil=0, targetX=0;
+function clearInput(){
+ keys.clear();pointers.clear();buttonKeys.clear();drag=null;wheelUntil=0;
+ play.classList.remove('dragging');
+ document.querySelectorAll('.held').forEach(b=>b.classList.remove('held'));
+}
+function pause(){if(mode!=='run')return;mode='paused';play.classList.remove('driving');sound.pause();clearInput();panel();}
 function start(){
- if(mode==='loading')return;
+ if(mode!=='menu'&&mode!=='paused')return;
  if(mode!=='paused'){race=reset();flash='';}
  mode='run';last=performance.now();clearInput();sound.play();panel();
- $('#start').blur();
+ play.classList.add('driving');play.focus({preventScroll:true});
 }
-$('#start').onclick=start;$('#pause').onclick=()=>mode==='run'?pause():start();
+// Keep the native button keyboard-accessible while the whole race view accepts a click or tap.
+$('.overlay').onclick=start;
+$('#pause').onclick=()=>mode==='run'?pause():start();
 $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
@@ -84,29 +93,64 @@ function cue(k){
 function fire(rocket){if(mode==='run')shoot(rocket,cue);}
 $('#fire').onclick=()=>fire(false);$('#rocket').onclick=()=>fire(true);
 for(const b of document.querySelectorAll('[data-hold]')){
- b.onpointerdown=e=>{if(mode!=='run')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.hold);b.classList.add('held');};
- b.onlostpointercapture=()=>{touch.delete(b.dataset.hold);b.classList.remove('held');};
- b.onkeydown=e=>{if(mode==='run'&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();touch.add(b.dataset.hold);}};
- b.onkeyup=()=>touch.delete(b.dataset.hold);
+ const action=b.dataset.hold;
+ function paint(){b.classList.toggle('held',buttonKeys.has(action)||[...pointers.values()].includes(action));}
+ b.onpointerdown=e=>{
+  if(mode!=='run'||e.button!==0)return;
+  e.preventDefault();b.setPointerCapture(e.pointerId);pointers.set(e.pointerId,action);paint();
+ };
+ b.onlostpointercapture=e=>{pointers.delete(e.pointerId);paint();};
+ b.onkeydown=e=>{if(mode==='run'&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();buttonKeys.add(action);paint();}};
+ b.onkeyup=b.onblur=()=>{buttonKeys.delete(action);paint();};
 }
+// A full-width gesture spans the track. Keep a short drag proportional on larger displays.
+const laneScale=()=>36/Math.min(560,play.clientWidth*.8);
+const lane=x=>Math.max(-18,Math.min(18,x));
+play.onpointerdown=e=>{
+ if(mode!=='run'||drag||e.button!==0)return;
+ play.setPointerCapture(e.pointerId);
+ drag={id:e.pointerId,start:e.clientX,lane:race.x};targetX=race.x;wheelUntil=0;
+ play.classList.add('dragging');
+};
+play.onpointermove=e=>{
+ if(drag?.id===e.pointerId)targetX=lane(drag.lane+(e.clientX-drag.start)*laneScale());
+};
+play.onlostpointercapture=e=>{
+ if(drag?.id===e.pointerId){drag=null;play.classList.remove('dragging');}
+};
+play.addEventListener('wheel',e=>{
+ if(mode!=='run'||e.ctrlKey||drag||!e.deltaX||Math.abs(e.deltaX)<Math.abs(e.deltaY))return;
+ e.preventDefault();
+ const now=performance.now(),unit=e.deltaMode===1?16:e.deltaMode===2?play.clientWidth:1;
+ targetX=lane((now<wheelUntil?targetX:race.x)+e.deltaX*unit*laneScale());wheelUntil=now+550;
+},{passive:false});
 const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'boost',KeyW:'boost',ArrowDown:'brake',KeyS:'brake',Space:'fire'};
 window.addEventListener('keydown',e=>{
  if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
  if(e.code==='KeyP'||e.code==='Escape'){if(!e.repeat){if(mode==='run')pause();else if(mode==='paused')start();}return;}
+ if(e.code==='Space'){
+  if(e.target.closest('button,a')&&e.target!==$('#start'))return;
+  if(mode==='menu'||mode==='paused'){e.preventDefault();if(!e.repeat)start();return;}
+  if(e.repeat&&!keys.has('Space'))return;
+ }
  if(mode!=='run')return;
- if(e.code==='Space'&&e.target.closest('button,a'))return;
  if(map[e.code]){e.preventDefault();keys.add(e.code);}
  if(e.code==='KeyR'&&!e.repeat)fire(true);
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 window.addEventListener('blur',pause);
-const held=k=>touch.has(k)||[...keys].some(code=>map[code]===k);
+const held=k=>buttonKeys.has(k)||[...pointers.values()].includes(k)||[...keys].some(code=>map[code]===k);
 let nextHud=0,frameCount=0,windowStart=0;
 function tick(now){
  const dt=Math.min(.25,Math.max(0,(now-last)/1000));last=now;
  if(mode==='run'){
-  const input={steer:Number(held('right'))-Number(held('left')),boost:held('boost'),brake:held('brake')};
+  let steer=Number(held('right'))-Number(held('left'));
+  if(!steer&&(drag||now<wheelUntil)){
+   const delta=targetX-race.x;
+   if(Math.abs(delta)>.65)steer=Math.sign(delta);
+  }
+  const input={steer,boost:held('boost'),brake:held('brake')};
   advance(dt,input,held('fire'),cue);
   sound.tick(race.thrust);draw(race);
   if(now>=nextHud){updateHUD();nextHud=now+75;}
