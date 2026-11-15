@@ -10,6 +10,7 @@ inline int nextId(const Layout& nodes) {
 
 inline int duplicate(Layout& nodes, int index) {
     Node copy = nodes.at(index);
+    copy.id = nextId(nodes);
     copy.position.x += 2;
     nodes.push_back(copy);
     return int(nodes.size()) - 1;
