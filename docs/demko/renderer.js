@@ -131,21 +131,23 @@ void main(){
 }`;
 const skyVertex='attribute vec2 point;varying vec2 uv;void main(){uv=point;gl_Position=vec4(point,0.,1.);}';
 const skyFragment=`
-precision highp float;varying vec2 uv;uniform vec4 cam;uniform float aspect,time,framing,skyPitch;
+precision highp float;varying vec2 uv;uniform vec4 cam;uniform float aspect,time,framing,skyPitch,bearing;
 void main(){
  float x=uv.x*aspect/framing,y=(uv.y-.14)/framing+cam.w*x+skyPitch;
  bool water=y<0.;float sy=abs(y);
  if(water)x+=.010*sin(y*75.+time*2.)*min(1.,-y*3.);
- vec2 p=vec2(x-(.48-cam.z*1.3),sy-.36);
+ float longitude=bearing+atan(x/1.55);
+    float delta=longitude-.34;
+    vec2 p=vec2(1.55*atan(sin(delta),cos(delta)),sy-.36);
  vec3 sky=mix(vec3(.58,.34,.44),vec3(.069,.093,.22),smoothstep(0.,1.,sy));
  float dist=length(p);sky+=vec3(.29,.15,.06)*exp(-8.*dist);
  vec2 tilt=vec2(p.x+.21*p.y,p.y-.21*p.x);
  float ring=abs(length(tilt/vec2(.32,.040))-1.);
  if(dist<.16)sky=mix(vec3(1.,.69,.41),vec3(1.,.91,.65),smoothstep(-.15,.15,p.y));
  if(ring<.13&&(tilt.y<0.||dist>.16))sky=vec3(1.,.84,.57);
- vec2 star=floor(vec2(x,sy)*220.);
+ vec2 star=floor(vec2(fract(longitude/6.2831853)*2074.,sy*220.));
  if(!water && sy>.31 && dist>.19 && fract(sin(dot(mod(star,61.),vec2(17.7,45.3)))*299.)>.996)sky+=.28;
- float ridge=.018+.014*sin(8.*(x+cam.z))+.009*sin(23.*(x+cam.z));
+ float ridge=.018+.014*sin(8.*longitude)+.009*sin(23.*longitude);
  vec3 mist=vec3(.38,.27,.38);
  if(!water && sy<ridge)sky=mix(mist,vec3(.48,.34,.43),sy/ridge);
  if(water){
@@ -171,7 +173,7 @@ function gpu(canvas,simulation){
  const engine=simulation.geometry;
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
- const u=locs(world,['cam','scale','pilot','moving','pass','clock','shadowOpacity','lift','visibility','pitch']),v=locs(sky,['cam','aspect','time','framing','skyPitch']);
+ const u=locs(world,['cam','scale','pilot','moving','pass','clock','shadowOpacity','lift','visibility','pitch']),v=locs(sky,['cam','aspect','time','framing','skyPitch','bearing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  // C++ bakes the same material and particle textures for both GPUs.
@@ -208,6 +210,7 @@ function gpu(canvas,simulation){
   gl.disableVertexAttribArray(tint);gl.disableVertexAttribArray(pos);
   gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.enableVertexAttribArray(point);gl.vertexAttribPointer(point,2,gl.FLOAT,false,0,0);
   const framing=Math.min(1,canvas.width/canvas.height);
+  gl.uniform1f(v.bearing,2*Math.PI*cam[1]/simulation.LAP+Math.atan(cam[2]));
   const grade=engine.cameraPitch(cam[1]);gl.uniform1f(v.skyPitch,grade*(1.55-.12*s.thrust));
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);

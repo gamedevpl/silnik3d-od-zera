@@ -13,16 +13,18 @@ fragment float4 skyPixel(Sky in [[stage_in]],constant View &v [[buffer(1)]]){
     float x=in.uv.x*v.lens.z/v.lens.w,y=(in.uv.y-.14)/v.lens.w+v.camera.w*x+v.terrain.x*v.lens.y/v.lens.w;
     bool water=y<0;float sy=abs(y);
     if(water)x+=.010*sin(y*75+v.effects.x*2)*min(1.f,-y*3);
-    float2 p=float2(x-(.48-v.camera.z*1.3),sy-.36);
+    float longitude=v.terrain.y+atan(x/1.55);
+    float delta=longitude-.34;
+    float2 p=float2(1.55*atan2(sin(delta),cos(delta)),sy-.36);
     float3 sky=mix(float3(.58,.34,.44),float3(.069,.093,.22),smoothstep(0.f,1.f,sy));
     float dist=length(p);sky+=float3(.29,.15,.06)*exp(-8*dist);
     float2 tilt=float2(p.x+.21*p.y,p.y-.21*p.x);
     float ring=abs(length(tilt/float2(.32,.040))-1);
     if(dist<.16)sky=mix(float3(1,.69,.41),float3(1,.91,.65),smoothstep(-.15f,.15f,p.y));
     if(ring<.13&&(tilt.y<0||dist>.16))sky=float3(1,.84,.57);
-    float2 star=floor(float2(x,sy)*220);star-=61*floor(star/61);
+    float2 star=floor(float2(fract(longitude/6.2831853)*2074.,sy*220.));star-=61*floor(star/61);
     if(!water&&sy>.31&&dist>.19&&fract(sin(dot(star,float2(17.7,45.3)))*299)>.996)sky+=.28;
-    float ridge=.018+.014*sin(8*(x+v.camera.z))+.009*sin(23*(x+v.camera.z));
+    float ridge=.018+.014*sin(8.*longitude)+.009*sin(23.*longitude);
     float3 mist=float3(.38,.27,.38);
     if(!water && sy<ridge)sky=mix(mist,float3(.48,.34,.43),sy/ridge);
     if(water){

@@ -33,32 +33,18 @@ class CanvasScene {
             double z = k * 12;
             double d = z - camZ;
             emit({Opacity, 1 - ramp((d - (mirror ? 112 : 236)) / (mirror ? 62 : 100))});
-            for (int side : {-1, 1}) {
-                double x = side * (28 + std::abs(k % 4)),
-                       top = sign * (8 + std::abs(std::sin(((k % 96 + 96) % 96) * 21 + side)) * 15);
-                if (k % 3 == 0) {
-                    double tower = side * (48 + std::abs(k % 7) * 4);
-                    double height = sign * (31 + std::abs(k % 5) * 6);
-                    polygon(mirror ? 0x2b3048 : 0x383955,
-                            {project(tower,0,z), project(tower,height,z), project(tower+side*9,height,z), project(tower+side*9,0,z)});
-                    for (int floor=1; floor<8; ++floor) {
-                        double y = height * floor / 8;
-                        polygon(mirror ? 0x475261 : (floor%3 ? 0x64799b : 0xb9a283),
-                                {project(tower,y,z),project(tower+side*7,y,z),project(tower+side*7,y+sign*.38,z),project(tower,y+sign*.38,z)});
-                    }
-                }
-                polygon(mirror ? 0x252c40 : 0x272840,
-                        {project(x, 0, z), project(x, top, z), project(x + side * 5, top, z),
-                         project(x + side * 5, 0, z)});
-                if (d < 165) {
-                    polygon(mirror ? 0x705669 : 0xab8294,
-                            {project(x, top * .7, z), project(x + side * 4, top * .7, z),
-                             project(x + side * 4, top * .68, z), project(x, top * .68, z)});
-                    polygon(mirror ? 0x366b79 : 0x68c8d3,
-                            {project(side * 19.3, 0, z), project(side * 19.55, 0, z),
-                             project(side * 19.55, 0, z + 11), project(side * 19.3, 0, z + 11)});
-                }
-            }
+            // Use the same footprints as the collision world in the low-detail renderer.
+            if(k%2==0)citySolids(k/2,[&](Building b){
+                auto front=[&](double x,double y){return project(x,sign*y,b.z);};
+                int face=mirror?0x252c40:0x343953;
+                polygon(face,{front(b.x,b.y),front(b.x+b.w,b.y),front(b.x+b.w,b.y+b.h),front(b.x,b.y+b.h)});
+                double edge=b.x<0?b.x+b.w:b.x;
+                polygon(mirror?0x22273b:0x282d44,{front(edge,b.y),project(edge,sign*b.y,b.z+b.d),
+                    project(edge,sign*(b.y+b.h),b.z+b.d),front(edge,b.y+b.h)});
+                if(b.h>5)for(double y=2;y<b.h-1;y+=3)
+                    polygon(mirror?0x535368:0x927b84,{front(b.x+.35,y),front(b.x+b.w-.45,y),
+                        front(b.x+b.w-.45,y+.20),front(b.x+.35,y+.20)});
+            });
             if (d >= 174)
                 continue;
             auto surface = [&](double x, double y, double zz) {
@@ -190,7 +176,8 @@ class CanvasScene {
                 double zz = z + p.center.z;
                 if (zz <= camZ + .8)
                     return;
-                auto center = project(x + p.center.x, deck + p.center.y, zz);
+                double wake=(int(kind)==Smoke || int(kind)==FireTrail)?rise*std::max(0.,-p.center.z-1.3)/std::max(30.f,speed):0.;
+                auto center = project(x + p.center.x-wake, deck + p.center.y, zz);
                 double scale = focal / (zz - camZ);
                 emit({Sprite, double(p.tile), center[0], center[1], p.w * scale, p.h * scale, -p.angle,
                       p.opacity});
@@ -248,7 +235,10 @@ class CanvasScene {
             auto nose=project(x,age,z);
             auto tail=project(x+road(z)-road(z-shaft)-shaft*speed,age-rise*shaft,z-shaft);
             const double w=std::max(1.,r*(kind==3?.22:.11));
-            polygon(0xffdc86,{{nose[0]-w,nose[1]},{nose[0]+w,nose[1]},{tail[0]+w,tail[1]},{tail[0]-w,tail[1]}});
+            if(kind==3){
+                polygon(0x9acdcf,{{nose[0],nose[1]-.4*w},{tail[0]+2.3*w,tail[1]+w},{tail[0]-2.3*w,tail[1]+w}});
+                emit({Ellipse,0xffad54,0,tail[0],tail[1],w,.85*w,0});
+            }else polygon(0xffdc86,{{nose[0]-w,nose[1]},{nose[0]+w,nose[1]},{tail[0]+w,tail[1]},{tail[0]-w,tail[1]}});
         } else if (kind == 1) {
             polygon(0xff664e, {{cx, cy - r}, {cx + r, cy}, {cx, cy + r}, {cx - r, cy}});
         } else {
@@ -264,22 +254,24 @@ class CanvasScene {
           cameraLift(bridgeHeight(race.x, race.distance) + viaductHeight(camZ)), out(commands) {
         horizon += focal * cameraGrade(camZ);
         out.clear();
-        double span = std::min(w, h), sunX = w * .5 + span * .256 - heading * focal,
+        const double bearing=tau*camZ/lapLength+std::atan(heading),delta=.34-bearing;
+        const bool planetInFront=std::cos(delta)>.05;
+        double span = std::min(w, h), sunX = w * .5 + focal*std::tan(delta),
                skyY = horizon - span * .17, waterY = horizon + span * .17;
-        emit({Ellipse, 0xffdc9f, 0, sunX, skyY, span * .065, span * .065, 0});
-        emit({Ellipse, 0xffcd96, 2, sunX, skyY, span * .13, span * .018, -.2});
+        if(planetInFront)emit({Ellipse, 0xffdc9f, 0, sunX, skyY, span * .065, span * .065, 0});
+        if(planetInFront)emit({Ellipse, 0xffcd96, 2, sunX, skyY, span * .13, span * .018, -.2});
         // A distant shore softens the meeting of the skyline and its reflection.
         for (int i = 0; i < 24; i++) {
             auto ridge = [&](int j) {
-                return horizon - span * (.023 + .011 * std::sin(j * .9 + heading * 8) +
-                                         .006 * std::cos(j * 1.9 + heading * 19));
+                return horizon - span * (.023 + .011 * std::sin(j * .9 + bearing * 8) +
+                                         .006 * std::cos(j * 1.9 + bearing * 19));
             };
             double a = width * i / 24, b = width * (i + 1) / 24;
             polygon(0x705469, {{a, horizon}, {a, ridge(i)}, {b, ridge(i + 1)}, {b, horizon}});
         }
         emit({ClipBelow, horizon});
-        emit({Ellipse, 0x88715f, 0, sunX, waterY, span * .063, span * .061, 0});
-        emit({Ellipse, 0xa88c73, 2, sunX, waterY, span * .128, span * .014, .2});
+        if(planetInFront)emit({Ellipse, 0x88715f, 0, sunX, waterY, span * .063, span * .061, 0});
+        if(planetInFront)emit({Ellipse, 0xa88c73, 2, sunX, waterY, span * .128, span * .014, .2});
         structures(true);
         emit({Restore});
         structures(false);

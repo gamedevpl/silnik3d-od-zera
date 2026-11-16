@@ -10,7 +10,7 @@ int main() {
         assert(neon::viaductGrade(offset + 940) < -.15);
         assert(neon::viaductHeight(offset + 1060) == 0);
     }
-    // Check both weapons over the lap seam. Steering after launch cannot bend their path.
+    // Cross the lap seam, then steer the ship away from both launched weapons.
     for(bool rocket:{false,true}){
         neon::Race r;
         r.distance=neon::lapLength-12;r.vx=-5;
@@ -21,14 +21,19 @@ int main() {
         for(int i=0;i<14;i++)r.stepShots(1./90);
         const auto &shot=r.shots.at(0);
         assert(shot.z>neon::lapLength);
-        assert(std::abs(shot.x-start.x-start.vx*14/90)<1e-7);
-        assert(std::abs(shot.y-start.y-start.vy*14/90)<1e-7);
+        if(rocket){
+            assert(std::abs(shot.x-neon::road(shot.z)-start.launchLane)<1e-7);
+            assert(std::abs(shot.y-neon::Race::deckAt(start.launchLane,shot.z)-1.85)<1e-7);
+        }else{
+            assert(std::abs(shot.x-start.x-start.vx*14/90)<1e-7);
+            assert(std::abs(shot.y-start.y-start.vy*14/90)<1e-7);
+        }
         neon::Race duel;
         for(auto &p:duel.rivals)p.z=400;
         auto &target=duel.rivals[0];target.z=25;target.speed=0;
         duel.shoot(rocket);
         const auto ray=duel.shots.front();
-        const double lane=ray.x+(target.z-ray.z)*ray.vx/ray.vz-neon::road(target.z);
+        const double lane=rocket?ray.launchLane:ray.x+(target.z-ray.z)*ray.vx/ray.vz-neon::road(target.z);
         target.x=lane+3.6;
         for(int i=0;i<24;i++)duel.stepShots(1./90);
         assert(target.hull==3);
@@ -36,6 +41,37 @@ int main() {
         duel.rocketCooldown=duel.cooldown=0;duel.shoot(rocket);
         for(int i=0;i<24;i++)duel.stepShots(1./90);
         assert(target.hull==(rocket?1:2));
+    }
+    // Fire through a facade, graze its side, and clear its roof at the next lap.
+    for(double offset:{0.,neon::lapLength}){
+        auto b=neon::skylineBlock(1,1,0,neon::canalWidthFactor);
+        b.z+=offset;
+        for(double height:{b.h*.5,b.h+12}){
+            neon::Race r;r.sectors.clear();
+            for(auto &pilot:r.rivals)pilot.recovery=1;
+            double x=b.x+neon::road(b.z)+b.w*.5;
+            r.shots.push_back({x,height,b.z-2,0,0,175,false});
+            r.stepShots(.05);
+            if(height>b.h)assert(r.shots.size()==1 && r.bursts.empty());
+            else assert(r.shots.empty() && std::abs(r.bursts.front().z-b.z)<1e-8);
+        }
+        neon::Race r;r.sectors.clear();
+        for(auto &pilot:r.rivals)pilot.recovery=1;
+        double z=b.z+1,x=b.x+neon::road(b.z)+(neon::road(b.z+b.d)-neon::road(b.z))/b.d;
+        r.shots.push_back({x-.8,2,z,100,0,20,false});r.stepShots(.02);
+        assert(r.shots.empty() && r.bursts.front().z>b.z && r.bursts.front().z<b.z+b.d);
+    }
+    for(double start:{280.,465.,895.})for(double lane:{-2.,3.}){
+        neon::Race r;r.distance=start;r.x=lane;r.sectors.clear();
+        for(auto &p:r.rivals)p.recovery=1;
+        r.shoot(true);
+        for(int i=0;i<90;i++){
+            r.stepShots(1./90);
+            const auto &s=r.shots.at(0);
+            double actual=s.x-neon::road(s.z);
+            assert(std::abs(actual-r.rocketLane(lane,s.z))<1e-8);
+            assert(std::abs(s.y-r.deckAt(actual,s.z)-1.85)<1e-8);
+        }
     }
     for(bool avoid:{false,true}){
         neon::Race course;auto obstacle=neon::sector(2);

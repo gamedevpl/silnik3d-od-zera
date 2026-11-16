@@ -79,22 +79,29 @@ template <class Emit> void damagePuffs(int kind, double time, double age, double
                  1 - u, 6);
         }
     } else if (kind == FireTrail || kind == Smoke) {
-        double side = age < 0 ? -1 : 1;
-        // Age remains continuous under acceleration. Airflow advects older puffs farther aft.
-        const double flow = std::clamp(speed / 84., 0., 1.25);
-        for (int i = 0; i < 14; i++) {
-            double u = std::fmod(time * 1.02 + std::abs(age) + i / 14., 1.);
-            double x = side * (.83 + .48 * u + .20 * u * std::sin(5 * u + std::abs(age))), y = 1.97 + (2.15 - 1.40 * flow) * u,
-                   z = -1.3 - (.85 + 7.4 * flow) * u;
-            double r = .14 + (.76 - .27 * flow) * u;
-            puff(x, y, z, r, r * (1 + .22 * u), 1.7 * i + .7 * u, .64 * (1 - u * u) * std::min(1., 8 * u), 4);
+        const double side=age<0?-1:1,flow=std::clamp(speed/84.,0.,1.25);
+        // Successive eddies roll out sideways as the slipstream strips the plume apart.
+        for(int i=0;i<23;i++){
+            const double seed=i*2.39996+side,u=std::fmod(time*.94+i/23.,1.);
+            const double swirl=u*(.28+.52*u),z=-1.32-(2.2+8.2*flow)*u;
+            const double x=side*(.86+.35*u)+swirl*std::sin(seed+u*5);
+            const double y=1.93+(3.5-2.30*flow)*u+swirl*std::cos(seed+u*5);
+            const double size=.18+(.88+.26*std::sin(seed))*u;
+            puff(x,y,z,size,size*(1+.24*u),seed+side*u*1.8,
+                 .88*(1-u*u)*std::min(1.,12*u),4);
         }
-        if (kind == FireTrail)
-            for (int i = 0; i < 9; i++) {
-                double u = std::fmod(time * 2.6 + i / 9., 1.), r = .12 + .28 * std::sin(3.14 * u);
-                puff(side * (.73 + .11 * std::sin(6 * u)), 2.0 + (1.08 - .68 * flow) * u, -1.27 - (.57 + 3.45 * flow) * u, r, .18 + (.60 - .22 * flow) * u,
-                     u - .5, .95 * (1 - u * u), 5);
+        if(kind==FireTrail){
+            for(int i=0;i<16;i++){
+                const double seed=i*2.39996,u=std::fmod(time*1.95+i/16.,1.);
+                const double wobble=u*std::sin(seed+7*u);
+                const double x=side*(.84+.19*wobble),y=1.94+(1.70-.98*flow)*u+.17*wobble;
+                const double z=-1.30-(1.12+4.55*flow)*u;
+                const double size=.18+.31*std::sin(3.14159*u);
+                puff(x,y,z,size*(1-.35*u),size*(1.3+.62*u),.34*wobble,.96*(1-u*u),5);
+                if(i%3==0)puff(x+wobble*.55,y+.7*u,z-1.6*u,.045,.12+.08*u,seed,.85*(1-u),6);
             }
+            puff(side*.84,1.93,-1.43,.24,.31,0,.95,6);
+        }
     } else if (kind == Sparks) {
         double side = age < 0 ? -1 : 1;
         for (int i = 0; i < 10; i++) {

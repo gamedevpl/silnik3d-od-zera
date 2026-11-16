@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include "junction.hpp"
+#include "buildings.hpp"
 
 namespace neon {
 inline double bound(double x, double a, double b) { return std::clamp(x, a, b); }
@@ -52,7 +53,7 @@ struct Pilot {
 struct Shot {
     double x,y,z,vx,vy,vz; // World coordinates, including road curvature and elevation at launch.
     bool rocket, spent=false;
-    double age=0;
+    double age=0, launchLane=0;
 };
 struct Burst {
     double x, z, age = 0, lift = 0;
@@ -83,10 +84,18 @@ struct Race {
     }
     static double deckAt(double lane,double z) { return viaductHeight(z)+bridgeHeight(lane,z); }
     double noseSteer() const {return .65*vx/std::max(30.,speed);}
+    static double rocketLane(double lane,double z) {
+        double island=islandHalf(z);
+        return island>0 ? routeSign(lane)*std::max(std::abs(lane),island+1.2*ramp(island)) : lane;
+    }
     Shot muzzle(bool rocket) const {
+        if(rocket){
+            const double z=distance+2.4,lane=rocketLane(x,z);
+            return {road(z)+lane,deckAt(lane,z)+1.85,z,153*slope(z),153*viaductGrade(z),153,true,false,0,x};
+        }
         const double yaw=slope(distance)+noseSteer();
         const double pitch=(deckAt(x,distance+1)-deckAt(x,distance-1))*.5;
-        const double vz=(rocket?153.:175.)/std::sqrt(1+yaw*yaw+pitch*pitch);
+        const double vz=175./std::sqrt(1+yaw*yaw+pitch*pitch);
         return {road(distance)+x+2.4*yaw,1.85+deckAt(x,distance)+2.4*pitch,distance+2.4,
                 vz*yaw,vz*pitch,vz,rocket};
     }
@@ -222,9 +231,12 @@ struct Race {
     void stepShots(double dt) {
         for (auto &shot : shots) {
             const double dz=shot.vz*dt;
-            auto worldX=[&](double t){return shot.x+t*dt*shot.vx;};
-            auto height=[&](double t){return shot.y+t*dt*shot.vy;};
-            auto laneAt=[&](double t){return worldX(t)-road(shot.z+dz*t);};
+            auto laneAt=[&](double t){
+                const double z=shot.z+dz*t;
+                return shot.rocket?rocketLane(shot.launchLane,z):shot.x+t*dt*shot.vx-road(z);
+            };
+            auto worldX=[&](double t){return shot.rocket?road(shot.z+dz*t)+laneAt(t):shot.x+t*dt*shot.vx;};
+            auto height=[&](double t){return shot.rocket?deckAt(laneAt(t),shot.z+dz*t)+1.85:shot.y+t*dt*shot.vy;};
             double first=2.;
             Pilot *pilot=nullptr;Sector *mine=nullptr;
             for(auto &p:rivals){
@@ -247,7 +259,7 @@ struct Race {
             }
             auto blocked=[&](double t){
                 double z=shot.z+dz*t,lane=laneAt(t),h=height(t)-deckAt(lane,z);
-                return h<.12 || (std::abs(lane)>18.6 && h<3.2) ||
+                return (std::abs(lane)<=19 && h<.12) || height(t)<.05 ||
                        (std::abs(lane)<islandHalf(z) && h<4.4);
             };
             bool wall=false;
@@ -256,8 +268,32 @@ struct Race {
                 for(int j=0;j<6;++j){double mid=(lo+hi)*.5;if(blocked(mid))hi=mid;else lo=mid;}
                 if(hi<first){first=hi;wall=true;mine=nullptr;pilot=nullptr;}
             }
+            // Each rendered box is sheared by the road offset at its front and back faces.
+            if(!shot.rocket && (std::abs(laneAt(0))>22 || std::abs(laneAt(1))>22)){
+                auto collide=[&](Building b){
+                    if(shot.z+dz<b.z || shot.z>b.z+b.d)return;
+                    const double skew=(road(b.z+b.d)-road(b.z))/b.d;
+                    double enter=0,leave=1;
+                    auto slab=[&](double origin,double delta,double size){
+                        if(std::abs(delta)<1e-9)return origin>=0 && origin<=size;
+                        double a=-origin/delta,c=(size-origin)/delta;
+                        enter=std::max(enter,std::min(a,c));leave=std::min(leave,std::max(a,c));
+                        return enter<=leave;
+                    };
+                    if(slab(shot.z-b.z,dz,b.d) && slab(shot.y-b.y,shot.vy*dt,b.h) &&
+                       slab(shot.x-b.x-road(b.z)-(shot.z-b.z)*skew,shot.vx*dt-dz*skew,b.w) && enter<first){
+                        first=enter;wall=true;mine=nullptr;pilot=nullptr;
+                    }
+                };
+                for(int k=int(std::floor(shot.z/24));k<=int(std::floor((shot.z+dz)/24));++k)
+                    citySolids(k,collide);
+            }
             const double t=std::min(1.,first);
-            shot.x=worldX(t);shot.y=height(t);shot.z+=dz*t;shot.age+=dt;
+            const double endX=worldX(t),endY=height(t);
+            if(shot.rocket && t>0){
+                shot.vx=(endX-shot.x)/(dt*t);shot.vy=(endY-shot.y)/(dt*t);
+            }
+            shot.x=endX;shot.y=endY;shot.z+=dz*t;shot.age+=dt;
             const double lane=shot.x-road(shot.z);
             const Burst flash{lane,shot.z,0,shot.y-deckAt(lane,shot.z)-1.7};
             if(wall){shot.spent=true;bursts.push_back(flash);}
@@ -418,7 +454,7 @@ struct Race {
         if (recovery > 0)
             add(x, distance, PlayerFragments, 1 - recovery / recoveryTime);
         else if (shield < 3)
-            add(x, distance, shield == 1 ? FireTrail : Smoke, damagedSide, speed);
+            add(x, distance, shield == 1 ? FireTrail : Smoke, damagedSide, speed, vx);
         if (scrape > 0)
             add(x + scrapeSide * 1.35, distance, Sparks, scrapeSide * scrape / .24);
         for (int i = 0; i < 6; i++) {
@@ -431,7 +467,7 @@ struct Race {
             else {
                 add(p.x, distance + dz, 6 + i, p.lean, p.speed);
                 if (p.hull < 3 && dz < 85)
-                    add(p.x, distance + dz, p.hull == 1 ? FireTrail : Smoke, i % 2 ? -1. : 1., p.speed);
+                    add(p.x, distance + dz, p.hull == 1 ? FireTrail : Smoke, i % 2 ? -1. : 1., p.speed, p.lean*16.);
             }
         }
         if(recovery<=0){

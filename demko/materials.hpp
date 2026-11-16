@@ -40,13 +40,16 @@ inline MaterialTile bakePlume(Tile kind) {
             double d = density(x, y), n = textureNoise(8 * x, 8 * y, 121);
             double light =
                 std::clamp(.48 + 1.7 * (d - density(x - .12, y - .15)) + .34 * n - .20 * y, 0., 1.);
-            double r = 53 + 114 * light, g = 61 + 112 * light, b = 76 + 103 * light, a = d * d * .84;
+            double folds=textureNoise(x*4+.8*n,y*4-.5*n,341);
+            light=std::clamp(light+.64*(folds-.5),0.,1.);
+            double r=32+157*light,g=34+147*light,b=45+142*light,a=d*d*(.68+.32*folds);
             if (kind == Tile::FlameSprite) {
-                double heat = std::clamp(d * (1.09 - .49 * y) + .18 * n, 0., 1.);
+                double tongue=std::sin(x*10+folds*7+3*y);
+                double heat=std::clamp(d*(1.04+.32*y)+.16*n+.22*folds+.12*tongue,0.,1.);
                 r = 243 + 12 * heat;
                 g = 48 + 195 * heat * heat;
                 b = 14 + 157 * std::pow(heat, 4);
-                a = d * (.65 + .35 * heat);
+                a = d * (.56 + .44 * heat) * std::clamp(1.2-std::abs(x)*(.65-.5*y)+.20*tongue,.0,1.);
             } else if (kind == Tile::EmberSprite) {
                 double q = std::max(0., 1 - std::hypot(x, y));
                 r = 255;

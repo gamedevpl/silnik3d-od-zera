@@ -1,5 +1,5 @@
-import {renderer} from './renderer.js?v=duel1';
-import {loadRace} from './race.js?v=plasma1';
+import {renderer} from './renderer.js?v=harbor2';
+import {loadRace} from './race.js?v=harbor2';
 import {Sound} from './audio.js?v=drive-rate1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -9,7 +9,7 @@ const keys=new Set(),pointers=new Map(),buttonKeys=new Set();
 const words={
  fork:['← Most · Kanał →','← Bridge · Canal →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
- brief:['Wejdź w turkusową smugę za rywalem. Gdy się naładuje, wciśnij dopalacz i wyjdź z niej na zakręcie. Celuj przed rywala. Działko i rakiety strzelają po prostej.','Follow the teal wake behind a rival. When it charges, press Boost and pull out to pass. Lead your rival. Cannon shots and rockets fly straight.'],
+ brief:['Wejdź w turkusową smugę za rywalem. Gdy się naładuje, wciśnij dopalacz i wyjdź z niej na zakręcie. Celuj przed rywala. Rakieta leci twoim pasem przez zakręty.','Follow the teal wake behind a rival. When it charges, press Boost and pull out to pass. Lead your rival. Rockets follow your lane through bends.'],
  boost:['Dopalacz','Boost'],launch:['Wyrzut ze smugi','Slingshot'],ready:['Zapas smugi · skręć + dopalacz','Wake stored · steer + boost'],
  empty:['Brak rakiet · zbierz zielone pola','Out of rockets · collect boost pads'],fired:['Rakieta odpalona','Rocket away'],
  loading:['Ładowanie…','Loading…'],start:['Graj · spacja lub kliknięcie','Race · Space or click'],tapStart:['Dotknij, aby zagrać','Tap to race'],resumeKey:['Wznów · spacja lub kliknięcie','Resume · Space or click'],tapResume:['Dotknij, aby wznowić','Tap to resume'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],

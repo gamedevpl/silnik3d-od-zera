@@ -18,7 +18,7 @@ static Frame geometryFrame(double time){
     cue=sceneCues;
     Frame f(time,8);
     f.geometry=&mesh;
-    f.widthFactor=3.15;
+    f.widthFactor=neon::canalWidthFactor;
     return f;
 }
 
@@ -34,7 +34,7 @@ static void racer(Frame &f,int team,double x,double z,double bank,int wing,doubl
     // A short white core inside a longer turbine plume, anchored in each exhaust throat.
     const double flow=std::clamp(speed/82.,0.,1.3);
     for(int side:{-1,1}){
-        double sx=side*(1.06+.06*(team%2)),length=.48+flow*.83+thrust*.89;
+        double sx=side*(1.06+.06*(team%2)),length=.58+flow*1.05+thrust*1.65;
         auto jet=[&](int i,double radius,double aft){
             double a=neon::tau*i/10;
             auto p=neon::posedVertex({float(sx+radius*std::cos(a)),float(.062+radius*std::sin(a)),float(-1.94-aft),0,0,0},cs,sn,wing);
@@ -45,6 +45,14 @@ static void racer(Frame &f,int team,double x,double z,double bank,int wing,doubl
             f.quad(jet(i,.147,0),jet(i+1,.147,0),jet(i+1,.112,.30),jet(i,.112,.30),{184,255,250});
             f.quad(jet(i,.112,.30),jet(i+1,.112,.30),jet(i+1,.075,.55*length),jet(i,.075,.55*length),{72,213,250});
             f.tri(jet(i,.075,.55*length),jet(i+1,.075,.55*length),jet(i,0,length*pulse),{70,121,224});
+        }
+        // Shock cells contract toward the tip and brighten as the jet lengthens.
+        for(int j=0;j<3;j++){
+            const double aft=(.27+.22*j)*length, radius=(.11-.024*j)*(.8+.2*thrust);
+            for(int i=0;i<10;i++){
+                auto a=jet(i,radius,aft),b=jet(i+1,radius,aft);
+                f.tri(a,b,jet(i,0,aft+.16*length),{176,245,255});
+            }
         }
     }
 }
@@ -96,11 +104,12 @@ static void harborCity(Frame &f,int k,double z){
     if(k<20 || k>46)return;
     for(int side:{-1,1})for(int row=0;row<2;row++){
         int id=k*37+row*13+side*8;
-        double x=side*(48+row*37+random01(id)*23),w=5+random01(id+2)*7,h=8+random01(id+1)*25;
-        if(k==39 && side<0)h=46;
+        auto body=neon::harborBlock(k,side,row);
+        double x=body.x,w=body.w,h=body.h;
         C front=mix({45,52,77},{84,65,88},random01(id+3)),shadow=mix(front,{20,32,53},.36);
         f.surface=Frame::FacadeFront;f.box(x,0,z,w,h,10,front,shadow);
-        f.box(x+w*.18,h,z+1,w*.66,2+h*.13,7.5,front,shadow);
+        auto roof=neon::penthouse(body);
+        f.box(roof.x,roof.y,roof.z,roof.w,roof.h,roof.d,front,shadow);
         f.surface=Frame::Plain;
         if(k==39 && side<0){
             f.box(x+w*.36,h+3,z+3,w*.24,10,3,{96,117,136},shadow);
@@ -214,10 +223,21 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         });
         place(0,pump,false);
     }
+    auto exhaustMist=[&](double lane,double z,double power,double bank){
+        if(power<.18)return;
+        for(int side:{-1,1})for(int j=0;j<6;j++){
+            const double u=std::fmod(time*2.0+j/6.+(side+1)*.18,1.);
+            const double at=z-2.3-u*(2.0+2.9*power),size=.12+.38*u;
+            puffs.push_back({{lane+neon::road(at)+side*(1.06+.15*u),
+                neon::Race::deckAt(lane,z)+1.9+side*std::sin(bank)+.27*u,at},
+                size,size*.82,j*2.4+u,.30*power*std::sin(pi*u),4});
+        }
+    };
     bool wreck=false;
     for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*6+2])==neon::PlayerFragments;
     if(!wreck){
         size_t start=mesh.size();
+        exhaustMist(x,distance,thrust,lean);
         racer(f,0,x,distance,lean,wing,speed,thrust,time);
         for(size_t i=start;i<mesh.size();i++)mesh[i].x+=(mesh[i].z-distance)*noseSteer;
     }
@@ -233,6 +253,8 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         double y=1.85;
         if(int(kind)>=neon::Sparks || kind==5){
             neon::damagePuffs(int(kind),time,age,o[4],[&](neon::Puff puff){
+                if(int(kind)==neon::Smoke || int(kind)==neon::FireTrail)
+                    puff.center.x-=o[5]*std::max(0.,-puff.center.z-1.3)/std::max(30.f,o[4]);
                 puff.center.z+=z;puff.center.x+=xx+neon::road(puff.center.z);
                 puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z)+(kind==5?o[5]:0);puffs.push_back(puff);
             });
@@ -261,6 +283,7 @@ int actors(double time,double distance,double x,double lean,double thrust,double
                 f.quad(q(a,r),q(b,r),q(b,r+.28*age),q(a,r+.28*age),mix({224,119,58},{255,253,212},age));
             }
         }else if(kind>=6){
+            exhaustMist(xx,z,std::clamp((o[4]-54.)/30.,0.,1.),age);
             racer(f,int(kind)-5,xx,z,age,0,o[4],std::clamp((o[4]-54.)/30.,0.,1.),time);
         }else if(kind==0){
             for(int j=0;j<3;j++)for(int side:{-1,1}){
@@ -283,9 +306,19 @@ int actors(double time,double distance,double x,double lean,double thrust,double
             const double nose=xx+(age>=0?2.35:-2.35);
             f.box(nose-.18,1.96,z-.42,.36,.44,.65,{255,108,72},amber);
         }else if(kind==2 || kind==3){
-            double width=kind==3?.22:.11, tail=kind==3?2.0:2.7;
+            double width=.11,tail=2.7;
             double dx=o[4]-neon::slope(z),dy=o[5];
             V head{xx,age,z},end{xx-tail*dx,age-tail*dy,z-tail};
+            if(kind==3){
+                auto part=[&](double aft,double side,double up){return V{xx-aft*dx+side,age-aft*dy+up,z-aft};};
+                V a=part(1.1,-.26,0),b=part(1.1,.26,0),c=part(1.1,0,.23);
+                f.tri(head,a,c,{219,241,242});f.tri(head,c,b,{112,151,174});
+                for(int side:{-1,1})
+                    f.tri(part(.95,side*.12,0),part(2,side*.55,0),part(1.8,0,.1),{82,211,201});
+                f.tri(part(1.65,-.16,0),part(1.65,.16,0),part(3.9,0,0),{255,151,60});
+                f.tri(part(1.66,0,.13),part(1.66,0,-.13),part(3.1,0,0),{255,243,173});
+                place(xx,z,false);continue;
+            }
             f.quad(head+V{-width,0,0},head+V{width,0,0},end+V{width,0,0},end+V{-width,0,0},{255,213,108});
             f.quad(head+V{0,width,0},head-V{0,width,0},end-V{0,width,0},end+V{0,width,0},{252,247,187});
             place(xx,z,false);continue;

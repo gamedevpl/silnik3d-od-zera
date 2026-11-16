@@ -113,7 +113,7 @@ class Graphics {
                   {f / aspect, f, aspect, framing},
                   {float(fmod(s.elapsed, 180.)), 0, 0, float(neon::bridgeHeight(s.x,s.distance)+neon::viaductHeight(cz))},
                   {0, 0, 0, 0},
-                  {float(s.x + neon::road(local)), float(local), float(neon::slope(local)), float(s.lean)},{float(neon::cameraGrade(cz)),0,0,0}};
+                  {float(s.x + neon::road(local)), float(local), float(neon::slope(local)), float(s.lean)},{float(neon::cameraGrade(cz)),float(neon::tau*cz/neon::lapLength+std::atan(neon::slope(cz))),0,0}};
         pass.colorAttachments[0].storeAction = MTLStoreActionStore;
         auto enc = [cmd renderCommandEncoderWithDescriptor:pass];
         auto uniforms = [&] {

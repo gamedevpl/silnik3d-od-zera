@@ -1,4 +1,5 @@
 // A small perspective rasterizer for the fly-through on the mascot's CRT.
+#include "buildings.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -16,7 +17,7 @@ V operator-(V a,V b){return {a.x-b.x,a.y-b.y,a.z-b.z};}
 V operator*(V a,double f){return {a.x*f,a.y*f,a.z*f};}
 using C=array<int,3>;
 C mix(C a,C b,double f){f=std::clamp(f,0.,1.);for(int i=0;i<3;i++)a[i]=int(a[i]*(1-f)+b[i]*f);return a;}
-double random01(int n){uint32_t h=uint32_t(n)*2654435761u;h^=h>>16;h*=2246822519u;return (h^(h>>13))/4294967296.;}
+double random01(int n){return neon::cityNoise(n);}
 double ease(double f){f=std::clamp(f,0.,1.);return f*f*(3-2*f);}
 struct Timing {
     double duration, end[18], bolts[3], launch, impact, pass, room;
@@ -150,8 +151,8 @@ struct Frame{
         int first=int(cz/8)-(block?0:2);
         for(int k=first;k<first+(block?3:23);k++)for(int side:{-1,1})for(int lane=0;lane<2;lane++){
             int id=((k%18+18)%18)*23+side*93+lane*43;
-            double z=k*8+random01(id)*2.5, x=side*(12+8*(widthFactor-1)+lane*12+random01(id+7)*5);
-            double w=2+random01(id+3)*3.8,h=4+random01(id+2)*(lane?28:16);
+            auto body=neon::skylineBlock(k,side,lane,widthFactor);
+            double z=body.z,x=body.x,w=body.w,h=body.h;
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
             surface=FacadeFront;
@@ -159,7 +160,8 @@ struct Frame{
             surface=Plain;
             if(block && (id%5==0 || id%5==1)){
                 double crown=h*.22;
-                box(x+.22*w,h,z+.6,w*.60,crown,2.8,mix(dark,{94,87,109},.28),dark);
+                auto roof=neon::crown(body);
+                box(roof.x,roof.y,roof.z,roof.w,roof.h,roof.d,mix(dark,{94,87,109},.28),dark);
                 if(!simple){
                     box(x+w*.32,h+crown,z+1,.10,1.8,.13,light,light);
                     for(int band=0;band<3;band++)
