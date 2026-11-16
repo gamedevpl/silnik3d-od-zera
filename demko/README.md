@@ -4,7 +4,7 @@
 
 Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
-At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin before the shipyard chicane. The airbrake helps hold the inside line through its two reversals.
+At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin at the foot of the harbor viaduct. The first sweeping bend climbs above the warehouses. The skyline opens up at the crest before the track curves back down to the waterfront. Climbing costs speed and descending gives it back.
 
 Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. Gold brackets mark a rival your rocket can track. You can also fire straight down an empty lane to clear a mine. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. A glancing contact pushes both ships apart. A hard impact costs shield, and holding a wing against a rail scrubs speed and throws sparks. A damaged ship smokes at two shield points and trails flame at one. Losing the last point breaks the hull apart before an automatic restart. Rivals can also be disabled and rejoin the race.
 
@@ -23,7 +23,7 @@ Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for
 ## Source code
 
 - [Ship models, lane markings and track geometry in C++](demo.cpp)
-- [Tileable normal and roughness maps for steel and facade glass](materials.hpp)
+- [Color and emission map for harbor windows, surface maps for the bridge, cladding and hull, and soft smoke and flame textures](materials.hpp)
 - [Contact sparks, damaged engines and hull fragments](damage_fx.hpp)
 - [Race physics, rival pilots and collisions in C++](race.hpp)
 - [Curved track meshes shared by Metal and WebGL](track_mesh.hpp)

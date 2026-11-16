@@ -19,10 +19,17 @@ inline double bridgeHeight(double x, double z) {
     return x < 0 ? 4.8 * ramp((p - forkStart) / 49) * ramp((forkEnd - p) / 49) : 0.;
 }
 inline int routeSign(double x) { return x < 0 ? -1 : 1; }
+// The waterfront stays at datum; only the racing ribbon climbs above it.
+inline double viaductHeight(double z){
+    double p=lapPosition(z);
+    return 27*ramp((p-480)/204)*ramp((1056-p)/216);
+}
+inline double viaductGrade(double z){return (viaductHeight(z+1)-viaductHeight(z-1))*.5;}
+inline double cameraGrade(double z){return .82*viaductGrade(z+10);}
 inline double chicane(double z) {
     double p = lapPosition(z);
-    return 35 * (ramp((p - 508) / 88) - ramp((p - 605) / 78)) -
-           25 * (ramp((p - 690) / 73) - ramp((p - 780) / 100));
+    return 78 * (ramp((p - 480) / 228) - ramp((p - 764) / 234)) -
+           19 * (ramp((p - 862) / 100) - ramp((p - 992) / 110));
 }
 inline int routeHint(double x, double z) {
     double p = lapPosition(z);

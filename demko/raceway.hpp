@@ -78,12 +78,18 @@ struct Frame{
     }
     void pixel(int i,C c){for(int j=0;j<3;j++)rgb[3*i+j]=std::clamp(c[j],0,255);}
     std::vector<Vertex>* geometry=nullptr;
-    enum Surface : uint8_t { Plain, Deck, FacadeFront, FacadeSide };
+    enum Surface : uint8_t { Plain, Deck, FacadeFront, FacadeSide, CladFront, CladSide, CladTop, Hull, SkyDeck };
     Surface surface=Plain;
     bool block=false, simple=false;
     void tri(V a,V b,V c,C color){
         if(geometry){
-            for(V p:{a,b,c})geometry->push_back({float(p.x),float(p.y),float(p.z),uint8_t(color[0]),uint8_t(color[1]),uint8_t(color[2]),uint8_t(surface)});
+            auto finish=surface;
+            if(surface==CladFront){
+                V u=b-a,v=c-a;
+                double nx=std::abs(u.y*v.z-u.z*v.y),ny=std::abs(u.z*v.x-u.x*v.z),nz=std::abs(u.x*v.y-u.y*v.x);
+                finish=*std::max_element(color.begin(),color.end())>165?Plain:ny>nx && ny>nz?CladTop:nx>nz?CladSide:CladFront;
+            }
+            for(V p:{a,b,c})geometry->push_back({float(p.x),float(p.y),float(p.z),finish==SkyDeck?uint8_t(p.x>0?255:0):uint8_t(color[0]),uint8_t(color[1]),uint8_t(color[2]),uint8_t(finish)});
             return;
         }
         if(casting){
@@ -273,8 +279,10 @@ struct Frame{
         V nose=p(0,.29,2.35),base=p(0,.10,-1.15),spine=p(0,.53,.25);
         for(int side:{-1,1}){
             V wing=p(side*1.55,-.09,-.91),mid=p(side*.53,.07,.54),tail=p(side*.56,.08,-1.12);
+            if(manual)surface=Hull;
             tri(nose,mid,spine,{212,216,216});tri(mid,base,spine,side<0?C{115,134,157}:C{196,203,209});
             tri(mid,wing,tail,side<0?C{231,97,60}:C{245,156,84});tri(spine,tail,base,{97,102,127});
+            surface=Plain;
             for(int j=0;j<3;j++){
                 double f=.43+j*.12;
                 tri(p(side*(f+.13),.09,-.68),p(side*(f+.23),.08,-.71),p(side*(f+.03),.115,-.23),{244,228,179});

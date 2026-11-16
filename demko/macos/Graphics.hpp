@@ -10,14 +10,14 @@ class Graphics {
         std::vector<int> starts;
     };
     struct View {
-        simd_float4 camera, lens, effects, visibility;
+        simd_float4 camera, lens, effects, visibility, pilot, terrain;
     };
     id<MTLDevice> device;
     id<MTLCommandQueue> queue;
     id<MTLRenderPipelineState> sky, solid, shadow;
-    id<MTLDepthStencilState> depth, shadowDepth, background;
+    id<MTLDepthStencilState> depth, shadowDepth, background, transparent;
     Strip scenery[3];
-    id<MTLTexture> maps[2];
+    id<MTLTexture> maps[neon::tileCount];
     void makeStrip(Strip &strip, int simple) {
         neon::TrackMesh track(simple);
         strip.starts = std::move(track.sections);
@@ -67,6 +67,7 @@ class Graphics {
         };
         background = state(MTLCompareFunctionAlways, false);
         depth = state(MTLCompareFunctionLessEqual, true);
+        transparent = state(MTLCompareFunctionLessEqual, false);
         shadowDepth = state(MTLCompareFunctionLess, true);
         auto desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
                                                                        width:64
@@ -75,7 +76,7 @@ class Graphics {
         desc.storageMode = MTLStorageModeShared;
         auto upload = [queue commandBuffer];
         auto blit = [upload blitCommandEncoder];
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < neon::tileCount; i++) {
             maps[i] = [device newTextureWithDescriptor:desc];
             if (!maps[i])
                 return false;
@@ -110,12 +111,13 @@ class Graphics {
         float framing = std::min(1.f, aspect), f = framing * (1.55 - .12 * s.thrust);
         View u = {{float(s.x * .87 + neon::road(cz)), float(cz), float(neon::slope(cz)), float(s.lean * .15)},
                   {f / aspect, f, aspect, framing},
-                  {float(fmod(s.elapsed, 180.)), 0, 0, float(neon::bridgeHeight(s.x, s.distance))},
-                  {0, 0, 0, 0}};
+                  {float(fmod(s.elapsed, 180.)), 0, 0, float(neon::bridgeHeight(s.x,s.distance)+neon::viaductHeight(cz))},
+                  {0, 0, 0, 0},
+                  {float(s.x + neon::road(local)), float(local), float(neon::slope(local)), float(s.lean)},{float(neon::cameraGrade(cz)),0,0,0}};
         pass.colorAttachments[0].storeAction = MTLStoreActionStore;
         auto enc = [cmd renderCommandEncoderWithDescriptor:pass];
         auto uniforms = [&] {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < neon::tileCount; i++)
                 [enc setFragmentTexture:maps[i] atIndex:i];
             [enc setVertexBytes:&u length:sizeof(u) atIndex:1];
             [enc setFragmentBytes:&u length:sizeof(u) atIndex:1];
@@ -151,11 +153,17 @@ class Graphics {
             if (mode == 2)
                 drawStrip(1, -12, 80, 198);
             else
-                drawStrip(mode == 0 ? 0 : 1, -12, 112, 174);
+                drawStrip(0, -12, 112, 174);
             u.effects.z = 1;
             uniforms();
             [enc setVertexBuffer:moving offset:0 atIndex:0];
-            [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:n];
+            [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:particleStart()];
+        }
+        if (n > particleStart()) {
+            [enc setDepthStencilState:transparent];
+            [enc drawPrimitives:MTLPrimitiveTypeTriangle
+                    vertexStart:particleStart()
+                    vertexCount:n - particleStart()];
         }
         [enc endEncoding];
         [cmd presentDrawable:drawable];

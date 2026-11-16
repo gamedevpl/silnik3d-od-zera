@@ -2,6 +2,13 @@
 #include "../race.hpp"
 #include <cassert>
 int main() {
+    for (double offset : {0., neon::lapLength}) {
+        assert(neon::viaductHeight(offset + 480) == 0);
+        assert(neon::viaductGrade(offset + 575) > .15);
+        assert(neon::viaductHeight(offset + 690) == 27 && neon::viaductHeight(offset + 830) == 27);
+        assert(neon::viaductGrade(offset + 940) < -.15);
+        assert(neon::viaductHeight(offset + 1060) == 0);
+    }
     neon::Race race;
     for (int i = 0; i < 60 * 95; ++i)
         race.advance(1. / 60, {});

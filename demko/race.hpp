@@ -186,6 +186,7 @@ struct Race {
             p.boost = std::max(0., p.boost - dt);
             if (approach >= 0 && approach < p.speed * dt && fabs(p.x - pad.x) < 3)
                 p.boost = 1.2;
+            target-=14*viaductGrade(p.z);
             p.speed += ((p.stun > 0 ? target * .53 : target) - p.speed) * (1 - exp(-2 * dt));
             if (p.recovery > 0) {
                 p.recovery = std::max(0., p.recovery - dt);
@@ -304,6 +305,7 @@ struct Race {
                 spent = false;
         }
         thrust += ((boost || padBoost > 0 || launchTime > 0) - thrust) * (1 - exp(-6 * dt));
+        speed -= 28*viaductGrade(distance)*dt;
         speed += ((in.brake ? 29.
                             : 39 + (forkSide < 0 ? 1.4 * bridgeHeight(x, distance) : 0.) + 24 * thrust +
                                   (drafting ? 6 : 0) + (launchTime > 0 ? 20 : 0)) -

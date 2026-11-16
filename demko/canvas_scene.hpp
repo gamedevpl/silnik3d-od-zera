@@ -8,7 +8,7 @@ namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
 class CanvasScene {
     using Point = std::array<double, 2>;
-    enum Op { Ellipse = -1, Rect = -2, ClipBelow = -3, Restore = -4, Opacity = -5 };
+    enum Op { Ellipse = -1, Rect = -2, ClipBelow = -3, Restore = -4, Opacity = -5, Sprite = -6 };
     double width, focal, horizon, camZ, camX, heading, turbineAngle, cameraLift;
     std::vector<float> &out;
 
@@ -35,24 +35,45 @@ class CanvasScene {
             for (int side : {-1, 1}) {
                 double x = side * (28 + std::abs(k % 4)),
                        top = sign * (8 + std::abs(std::sin(((k % 96 + 96) % 96) * 21 + side)) * 15);
+                if (k % 3 == 0) {
+                    double tower = side * (48 + std::abs(k % 7) * 4);
+                    double height = sign * (31 + std::abs(k % 5) * 6);
+                    polygon(mirror ? 0x2b3048 : 0x383955,
+                            {project(tower,0,z), project(tower,height,z), project(tower+side*9,height,z), project(tower+side*9,0,z)});
+                    for (int floor=1; floor<8; ++floor) {
+                        double y = height * floor / 8;
+                        polygon(mirror ? 0x475261 : (floor%3 ? 0x64799b : 0xb9a283),
+                                {project(tower,y,z),project(tower+side*7,y,z),project(tower+side*7,y+sign*.38,z),project(tower,y+sign*.38,z)});
+                    }
+                }
                 polygon(mirror ? 0x252c40 : 0x272840,
                         {project(x, 0, z), project(x, top, z), project(x + side * 5, top, z),
                          project(x + side * 5, 0, z)});
-                if (!mirror && d < 165) {
-                    polygon(0xab8294, {project(x, top * .7, z), project(x + side * 4, top * .7, z),
-                                       project(x + side * 4, top * .68, z), project(x, top * .68, z)});
-                    polygon(0x68c8d3,
+                if (d < 165) {
+                    polygon(mirror ? 0x705669 : 0xab8294,
+                            {project(x, top * .7, z), project(x + side * 4, top * .7, z),
+                             project(x + side * 4, top * .68, z), project(x, top * .68, z)});
+                    polygon(mirror ? 0x366b79 : 0x68c8d3,
                             {project(side * 19.3, 0, z), project(side * 19.55, 0, z),
                              project(side * 19.55, 0, z + 11), project(side * 19.3, 0, z + 11)});
                 }
             }
             if (d >= 174)
                 continue;
+            auto surface = [&](double x, double y, double zz) {
+                return project(x, y + sign * viaductHeight(zz), zz);
+            };
+            if (viaductHeight(z + 6) > .01) {
+                polygon(mirror ? 0x222b43 : 0x38465b,
+                        {surface(-18.5,0,z), surface(18.5,0,z), surface(18.5,0,z+12), surface(-18.5,0,z+12)});
+                for (double x : {-9., 9.})
+                    polygon(0x596772, {surface(x,0,z), surface(x+.09,0,z), surface(x+.09,0,z+12), surface(x,0,z+12)});
+            }
             emit({Opacity, 1 - ramp((d - 112) / 62)});
             for (int offset : {6, 0}) {
                 auto face = [&](CoursePoint a, CoursePoint b, CoursePoint c, CoursePoint d, int rgb) {
-                    auto q = [&](CoursePoint p) { return project(p.x, sign * p.y, p.z); };
-                    polygon(mirror ? 0x343746 : rgb, {q(a), q(b), q(c), q(d)});
+                    auto q = [&](CoursePoint p) { return surface(p.x, sign * p.y, p.z); };
+                    polygon(mirror ? (((rgb >> 1) & 0x7f7f7f) + 0x080c10) : rgb, {q(a), q(b), q(c), q(d)});
                 };
                 courseSpan(z + offset, face, face);
                 if (!mirror)
@@ -63,24 +84,24 @@ class CanvasScene {
                     double x = lane * 7;
                     if (islandHalf(z + 2) > 0 && x < islandHalf(z + 2) + .2)
                         continue;
-                    polygon(0x84a9af, {project(x - .12, .08, z), project(x + .12, .08, z),
-                                       project(x + .12, .08, z + 4), project(x - .12, .08, z + 4)});
+                    polygon(0x84a9af, {surface(x - .12, .08, z), surface(x + .12, .08, z),
+                                       surface(x + .12, .08, z + 4), surface(x - .12, .08, z + 4)});
                 }
             int section = circuitIndex(int(std::floor(z / 24)));
             if (!mirror) {
                 int edge = district(section) == District::Shipyard ? 0xffb24f : 0x64ddda;
                 for (int side : {-1, 1}) {
                     double x = side * 18.4;
-                    polygon(edge, {project(x - .13, .09, z), project(x + .13, .09, z),
-                                   project(x + .13, .09, z + 12), project(x - .13, .09, z + 12)});
+                    polygon(edge, {surface(x - .13, .09, z), surface(x + .13, .09, z),
+                                   surface(x + .13, .09, z + 12), surface(x - .13, .09, z + 12)});
                 }
             }
-            if (!mirror && k % 2 == 1 && (section == 0 || section == 7 || section == 16)) {
+            if (k % 2 == 1 && (section == 0 || section == 7 || section == 16)) {
                 double gate = z + 3, top = sign * (section ? 12 : 9);
                 auto beam = [&](double x, double y, double w, double h, int rgb) {
-                    polygon(rgb,
-                            {project(x, sign * y, gate), project(x + w, sign * y, gate),
-                             project(x + w, sign * (y + h), gate), project(x, sign * (y + h), gate)});
+                    polygon(mirror ? ((rgb >> 1) & 0x7f7f7f) : rgb,
+                            {surface(x, sign * y, gate), surface(x + w, sign * y, gate),
+                             surface(x + w, sign * (y + h), gate), surface(x, sign * (y + h), gate)});
                 };
                 for (int side : {-1, 1})
                     beam(side * 19.4 - 1, 0, 2, section ? 15 : 9, 0x42516b);
@@ -89,9 +110,9 @@ class CanvasScene {
                     beam(-20, 15, 40, .65, 0x47596e);
                     for (int j = 0; j < 8; j++) {
                         double x = -19 + j * 4.7;
-                        polygon(0x50657b,
-                                {project(x, top, gate), project(x + .5, top, gate),
-                                 project(x + 4.9, sign * 15, gate), project(x + 4.4, sign * 15, gate)});
+                        polygon(mirror ? 0x33404e : 0x50657b,
+                                {surface(x, top, gate), surface(x + .5, top, gate),
+                                 surface(x + 4.9, sign * 15, gate), surface(x + 4.4, sign * 15, gate)});
                     }
                     beam(-19, 12, 38, .21, 0x64ddda);
                 } else
@@ -101,7 +122,7 @@ class CanvasScene {
             if (!mirror && k % 2 == 1 && section == 7) {
                 double zz = z + 1;
                 auto blade = [&](double a, double r) {
-                    return project(-20.6 + r * std::cos(a), 11.7 + r * std::sin(a), zz);
+                    return surface(-20.6 + r * std::cos(a), 11.7 + r * std::sin(a), zz);
                 };
                 for (int i = 0; i < 6; i++) {
                     double a = i * tau / 6 + turbineAngle;
@@ -109,19 +130,19 @@ class CanvasScene {
                                        blade(a + .43, 4)});
                 }
             }
-            if (k % 8 == 1 && district(section) == District::Shipyard) {
+            if (viaductHeight(z) < 6 && k % 8 == 1 && district(section) == District::Shipyard) {
                 int side = section % 8 == 0 ? 1 : -1;
-                polygon(0x56677e, {project(side * 22, 0, z), project(side * 24, 0, z),
-                                   project(side * 24, sign * 21, z), project(side * 22, sign * 21, z)});
+                polygon(0x56677e, {surface(side * 22, 0, z), surface(side * 24, 0, z),
+                                   surface(side * 24, sign * 21, z), surface(side * 22, sign * 21, z)});
                 polygon(0xf4a456,
-                        {project(side * 22, sign * 20, z), project(side * 6, sign * 15, z),
-                         project(side * 6, sign * 14.5, z), project(side * 22, sign * 19, z)});
+                        {surface(side * 22, sign * 20, z), surface(side * 6, sign * 15, z),
+                         surface(side * 6, sign * 14.5, z), surface(side * 22, sign * 19, z)});
             }
-            if (k % 2 == 0 && section % 2 && district(section) == District::Quay) {
+            if (viaductHeight(z) < 3 && k % 2 == 0 && section % 2 && district(section) == District::Quay) {
                 emit({12, double(mirror ? 0x645265 : 0xe7aa87),
                       std::max(1., focal * (mirror ? .12 : .17) / (z - camZ))});
                 for (int i = 0; i < 12; i++) {
-                    auto p = project(22 * std::cos(i * tau / 12),
+                    auto p = surface(22 * std::cos(i * tau / 12),
                                      sign * (4 + 7 * std::sin(i * tau / 12)), z);
                     emit({p[0], p[1]});
                 }
@@ -133,10 +154,19 @@ class CanvasScene {
         auto [x, z, kind, age] = o;
         if (z <= camZ + 1)
             return;
-        double deck = bridgeHeight(x, z);
+        double deck = bridgeHeight(x, z) + viaductHeight(z);
         auto [cx, cy] = project(x, 1.85 + deck, z);
         double r = focal / (z - camZ);
-        if (int(kind) >= Sparks) {
+        if (int(kind) >= Sparks || kind == 5) {
+            damagePuffs(int(kind), turbineAngle / .85, age, [&](const Puff &p) {
+                double zz = z + p.center.z;
+                if (zz <= camZ + .8)
+                    return;
+                auto center = project(x + p.center.x, deck + p.center.y, zz);
+                double scale = focal / (zz - camZ);
+                emit({Sprite, double(p.tile), center[0], center[1], p.w * scale, p.h * scale, -p.angle,
+                      p.opacity});
+            });
             damageMesh(int(kind), turbineAngle / .85, age,
                        [&](CoursePoint a, CoursePoint b, CoursePoint c, int rgb) {
                            auto q = [&](CoursePoint p) { return project(x + p.x, deck + p.y, z + p.z); };
@@ -182,8 +212,6 @@ class CanvasScene {
                 }
         } else if (kind == 1) {
             polygon(0xff664e, {{cx, cy - r}, {cx + r, cy}, {cx, cy + r}, {cx - r, cy}});
-        } else if (kind == 5) {
-            emit({Rect, 0xffc36c, cx - r, cy - r, r * (1 + age), r});
         } else {
             emit({Rect, 0xffc875, cx, cy, std::max(2., r * .19), std::max(3., r)});
         }
@@ -194,7 +222,8 @@ class CanvasScene {
         : width(w), focal(std::min(w, h) * .76), horizon(h * .43),
           camZ(race.distance - race.laps * lapLength - 9.2), camX(race.x * .87 + road(camZ) + pan),
           heading(slope(camZ) - pan / 48), turbineAngle(race.elapsed * .85),
-          cameraLift(bridgeHeight(race.x, race.distance)), out(commands) {
+          cameraLift(bridgeHeight(race.x, race.distance) + viaductHeight(camZ)), out(commands) {
+        horizon += focal * cameraGrade(camZ);
         out.clear();
         double span = std::min(w, h), sunX = w * .5 + span * .256 - heading * focal,
                skyY = horizon - span * .17, waterY = horizon + span * .17;
@@ -210,8 +239,8 @@ class CanvasScene {
             polygon(0x705469, {{a, horizon}, {a, ridge(i)}, {b, ridge(i + 1)}, {b, horizon}});
         }
         emit({ClipBelow, horizon});
-        emit({Ellipse, 0x544958, 0, sunX, waterY, span * .063, span * .061, 0});
-        emit({Ellipse, 0x74616a, 2, sunX, waterY, span * .128, span * .014, .2});
+        emit({Ellipse, 0x88715f, 0, sunX, waterY, span * .063, span * .061, 0});
+        emit({Ellipse, 0xa88c73, 2, sunX, waterY, span * .128, span * .014, .2});
         structures(true);
         emit({Restore});
         structures(false);
@@ -228,7 +257,7 @@ class CanvasScene {
                 y -= .23 * dent;
                 z -= .18 * dent;
             }
-            return project(race.x + x, cameraLift + 1.85 + y + x * race.lean, camZ + 9.2 + z);
+            return project(race.x + x, bridgeHeight(race.x,race.distance) + viaductHeight(race.distance + z) + 1.85 + y + x * race.lean, camZ + 9.2 + z);
         };
         for (int s : {-1, 1}) {
             polygon(0xd4d9dd, {p(0, .3, 2.35), p(s * .55, .1, .54), p(0, .4, -1)});

@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCircuit4"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCircuit5"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -190,7 +190,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit4"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit5"];
             }
         }
         race.cues.clear();

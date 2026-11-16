@@ -32,6 +32,8 @@ int canvasFrame(int width, int height, double pan) {
 const float *canvasData() { return canvasCommands.data(); }
 void raceReset() { race = neon::Race{}; }
 double lapLength() { return neon::lapLength; }
+double elevation(double z){return neon::viaductHeight(z);}
+double cameraPitch(double z){return neon::cameraGrade(z);}
 double roadX(double z) { return neon::road(z); }
 double roadSlopeAt(double z) { return neon::slope(z); }
 void raceShoot(int rocket) { race.shoot(rocket != 0); }

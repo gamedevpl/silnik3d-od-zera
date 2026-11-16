@@ -7,6 +7,8 @@
 #include "damage_fx.hpp"
 
 static std::vector<Vertex> mesh;
+static int firstPuff;
+extern "C" int particleStart(){return firstPuff;}
 static float objects[64*4]; // Lane X, world Z, object kind, animation phase.
 static_assert(sizeof(Vertex)==16);
 
@@ -85,6 +87,26 @@ static void landmark(Frame &f,int k,double z){
     }
 }
 
+// Distant blocks share their silhouettes across all detail levels.
+static void harborCity(Frame &f,int k,double z){
+    if(k<20 || k>46)return;
+    for(int side:{-1,1})for(int row=0;row<2;row++){
+        int id=k*37+row*13+side*8;
+        double x=side*(48+row*37+random01(id)*23),w=5+random01(id+2)*7,h=8+random01(id+1)*25;
+        if(k==39 && side<0)h=46;
+        C front=mix({45,52,77},{84,65,88},random01(id+3)),shadow=mix(front,{20,32,53},.36);
+        f.surface=Frame::FacadeFront;f.box(x,0,z,w,h,10,front,shadow);
+        f.box(x+w*.18,h,z+1,w*.66,2+h*.13,7.5,front,shadow);
+        f.surface=Frame::Plain;
+        if(k==39 && side<0){
+            f.box(x+w*.36,h+3,z+3,w*.24,10,3,{96,117,136},shadow);
+            f.box(x+w*.43,h+12,z+4,.24,8,.3,{252,193,121},shadow);
+        }
+        if(k==39 && side<0 && row==0)f.box(x-34,25,z+3,35,2.1,2.8,{112,127,142},shadow);
+        if(!f.simple && k%3==row)
+            f.box(x+.12,h*.82,z-.07,w-.24,.21,.10,side>0?C{239,158,96}:C{99,205,217},shadow);
+    }
+}
 extern "C" {
 int circuitSection(int section,int simple){
     mesh.clear();Frame f=geometryFrame(0);f.block=true;f.simple=simple!=0;
@@ -92,12 +114,19 @@ int circuitSection(int section,int simple){
     double z=k*24;f.cz=z;
     auto district=neon::district(k);
     f.skyline();
+    harborCity(f,k,z);
     if(simple==2)return int(mesh.size());
-    f.rings(district==neon::District::Quay && k!=0 && k%2);f.lightBays();
-    landmark(f,k,z+15);
+    size_t trackBegin=mesh.size();
+    f.surface=Frame::CladFront;
+    f.rings(district==neon::District::Quay && k!=0 && k%2 && neon::viaductHeight(z)<3);if(neon::viaductHeight(z)<4)f.lightBays();
+    if(neon::viaductHeight(z)<6)landmark(f,k,z+15);
+    f.surface=Frame::Plain;
     auto face=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
+        auto saved=f.surface;
+        if(saved==Frame::Plain)f.surface=Frame::CladFront;
         f.quad({a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},{d.x,d.y,d.z},
                {(rgb>>16)&255,(rgb>>8)&255,rgb&255});
+        f.surface=saved;
     };
     auto plate=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
         f.surface=Frame::Deck;face(a,b,c,d,rgb);f.surface=Frame::Plain;
@@ -117,6 +146,23 @@ int circuitSection(int section,int simple){
         if(neon::islandHalf(zz+2)>0 && (x<0 || x<neon::islandHalf(zz+2)+.2))continue;
         f.quad({x-.10,.08,zz},{x+.10,.08,zz},{x+.10,.08,zz+4},{x-.10,.08,zz+4},
                lane==0?C{190,169,130}:C{104,163,179});
+    }
+    if(z>=480 && z<1056){
+        for(int i=0;i<4;i++){
+            double a=z+6*i,b=a+6;
+            f.surface=Frame::SkyDeck;
+            f.quad({-18.55,-.015,a},{18.55,-.015,a},{18.55,-.015,b},{-18.55,-.015,b},{46,71,86});
+            f.surface=Frame::Plain;
+            for(int side:{-1,1}){
+                double ex=side*18.6;
+                f.box(ex-.27,-.85,a,.54,.96,6,{65,82,100},{35,48,67});
+                f.box(ex-.20,.15,a+.4,.40,.12,3.2,{121,240,221},{48,146,154});
+            }
+        }
+    }
+    for(size_t i=trackBegin;i<mesh.size();i++)mesh[i].y+=neon::viaductHeight(mesh[i].z);
+    if(neon::viaductHeight(z+12)>3 && k%2==0){
+        for(int side:{-1,1})f.box(side*15-1,0,z+12,2,neon::viaductHeight(z+12)-.15,2.4,{56,66,88},{30,44,62});
     }
     return int(mesh.size());
 }
@@ -143,14 +189,16 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
+    static std::vector<neon::Puff> puffs;
+    puffs.clear();
     size_t first=0;
     auto place=[&](double x,double z,bool onTrack){
         double origin=neon::road(z),tangent=neon::slope(z);
-        double deck=onTrack?neon::bridgeHeight(x,z):0;
+        double deck=onTrack?neon::bridgeHeight(x,z)+neon::viaductHeight(z):0;
         for(;first<mesh.size();++first){
             auto &v=mesh[first];
             v.x+=origin+(v.z-z)*tangent;
-            v.y+=deck;
+            v.y+=deck+(onTrack?(v.z-z)*neon::viaductGrade(z):0.);
         }
     };
     lockTurbine(f,distance,time);place(0,7*24+13,false);
@@ -164,7 +212,7 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     bool wreck=false;
     for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*4+2])==neon::PlayerFragments;
     if(!wreck)f.ship(true,wing);
-    if(!wreck && neon::bridgeHeight(x,distance)>.1){
+    if(!wreck && (neon::bridgeHeight(x,distance)+neon::viaductHeight(distance))>.1){
         auto shadow=[&](double dx,double dz){return V{x+dx-.35,.16+neon::bridgeHeight(x,distance+dz)-neon::bridgeHeight(x,distance),distance+dz-.4};};
         for(int side:{-1,1})
             f.quad(shadow(0,2.2),shadow(side*.62,.28),shadow(side*1.5,-1.1),shadow(0,-.82),{36,49,60});
@@ -174,7 +222,11 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
         const float *o=objects+4*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
-        if(int(kind)>=neon::Sparks){
+        if(int(kind)>=neon::Sparks || kind==5){
+            neon::damagePuffs(int(kind),time,age,[&](neon::Puff puff){
+                puff.center.z+=z;puff.center.x+=xx+neon::road(puff.center.z);
+                puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z);puffs.push_back(puff);
+            });
             neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
                 f.tri({xx+a.x,a.y,z+a.z},{xx+b.x,b.y,z+b.z},{xx+c.x,c.y,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
             });
@@ -214,14 +266,19 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
         }else if(kind==2 || kind==3){
             double width=kind==3?.28:.11;
             f.box(xx-width,y-.06,z,2*width,.14,kind==3?2.4:1.6,{255,226,118},{84,234,255});
-        }else if(kind==5){
-            for(int j=0;j<12;j++){
-                double a=j*2*pi/12,spread=.2+age*5;
-                V p{xx+spread*std::cos(a),y+spread*std::sin(a),z};
-                f.tri(p,p+V{.2,.1,.2},p+V{.1,.45,.16},j%2?C{255,191,86}:C{255,91,68});
-            }
         }
         place(xx,z,true);
+    }
+    firstPuff=int(mesh.size());
+    std::stable_sort(puffs.begin(),puffs.end(),[](const auto &a,const auto &b){return a.center.z>b.center.z;});
+    for(const auto &p:puffs){
+        double c=std::cos(p.angle),s=std::sin(p.angle);
+        auto corner=[&](int u,int v){
+            double x=(2*u-1)*p.w,y=(1-2*v)*p.h;
+            return Vertex{float(p.center.x+c*x-s*y),float(p.center.y+s*x+c*y),float(p.center.z),
+                uint8_t(u*255),uint8_t(v*255),uint8_t(255*p.opacity),uint8_t(28+p.tile)};
+        };
+        mesh.insert(mesh.end(),{corner(0,0),corner(1,0),corner(0,1),corner(0,1),corner(1,0),corner(1,1)});
     }
     return int(mesh.size());
 }

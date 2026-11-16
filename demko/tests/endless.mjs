@@ -9,7 +9,7 @@ test('the WebAssembly build matches a five-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[1483.503982738,1,7],[2990.305071503,2,3],[4373.242196685,3,6],[5794.088355658,5,6]];
+  const checkpoints=[[1528.243126161,1,7],[3029.275699280,2,4],[4500.735430173,3,1],[5879.906494243,5,6]];
   for(let i=0;i<10800;i++){
    if(i%821===0)sim.shoot(true,cue);
    sim.advance(1/90,{steer:Math.floor(i/57)%3-1,boost:i%890<570,brake:i%341<19},i%4===0,cue);
@@ -24,9 +24,9 @@ test('the WebAssembly build matches a five-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-24.016607466)<.0001);
-  assert.equal(s.rockets,0);assert.equal(s.shield,3);
-  assert.deepEqual(counts,{rocket:7,fire:491,break:102,hit:25,repair:10,pad:11,rail:35,lap:5,launch:4,wreck:10});
+  assert(Math.abs(s.lastLap-25.723945313)<.0001);
+  assert.equal(s.rockets,0);assert.equal(s.shield,1);
+  assert.deepEqual(counts,{rocket:7,fire:506,break:96,hit:23,repair:7,pad:10,rail:38,lap:5,launch:3,wreck:7});
   assert.equal(sim.reset().distance,0);
  });
 
@@ -41,4 +41,23 @@ test('leaving a charged wake with boost releases one slingshot',async()=>{
  step(0,true,30);assert.equal(s.launchTime,0);
  step(-1,true,32);assert(s.launchTime>0);assert.equal(s.wakeCharge,0);
  assert.equal(events.filter(e=>e==='launch').length,1);
+});
+
+test('smoke is a transparent sprite batch following the solid meshes',async()=>{
+ const sim=await loadRace(binary),race=sim.reset(),gpu=sim.geometry;
+ const texture=new Uint8Array(gpu.memory.buffer,gpu.surfaceMap(4),64*64*4);
+ assert.equal(texture[3],0);
+ assert(texture[4*(32*64+32)+3]>150);
+ for(let i=0;i<300;i++){
+  if(i%821===0)sim.shoot(true,()=>{});
+  sim.advance(1/90,{steer:Math.floor(i/57)%3-1,boost:i%890<570,brake:i%341<19},i%4===0,()=>{});
+  if(race.shield!==2)continue;
+  const n=gpu.raceActors(race.elapsed),first=gpu.particleStart();
+  assert(first>0 && first<n);
+  assert.equal((n-first)%6,0);
+  const data=new Uint8Array(gpu.memory.buffer,gpu.vertices()+first*16,(n-first)*16);
+  for(let j=15;j<data.length;j+=16)assert(data[j]>=32 && data[j]<=34);
+  return;
+ }
+ assert.fail('no damage in replay');
 });
