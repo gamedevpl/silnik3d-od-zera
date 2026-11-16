@@ -13,4 +13,5 @@ int circuitSection(int section, int simple);
 const Vertex *vertices();
 float *objectBuffer();
 int particleStart();
+int heatStart();
 }

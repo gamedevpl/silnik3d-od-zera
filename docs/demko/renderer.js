@@ -20,12 +20,37 @@ void main(){
 }`;
 const fragment=`
 precision highp float; varying vec3 world,color;varying float mat;varying float depth,alt,sourceDepth;
-uniform float pass,moving,clock;uniform sampler2D steel,glass,cladding,hull,smoke,flame,ember,city;uniform vec4 pilot;uniform vec4 cam;uniform float lift;uniform float shadowOpacity;uniform vec2 visibility;
+uniform float pass,moving,clock;uniform sampler2D steel,glass,cladding,hull,smoke,flame,ember,city;uniform vec4 lamps[16];uniform vec4 pilot;uniform vec4 cam;uniform float lift;uniform float shadowOpacity;uniform vec2 visibility;
+vec3 incidentLight(vec3 p,vec3 n,vec3 eye,float polish){
+ vec3 sum=vec3(0.);
+ for(int i=0;i<16;i++){
+  vec4 source=lamps[i];
+  if(source.w==0.)break;
+  vec3 delta=source.xyz-p;
+  float d2=dot(delta,delta);
+  if(d2>=144.)continue;
+  vec3 light=delta*inversesqrt(max(.001,d2));
+  float facing=max(0.,dot(n,light));
+  vec3 halfDir=light+eye;
+  float spec=max(0.,dot(n,halfDir)*inversesqrt(max(.001,dot(halfDir,halfDir))));
+  float falloff=1.-d2/144.;
+  float energy=abs(source.w)*falloff*falloff/(1.+.42*d2);
+  vec3 tint=source.w>0.?vec3(.075,.60,1.):vec3(1.,.24,.032);
+  sum+=tint*energy*(.12+.64*facing+polish*facing*pow(spec,22.));
+ }
+ return sum;
+}
 void main(){
  if(alt<-.04||depth>=visibility.y)discard;
  float range=1.-smoothstep(visibility.x,visibility.y,depth);
  if(mat>23.5 && mat<24.5){if(pass>.5)discard;gl_FragColor=vec4(color,.88);return;}
  if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
+ vec3 viewDir=normalize(vec3(cam.x,4.15+lift,cam.y)-world);
+ if(mat>52.5 && mat<53.5){
+  vec3 normal=normalize(vec3(.035*sin(world.z*1.7+clock),1.,.05*sin(world.x*2.-clock)));
+  vec3 spill=incidentLight(world,normal,viewDir,1.6)*.76;
+  gl_FragColor=vec4(spill/(1.+.52*spill),0.);return;
+ }
  if(mat>51.5 && mat<52.5){
   vec3 emission=mix(vec3(.98,.19,.025),vec3(1.,.96,.68),color.r*color.r);
   float flicker=sin(world.z*3.-clock*11.+2.*sin(world.y*6.+world.x*2.));
@@ -34,7 +59,8 @@ void main(){
  }
  if(mat>79.5){
   float hot=step(143.5,mat);
-  float age=clamp((floor(mat+.5)-80.-64.*hot)/63.,0.,1.);
+  float ion=step(207.5,mat);
+  float age=clamp((floor(mat+.5)-80.-64.*(hot+ion))/(63.-16.*ion),0.,1.);
   vec3 p=color*2.-1.;
   vec3 ray=world-vec3(cam.x,4.15+lift,cam.y);
   ray=normalize(ray*vec3(1.,1.,1./1.7));
@@ -54,7 +80,10 @@ void main(){
    vec3 soot=mix(vec3(.075,.087,.115),vec3(.63,.63,.65),shade);
    float core=clamp(mass*.82+.16*eddy+.10,0.,1.);
    vec3 fire=mix(vec3(.96,.18,.035),vec3(1.,.94,.66),core*core);
-   light+=(1.-opacity)*cover*mix(soot,fire,heat*core);
+   vec3 plasma=mix(vec3(.10,.36,1.),vec3(.45,1.,1.),core);
+   vec3 emission=mix(fire,plasma,ion);
+   vec3 scatter=mix(soot,emission,heat*core);
+   light+=(1.-opacity)*cover*(scatter+emission*heat*(.38+.62*core));
    opacity+=(1.-opacity)*cover;
    p+=ray*stride;
   }
@@ -77,6 +106,7 @@ void main(){
   vec3 shoulder=mix(vec3(.15,.19,.21),vec3(.65,.46,.24),hatch*.66);
   tint=mix(tint,shoulder,service*(.25+.75*nearDetail));
   tint+=strip*vec3(.12,.26,.27)*nearDetail;
+  tint+=incidentLight(world,vec3(0.,1.,0.),viewDir,.65)*(.46+.54*tint);
   gl_FragColor=vec4(tint,mix(.69,.90,fres)*range);return;
  }
  if(mat>39.5){
@@ -109,6 +139,13 @@ void main(){
           vec3(.85,.68,.48)*pow(max(0.,1.-abs(l-.76)*15.),3.);
    shaded*=1.-.55*(1.-smoothstep(.008,.025,abs(uv.y-.36)));
   }else if(mat>49.5 && mat<50.5)shaded=base*(.86+.14*l);
+  vec3 n=viewDir;
+#ifdef CANAL_NORMALS
+  vec3 face=cross(dFdx(world),dFdy(world));
+  n=face*inversesqrt(max(.00000001,dot(face,face)));
+  if(dot(n,viewDir)<0.)n=-n;
+#endif
+  shaded+=incidentLight(world,n,viewDir,polish)*(.25+.55*shaded);
   if(pass>.5)shaded=mix(vec3(.045,.082,.125),shaded,.47);
   float opacity=pass>.5 ? .065+.355*smoothstep(6.,22.,depth) : 1.;
   gl_FragColor=vec4(mix(shaded,vec3(.40,.30,.43),.65*smoothstep(36.,155.,depth)),opacity*range);return;
@@ -152,6 +189,7 @@ void main(){
    float fade=1.-smoothstep(15.,43.,depth);
    shaded=mix(shaded,vec3(.79,.51,.19),.53*stripe*fade);
   }
+  shaded+=incidentLight(world,n,eye,1.-tex.a)*(.32+.6*shaded);
   c=mix(shaded,vec3(.40,.30,.43),haze);
  }
  if(pass>.5){
@@ -191,6 +229,28 @@ void main(){
  }
  gl_FragColor=vec4(sky,1.);
 }`;
+const heatFragment=`
+precision highp float;
+varying vec3 world,color;
+varying float depth,mat;
+uniform sampler2D scene;
+uniform vec2 texel;
+uniform float clock;
+void main(){
+ vec2 p=color.rg;
+ float edge=1.-smoothstep(.24,1.,abs(2.*p.x-1.));
+ float envelope=edge*smoothstep(0.,.15,p.y)*(1.-smoothstep(.57,1.,p.y));
+ float fire=step(55.5,mat);
+ float phase=clock*(9.+fire*2.)+world.x*1.4;
+ float waves=sin(12.*p.y-phase+1.2*sin(6.*p.x+.47*phase));
+ float curls=sin(9.*p.x+5.*p.y+.85*phase+waves);
+ float strength=envelope*color.b;
+ vec2 bend=vec2(waves,curls*.60)*strength*min(4.,23./max(depth,1.));
+ vec3 behind=texture2D(scene,clamp((gl_FragCoord.xy+bend)*texel,texel*.5,1.-texel*.5)).rgb;
+ vec3 tint=mix(vec3(.05,.48,1.),vec3(1.,.28,.035),fire);
+ vec3 glow=tint*color.b*(.12+.16*(.5+.5*waves))*edge;
+ gl_FragColor=vec4(behind+glow,strength*.88);
+}`;
 function program(gl,vs,fs){
  const p=gl.createProgram();
  for(const [type,source] of [[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){
@@ -198,6 +258,7 @@ function program(gl,vs,fs){
   if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));
   gl.attachShader(p,sh);gl.deleteShader(sh);
  }
+ gl.bindAttribLocation(p,0,"pos");gl.bindAttribLocation(p,0,"point");gl.bindAttribLocation(p,1,"tint");
  gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));
  return p;
 }
@@ -205,14 +266,26 @@ function gpu(canvas,simulation){
  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
  const engine=simulation.geometry;
- const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
+ const normals=gl.getExtension('OES_standard_derivatives')?'#extension GL_OES_standard_derivatives : enable\n#define CANAL_NORMALS\n':'';
+ const world=program(gl,vertex,normals+fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
  const u=locs(world,['cam','scale','pilot','moving','pass','clock','shadowOpacity','lift','visibility','pitch']),v=locs(sky,['cam','aspect','time','framing','skyPitch','bearing']);
+ const lamps=gl.getUniformLocation(world,'lamps[0]');
+ const heat=program(gl,vertex,heatFragment);
+ const hu=locs(heat,['cam','scale','clock','lift','pitch','texel','scene']);
+ const scene=gl.createTexture();
+ let sceneWidth=0,sceneHeight=0,steelMap;
+ gl.bindTexture(gl.TEXTURE_2D,scene);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  // C++ bakes the same material and particle textures for both GPUs.
  for(const [unit,name] of ['steel','glass','cladding','hull','smoke','flame','ember','city'].entries()){
   const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,tex);
+  if(unit===0)steelMap=tex;
   const ptr=engine.surfaceMap(unit);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,64,64,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(engine.memory.buffer,ptr,64*64*4));
   gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
@@ -251,6 +324,8 @@ function gpu(canvas,simulation){
   const n=engine.raceActors(s.elapsed);upload(dynamic,n,gl.DYNAMIC_DRAW);
   const local=s.distance-s.laps*simulation.LAP;
   gl.useProgram(world);gl.uniform4f(u.pilot,s.x+simulation.road(local),local,simulation.slope(local),s.lean);gl.uniform4fv(u.cam,cam);gl.uniform1f(u.lift,s.deck+engine.elevation(cam[1]));gl.uniform1f(u.pitch,grade);gl.uniform1f(u.clock,s.elapsed%180);
+  const lightData=engine.raceLights();
+  gl.uniform4fv(lamps,new Float32Array(engine.memory.buffer,lightData,64));
   const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
@@ -271,7 +346,26 @@ function gpu(canvas,simulation){
    gl.uniform1f(u.moving,1);bind(dynamic);gl.drawArrays(gl.TRIANGLES,0,engine.particleStart());
   }
   const start=engine.particleStart();
-  if(n>start){gl.depthMask(false);gl.drawArrays(gl.TRIANGLES,start,n-start);gl.depthMask(true);}
+  gl.depthMask(false);
+  gl.blendFunc(gl.ONE,gl.ONE);
+  gl.drawArrays(gl.TRIANGLES,start,6);
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  const firstHeat=engine.heatStart();
+  gl.drawArrays(gl.TRIANGLES,start+6,firstHeat-start-6);
+  if(n>firstHeat){
+   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,scene);
+   if(sceneWidth!==canvas.width || sceneHeight!==canvas.height){
+    sceneWidth=canvas.width;sceneHeight=canvas.height;
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,sceneWidth,sceneHeight,0,gl.RGB,gl.UNSIGNED_BYTE,null);
+   }
+   gl.copyTexSubImage2D(gl.TEXTURE_2D,0,0,0,0,0,sceneWidth,sceneHeight);
+   gl.useProgram(heat);gl.uniform1i(hu.scene,0);gl.uniform2f(hu.texel,1/sceneWidth,1/sceneHeight);
+   gl.uniform4fv(hu.cam,cam);gl.uniform2f(hu.scale,focus*sceneHeight/sceneWidth,focus);
+   gl.uniform1f(hu.pitch,grade);gl.uniform1f(hu.lift,s.deck+engine.elevation(cam[1]));
+   gl.uniform1f(hu.clock,s.elapsed%180);gl.drawArrays(gl.TRIANGLES,firstHeat,n-firstHeat);
+   gl.bindTexture(gl.TEXTURE_2D,steelMap);
+  }
+  gl.depthMask(true);
  };
 }
 
@@ -298,6 +392,26 @@ function canvasFlight(canvas,simulation){
   // See CanvasScene::Op. Positions and painter order come from C++.
   for(let i=0;i<size;){
    const op=data[i++];
+   if(op===-8){
+    const x=data[i++],y=data[i++],rx=data[i++],ry=data[i++],power=data[i++],time=data[i++];
+    if(x+rx<0||x-rx>w||y+ry<0||y-ry>h)continue;
+    ctx.save();ctx.globalAlpha=.68*Math.abs(power);
+    ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.clip();
+    for(let j=0;j<7;j++){
+     const u=(j+.5)/7,top=y-ry+j*2*ry/7,height=2*ry/7;
+     const dx=Math.sin(time*11+u*12+x*.03)*Math.sin(Math.PI*u)*Math.min(3,rx*.12);
+     ctx.drawImage(canvas,x-rx+dx,top,2*rx,height,x-rx,top,2*rx,height);
+    }
+    ctx.restore();continue;
+   }
+   if(op===-7){
+    const x=data[i++],y=data[i++],rx=data[i++],ry=data[i++],power=data[i++];
+    ctx.save();ctx.translate(x,y);ctx.scale(rx,ry);ctx.globalCompositeOperation='lighter';
+    ctx.globalAlpha=Math.abs(power);
+    const light=ctx.createRadialGradient(0,0,0,0,0,1),rgb=power>0?'19,153,255':'255,61,8';
+    light.addColorStop(0,'rgba('+rgb+',.9)');light.addColorStop(.38,'rgba('+rgb+',.36)');light.addColorStop(1,'rgba('+rgb+',0)');
+    ctx.fillStyle=light;ctx.fillRect(-1,-1,2,2);ctx.restore();continue;
+   }
    if(op===-6){
     const tile=data[i++],x=data[i++],y=data[i++],rx=data[i++],ry=data[i++],angle=data[i++],alpha=data[i++];
     ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(sprites[tile-4],-rx,-ry,2*rx,2*ry);ctx.restore();continue;

@@ -3,6 +3,7 @@
 #import <simd/simd.h>
 #include "../track_mesh.hpp"
 #include "../materials.hpp"
+#include "../race_lights.hpp"
 
 class Graphics {
     struct Strip {
@@ -11,10 +12,12 @@ class Graphics {
     };
     struct View {
         simd_float4 camera, lens, effects, visibility, pilot, terrain;
+        neon::RaceLights lamps;
     };
     id<MTLDevice> device;
     id<MTLCommandQueue> queue;
-    id<MTLRenderPipelineState> sky, solid, shadow;
+    id<MTLRenderPipelineState> sky, solid, shadow, spill, heat;
+    id<MTLTexture> sceneColor;
     id<MTLDepthStencilState> depth, shadowDepth, background, transparent;
     Strip scenery[3];
     id<MTLTexture> maps[neon::tileCount];
@@ -28,6 +31,7 @@ class Graphics {
 
   public:
     bool setup(MTKView *view, NSError **error) {
+        view.framebufferOnly = NO;
         device = view.device;
         queue = [device newCommandQueue];
         NSURL *url = [NSBundle.mainBundle URLForResource:@"Canal" withExtension:@"metal"];
@@ -38,7 +42,7 @@ class Graphics {
         auto lib = [device newLibraryWithSource:src options:nil error:error];
         if (!lib)
             return false;
-        auto pipeline = [&](NSString *vertex, NSString *fragment, bool blend) {
+        auto pipeline = [&](NSString *vertex, NSString *fragment, bool blend, bool additive=false) {
             auto d = [MTLRenderPipelineDescriptor new];
             d.vertexFunction = [lib newFunctionWithName:vertex];
             d.fragmentFunction = [lib newFunctionWithName:fragment];
@@ -46,8 +50,8 @@ class Graphics {
             auto c = d.colorAttachments[0];
             c.pixelFormat = view.colorPixelFormat;
             c.blendingEnabled = blend;
-            c.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-            c.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            c.sourceRGBBlendFactor = additive ? MTLBlendFactorOne : MTLBlendFactorSourceAlpha;
+            c.destinationRGBBlendFactor = additive ? MTLBlendFactorOne : MTLBlendFactorOneMinusSourceAlpha;
             return [device newRenderPipelineStateWithDescriptor:d error:error];
         };
         sky = pipeline(@"skyVertex", @"skyPixel", false);
@@ -57,7 +61,9 @@ class Graphics {
         if (!solid)
             return false;
         shadow = pipeline(@"worldVertex", @"worldPixel", true);
-        if (!shadow)
+        spill = pipeline(@"worldVertex", @"worldPixel", true, true);
+        heat = pipeline(@"worldVertex", @"heatPixel", true);
+        if (!shadow || !spill || !heat)
             return false;
         auto state = [&](MTLCompareFunction func, bool write) {
             auto d = [MTLDepthStencilDescriptor new];
@@ -114,7 +120,9 @@ class Graphics {
                   {float(fmod(s.elapsed, 180.)), 0, 0, float(neon::bridgeHeight(s.x,s.distance)+neon::viaductHeight(cz))},
                   {0, 0, 0, 0},
                   {float(s.x + neon::road(local)), float(local), float(neon::slope(local)), float(s.lean)},{float(neon::cameraGrade(cz)),float(neon::tau*cz/neon::lapLength+std::atan(neon::slope(cz))),0,0}};
+        u.lamps = neon::raceLights(s);
         pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+        pass.depthAttachment.storeAction = MTLStoreActionStore;
         auto enc = [cmd renderCommandEncoderWithDescriptor:pass];
         auto uniforms = [&] {
             for (int i = 0; i < neon::tileCount; i++)
@@ -161,11 +169,37 @@ class Graphics {
         }
         if (n > particleStart()) {
             [enc setDepthStencilState:transparent];
+            [enc setRenderPipelineState:spill];
+            [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:particleStart() vertexCount:6];
+            [enc setRenderPipelineState:solid];
             [enc drawPrimitives:MTLPrimitiveTypeTriangle
-                    vertexStart:particleStart()
-                    vertexCount:n - particleStart()];
+                    vertexStart:particleStart()+6
+                    vertexCount:heatStart() - particleStart()-6];
         }
         [enc endEncoding];
+        if(n>heatStart()){
+            auto frame=drawable.texture;
+            if(!sceneColor || sceneColor.width!=frame.width || sceneColor.height!=frame.height){
+                auto desc=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:frame.pixelFormat
+                    width:frame.width height:frame.height mipmapped:NO];
+                desc.storageMode=MTLStorageModePrivate;
+                desc.usage=MTLTextureUsageShaderRead;
+                sceneColor=[device newTextureWithDescriptor:desc];
+            }
+            auto copy=[cmd blitCommandEncoder];
+            [copy copyFromTexture:frame toTexture:sceneColor];
+            [copy endEncoding];
+            pass.colorAttachments[0].loadAction=MTLLoadActionLoad;
+            pass.depthAttachment.loadAction=MTLLoadActionLoad;
+            enc=[cmd renderCommandEncoderWithDescriptor:pass];
+            [enc setRenderPipelineState:heat];[enc setDepthStencilState:transparent];
+            [enc setVertexBytes:&u length:sizeof(u) atIndex:1];
+            [enc setFragmentBytes:&u length:sizeof(u) atIndex:1];
+            [enc setFragmentTexture:sceneColor atIndex:0];
+            [enc setVertexBuffer:moving offset:0 atIndex:0];
+            [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:heatStart() vertexCount:n-heatStart()];
+            [enc endEncoding];
+        }
         [cmd presentDrawable:drawable];
         [cmd commit];
         return cmd;

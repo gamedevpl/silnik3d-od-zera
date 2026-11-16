@@ -8,6 +8,7 @@ namespace neon {
 struct Gas {
     double x,y,z,vx,vy,vz,age,life,radius,spread;
     bool hot;
+    bool ion = false;
 };
 struct Wake {
     std::vector<Gas> gas;
@@ -40,7 +41,7 @@ struct Wake {
                     y+wing*1.04*std::sin(bank)-vy*emission,
                     z-vz*emission,gasSpeed*vx+1.65*std::cos(twist),
                     gasSpeed*vy+2.1+.95*std::sin(twist),gasSpeed*vz-3.8,0,
-                    life,r,damage?1.65:.64,damage>=2});
+                    life,r,damage?1.65:.64,damage>=2,!damage});
             };
             if(damage)emit(side);else{emit(-1);emit(1);}
         }

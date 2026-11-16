@@ -1,8 +1,31 @@
 // Native checks for arrangements that are deliberately not writable via the browser ABI.
 #include "../race.hpp"
+#include "../race_lights.hpp"
 #include <cassert>
 #include "../damage_fx.hpp"
 int main() {
+    {
+        neon::Race r;
+        for(auto &p:r.rivals)p.z=400;
+        r.distance=neon::lapLength+710;
+        r.laps=1;
+        auto idle=neon::raceLights(r);
+        assert(idle[0][3]>0 && idle[1][3]>0 && idle[0][0]<idle[1][0]);
+        assert(idle[0][1]>28 && std::abs(idle[0][2]-708)<1);
+        r.thrust=1;
+        assert(neon::raceLights(r)[0][3]>2*idle[0][3]);
+        r.recovery=1;
+        for(auto &p:r.rivals)p.recovery=1;
+        r.wakes[0].gas.push_back({7,30,r.distance-4,0,0,0,.05,.69,1,0,true});
+        auto burning=neon::raceLights(r);
+        assert(burning[0][3]<0 && burning[0][0]==7 && burning[0][2]==706);
+        r.wakes[0].gas[0].hot=false;
+        assert(neon::raceLights(r)[0][3]==0);
+        r.wakes[0].gas[0].ion=true;
+        assert(neon::raceLights(r)[0][3]>0);
+        r.wakes[0].gas[0].age=.65;
+        assert(neon::raceLights(r)[0][3]==0);
+    }
     for (double offset : {0., neon::lapLength}) {
         assert(neon::viaductHeight(offset + 480) == 0);
         assert(neon::viaductGrade(offset + 575) > .15);

@@ -7,9 +7,11 @@
 #include "racer.hpp"
 #include "damage_fx.hpp"
 #include "flame.hpp"
+#include "thermal.hpp"
 
 static std::vector<Vertex> mesh;
-static int firstPuff;
+static int firstPuff, firstHeat;
+extern "C" int heatStart(){return firstHeat;}
 extern "C" int particleStart(){return firstPuff;}
 static float objects[raceObjectCapacity*6]; // Lane X, world Z, object kind, animation phase and emitter speed.
 static_assert(sizeof(Vertex)==16);
@@ -247,7 +249,7 @@ int actors(const neon::Race &race,double time,int count){
         const float *o=objects+6*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
-        if(int(kind)==neon::HotGas || int(kind)==neon::ColdGas){volumes.push_back(o);continue;}
+        if(int(kind)==neon::HotGas || int(kind)==neon::ColdGas || int(kind)==neon::IonGas){volumes.push_back(o);continue;}
         if(int(kind)>=neon::Sparks || kind==5){
             const double lift=(int(kind)==neon::RocketImpact || kind==5)?o[5]:0;
             neon::damagePuffs(int(kind),time,age,[&](neon::Puff puff){
@@ -333,6 +335,13 @@ int actors(const neon::Race &race,double time,int count){
         place(xx,z,true);
     }
     firstPuff=int(mesh.size());
+    // The open canal is drawn in the sky pass. Receive local light at its surface
+    // after the reflections, with the opaque boats and bridges still in depth.
+    auto water=[&](double side,double ahead){
+        return Vertex{float(neon::road(distance)+x+side),.03f,float(distance+ahead),0,0,0,53};
+    };
+    auto a=water(-220,-14),b=water(220,-14),c=water(220,134),d=water(-220,134);
+    mesh.insert(mesh.end(),{a,b,c,a,c,d});
     std::stable_sort(volumes.begin(),volumes.end(),[](auto a,auto b){return a[1]>b[1];});
     // Submit only the entry faces of each gas volume. The fragment shader integrates its interior.
     const double cameraZ=distance-9.2,cameraX=x*.87+neon::road(cameraZ);
@@ -340,7 +349,9 @@ int actors(const neon::Race &race,double time,int count){
     for(const auto *v:volumes){
         double z=v[1],cx=v[0]+neon::road(z),cy=v[5],r=v[4];
         if(z-cameraZ<1.0+1.7*r)continue;
-        auto material=uint8_t((int(v[2])==neon::HotGas?144:80)+std::clamp(int(v[3]*63),0,63));
+        bool ion=int(v[2])==neon::IonGas;
+        int steps=ion?47:63;
+        auto material=uint8_t((ion?208:int(v[2])==neon::HotGas?144:80)+std::clamp(int(v[3]*steps),0,steps));
         auto vertex=[&](int a,int b,int c){
             return Vertex{float(cx+a*r),float(cy+b*r),float(z+c*r*1.7),
                 uint8_t(a>0?255:0),uint8_t(b>0?255:0),uint8_t(c>0?255:0),material};};
@@ -364,5 +375,14 @@ int actors(const neon::Race &race,double time,int count){
         };
         mesh.insert(mesh.end(),{corner(0,0),corner(1,0),corner(0,1),corner(0,1),corner(1,0),corner(1,1)});
     }
+    firstHeat=int(mesh.size());
+    neon::thermalFields(race,[&](neon::HeatPoint a,neon::HeatPoint b,double power,bool fire){
+        auto corner=[&](neon::HeatPoint p,int side,int end){
+            return Vertex{float(p.x+side*p.radius),float(p.y),float(p.z),uint8_t(side>0?255:0),
+                          uint8_t(end*255),uint8_t(255*power),uint8_t(fire?56:55)};
+        };
+        auto l=corner(a,-1,0),r=corner(a,1,0),tl=corner(b,-1,1),tr=corner(b,1,1);
+        mesh.insert(mesh.end(),{l,r,tr,l,tr,tl});
+    });
     return int(mesh.size());
 }

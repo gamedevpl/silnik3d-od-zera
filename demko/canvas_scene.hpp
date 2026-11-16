@@ -5,12 +5,14 @@
 #include "damage_fx.hpp"
 #include "racer.hpp"
 #include "flame.hpp"
+#include "race_lights.hpp"
+#include "thermal.hpp"
 
 namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
 class CanvasScene {
     using Point = std::array<double, 2>;
-    enum Op { Ellipse = -1, Rect = -2, ClipBelow = -3, Restore = -4, Opacity = -5, Sprite = -6 };
+    enum Op { Ellipse = -1, Rect = -2, ClipBelow = -3, Restore = -4, Opacity = -5, Sprite = -6, LightPool = -7, HeatLens = -8 };
     double width, focal, horizon, camZ, camX, heading, turbineAngle, cameraLift;
     std::vector<float> &out;
 
@@ -169,9 +171,13 @@ class CanvasScene {
         auto [x, z, kind, age, speed, rise] = o;
         if (z <= camZ + 1)
             return;
-        if(int(kind)==ColdGas || int(kind)==HotGas){
+        if(int(kind)==ColdGas || int(kind)==HotGas || int(kind)==IonGas){
             if(z-camZ<1+1.7*speed)return;
             const auto center=project(x,rise,z);double r=focal*speed/(z-camZ);
+            if(int(kind)==IonGas){
+                emit({LightPool,center[0],center[1],r*1.45,r*1.45,.74*(1-ramp(age))});
+                return;
+            }
             bool burning=int(kind)==HotGas && age<.36;
             emit({Sprite,burning?5.:4.,center[0],center[1],r,r*(burning?1.15:.94),age*1.4,
                 (1-ramp(age))*(burning?.89:.56)});
@@ -281,6 +287,17 @@ class CanvasScene {
         structures(true);
         emit({Restore});
         structures(false);
+        for(const auto &lamp : raceLights(race)){
+            if(lamp[3]==0)break;
+            const double z=lamp[2], d=z-camZ, lane=lamp[0]-road(z);
+            const double floor=Race::deckAt(lane,z), height=lamp[1]-floor;
+            if(d<1.5 || height<0 || height>=12)continue;
+            const auto center=project(lane,floor,z);
+            const double radius=focal*4.8/d;
+            const double alpha=std::min(.86,std::abs(lamp[3])/(1+.42*height*height));
+            emit({LightPool,center[0],center[1],radius,radius*bound((4.15+cameraLift-floor)/d,.05,1),
+                  lamp[3]>0?alpha:-alpha});
+        }
         auto visible = race.visible();
         if(race.recovery<=0)visible.push_back({float(race.x),float(race.distance-race.laps*lapLength),-1,0,0,0});
         std::stable_sort(visible.begin(), visible.end(), [](auto &a, auto &b) { return a[1] > b[1]; });
@@ -290,6 +307,23 @@ class CanvasScene {
             if(a.z>camZ+1 && c.z>camZ+1)fire.push_back({a,b,c,d});
         });
         std::stable_sort(fire.begin(),fire.end(),[](const Face &a,const Face &b){return a.a.z>b.a.z;});
+        struct Lens { double depth,x,y,rx,ry,power; };
+        std::vector<Lens> lenses;
+        thermalFields(race,[&](HeatPoint a,HeatPoint b,double power,bool fire){
+            if(std::min(a.z,b.z)<camZ+1)return;
+            auto p=project(a.x-road(a.z),a.y,a.z),q=project(b.x-road(b.z),b.y,b.z);
+            double radius=focal*(a.radius+b.radius)/(a.z+b.z-2*camZ);
+            lenses.push_back({(a.z+b.z)*.5,(p[0]+q[0])*.5,(p[1]+q[1])*.5,
+                              radius,std::max(1.,std::abs(p[1]-q[1])*.5),fire?-power:power});
+        });
+        std::sort(lenses.begin(),lenses.end(),[](auto a,auto b){return a.depth>b.depth;});
+        size_t nextLens=0;
+        auto refractTo=[&](double z){
+            while(nextLens<lenses.size() && lenses[nextLens].depth>z){
+                const auto &l=lenses[nextLens++];
+                emit({HeatLens,l.x,l.y,l.rx,l.ry,l.power,race.elapsed});
+            }
+        };
         size_t i=0;
         auto burnTo=[&](double z){
             for(;i<fire.size() && fire[i].a.z>z;++i){
@@ -302,11 +336,11 @@ class CanvasScene {
             emit({Opacity,1});
         };
         for(auto &o:visible){
-            burnTo(o[1]);
+            burnTo(o[1]);refractTo(o[1]);
             if(o[2]==-1)ship(0,race.x,o[1],race.lean,(3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
             else actor(o);
         }
-        burnTo(camZ);
+        burnTo(camZ);refractTo(camZ);
     }
 };
 } // namespace neon

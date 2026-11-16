@@ -78,3 +78,16 @@ test('cannon follows the sight ray and rocket holds its launch lane',async()=>{
   else assert(Math.abs(next[0]+sim.road(next[1])-world-(next[1]-z)*yaw)<.0001);
  }
 });
+
+test('boost produces luminous ion gas and a separate bounded refraction pass',async()=>{
+ const sim=await loadRace(binary),s=sim.reset(),gpu=sim.geometry;
+ for(let i=0;i<25;i++)sim.advance(1/90,{steer:0,boost:true,brake:false},false,()=>{});
+ const n=gpu.raceActors(s.elapsed),puffs=gpu.particleStart(),heat=gpu.heatStart();
+ assert(puffs+6<heat && heat<n);
+ const data=new Uint8Array(gpu.memory.buffer,gpu.vertices(),n*16);
+ const materials=(from,to)=>Array.from({length:to-from},(_,i)=>data[(from+i)*16+15]);
+ assert(materials(puffs,puffs+6).every(m=>m===53));
+ assert(materials(puffs+6,heat).some(m=>m>=208));
+ assert(materials(heat,n).every(m=>m===55 || m===56));
+ assert.equal((n-heat)%6,0);
+});

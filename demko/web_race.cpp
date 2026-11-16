@@ -1,5 +1,6 @@
 // Browser ABI. State is copied after a simulation step so JS never owns race rules.
 #include "track_mesh.hpp"
+#include "race_lights.hpp"
 #include "materials.hpp"
 #include "sound_bank.hpp"
 #include "canvas_scene.hpp"
@@ -28,6 +29,12 @@ const int *trackSections() { return track->sections.data(); }
 const Vertex *trackVertices() { return track->data.data(); }
 void releaseTrack() { track.reset(); }
 int raceActors(double time) { return neon::buildActors(race, time); }
+
+const float *raceLights() {
+    static neon::RaceLights lamps;
+    lamps = neon::raceLights(race);
+    return lamps.front().data();
+}
 
 int canvasFrame(int width, int height, double pan) {
     neon::CanvasScene scene(race, width, height, pan, canvasCommands);

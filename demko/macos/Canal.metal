@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 using namespace metal;
 struct MeshVertex { packed_float3 p; uchar4 tint; };
-struct View { float4 camera, lens, effects, visibility, pilot, terrain; }; // scale X/Y, aspect, framing; clock, pass, moving
+struct View { float4 camera, lens, effects, visibility, pilot, terrain; float4 lamps[16]; }; // scale X/Y, aspect, framing; clock, pass, moving
 struct Varying { float4 pos [[position]]; float3 color,world; float mat; float distance,alt,sourceDepth; };
 constexpr sampler repeatMap(coord::normalized,address::repeat,filter::linear,mip_filter::linear);
 struct Sky { float4 pos [[position]]; float2 uv; };
@@ -41,11 +41,36 @@ vertex Varying worldVertex(uint id [[vertex_id]], const device MeshVertex *verti
     float d=z-v.camera.y,h=y-4.15-v.effects.w;
     return {float4((x+v.camera.w*h)*v.lens.x,(h-v.camera.w*x-d*v.terrain.x)*v.lens.y+.14*d,1.0022*d-.805,d),float3(vert.tint.rgb)/255,p,float(vert.tint.a),d,p.y,p.z-v.camera.y};
 }
+float3 incidentLight(float3 p,float3 n,float3 eye,float polish,constant View &v){
+ float3 sum=float3(0.f);
+ for(int i=0;i<16;i++){
+  float4 source=v.lamps[i];
+  if(source.w==0.f)break;
+  float3 delta=source.xyz-p;
+  float d2=dot(delta,delta);
+  if(d2>=144.f)continue;
+  float3 light=delta*rsqrt(max(.001f,d2));
+  float facing=max(0.f,dot(n,light));
+  float3 halfDir=light+eye;
+  float spec=max(0.f,dot(n,halfDir)*rsqrt(max(.001f,dot(halfDir,halfDir))));
+  float falloff=1.f-d2/144.f;
+  float energy=abs(source.w)*falloff*falloff/(1.f+.42f*d2);
+  float3 tint=source.w>0.f?float3(.075f,.60f,1.f):float3(1.f,.24f,.032f);
+  sum+=tint*energy*(.12f+.64f*facing+polish*facing*pow(spec,22.f));
+ }
+ return sum;
+}
 fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]],texture2d<float> steel [[texture(0)]],texture2d<float> glass [[texture(1)]],texture2d<float> cladding [[texture(2)]],texture2d<float> hull [[texture(3)]],texture2d<float> smoke [[texture(4)]],texture2d<float> flame [[texture(5)]],texture2d<float> ember [[texture(6)]],texture2d<float> city [[texture(7)]]){
     if(in.alt<-.04||in.distance>=v.visibility.y)discard_fragment();
     float range=1-smoothstep(v.visibility.x,v.visibility.y,in.distance);
     if(in.mat>23.5f && in.mat<24.5f){if(v.effects.y>.5f)discard_fragment();return float4(in.color,.88f);}
     if(v.effects.y>1.5)return float4(.04,.075,.13,.26*range*(1-smoothstep(152.f,192.f,in.sourceDepth)));
+ float3 viewDir=normalize(float3(v.camera.x,4.15+v.effects.w,v.camera.y)-in.world);
+ if(in.mat>52.5 && in.mat<53.5){
+  float3 normal=normalize(float3(.035*sin(in.world.z*1.7+v.effects.x),1.,.05*sin(in.world.x*2.-v.effects.x)));
+  float3 spill=incidentLight(in.world,normal,viewDir,1.6,v)*.76;
+  return float4(spill/(1.+.52*spill),0.);
+ }
  if(in.mat>51.5 && in.mat<52.5){
   float3 emission=mix(float3(.98,.19,.025),float3(1.,.96,.68),in.color.r*in.color.r);
   float flicker=sin(in.world.z*3.-v.effects.x*11.+2.*sin(in.world.y*6.+in.world.x*2.));
@@ -54,7 +79,8 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
  }
  if(in.mat>79.5){
   float hot=step(143.5,in.mat);
-  float age=clamp((floor(in.mat+.5)-80.-64.*hot)/63.,0.,1.);
+  float ion=step(207.5,in.mat);
+  float age=clamp((floor(in.mat+.5)-80.-64.*(hot+ion))/(63.-16.*ion),0.,1.);
   float3 p=in.color*2.-1.;
   float3 ray=in.world-float3(v.camera.x,4.15+v.effects.w,v.camera.y);
   ray=normalize(ray*float3(1.,1.,1./1.7));
@@ -74,7 +100,10 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
    float3 soot=mix(float3(.075,.087,.115),float3(.63,.63,.65),shade);
    float core=clamp(mass*.82+.16*eddy+.10,0.,1.);
    float3 fire=mix(float3(.96,.18,.035),float3(1.,.94,.66),core*core);
-   light+=(1.-opacity)*cover*mix(soot,fire,heat*core);
+   float3 plasma=mix(float3(.10,.36,1.),float3(.45,1.,1.),core);
+   float3 emission=mix(fire,plasma,ion);
+   float3 scatter=mix(soot,emission,heat*core);
+   light+=(1.-opacity)*cover*(scatter+emission*heat*(.38+.62*core));
    opacity+=(1.-opacity)*cover;
    p+=ray*stride;
   }
@@ -97,6 +126,7 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
   float3 shoulder=mix(float3(.15f,.19f,.21f),float3(.65f,.46f,.24f),hatch*.66f);
   tint=mix(tint,shoulder,service*(.25f+.75f*nearDetail));
   tint+=strip*float3(.12f,.26f,.27f)*nearDetail;
+  tint+=incidentLight(in.world,float3(0.,1.,0.),viewDir,.65,v)*(.46+.54*tint);
   return float4(tint,mix(.69f,.90f,fres)*range);
     }
  if(in.mat>39.5f){
@@ -129,6 +159,10 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
           float3(.85f,.68f,.48f)*pow(max(0.f,1.f-abs(l-.76f)*15.f),3.f);
    shaded*=1.f-.55f*(1.f-smoothstep(.008f,.025f,abs(uv.y-.36f)));
   }else if(in.mat>49.5f && in.mat<50.5f)shaded=base*(.86f+.14f*l);
+  float3 face=cross(dfdx(in.world),dfdy(in.world));
+  float3 n=face*rsqrt(max(.00000001f,dot(face,face)));
+  if(dot(n,viewDir)<0.)n=-n;
+  shaded+=incidentLight(in.world,n,viewDir,polish,v)*(.25+.55*shaded);
   if(v.effects.y>.5f)shaded=mix(float3(.045f,.082f,.125f),shaded,.47f);
   float opacity=v.effects.y>.5f ? .065f+.355f*smoothstep(6.f,22.f,in.distance) : 1.f;
   return float4(mix(shaded,float3(.40f,.30f,.43f),.65f*smoothstep(36.f,155.f,in.distance)),opacity*range);
@@ -173,6 +207,7 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
    float stripe=smoothstep(.45f,.52f,fract((p.x+p.y)*6))*inset;
    shaded=mix(shaded,float3(.79,.51,.19),.53f*stripe*(1-smoothstep(15.f,43.f,in.distance)));
   }
+  shaded+=incidentLight(world,n,eye,1.-tex.a,v)*(.32+.6*shaded);
   c=mix(shaded,float3(.40f,.30f,.43f),haze);
  }
     if(v.effects.y>.5){
@@ -182,4 +217,22 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
     }
     float alpha=v.effects.y>.5 && v.effects.z>.5 ? (.065+.355*smoothstep(6.f,22.f,in.distance)) : 1;
     return float4(c,alpha*range);
+}
+
+fragment float4 heatPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]],texture2d<float> scene [[texture(0)]]){
+ constexpr sampler screenMap(coord::normalized,address::clamp_to_edge,filter::linear);
+ float2 texel=1./float2(scene.get_width(),scene.get_height());
+ float2 p=in.color.rg;
+ float edge=1.-smoothstep(.24,1.,abs(2.*p.x-1.));
+ float envelope=edge*smoothstep(0.,.15,p.y)*(1.-smoothstep(.57,1.,p.y));
+ float fire=step(55.5,in.mat);
+ float phase=v.effects.x*(9.+fire*2.)+in.world.x*1.4;
+ float waves=sin(12.*p.y-phase+1.2*sin(6.*p.x+.47*phase));
+ float curls=sin(9.*p.x+5.*p.y+.85*phase+waves);
+ float strength=envelope*in.color.b;
+ float2 bend=float2(waves,curls*.60)*strength*min(4.f,23.f/max(in.distance,1.f));
+ float3 behind=scene.sample(screenMap,clamp((in.pos.xy+bend*float2(1,-1))*texel,texel*.5,1.-texel*.5)).rgb;
+ float3 tint=mix(float3(.05,.48,1.),float3(1.,.28,.035),fire);
+ float3 glow=tint*in.color.b*(.12+.16*(.5+.5*waves))*edge;
+ return float4(behind+glow,strength*.88);
 }

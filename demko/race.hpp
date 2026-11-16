@@ -27,7 +27,7 @@ struct Input {
     bool boost = false, brake = false;
 };
 enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck, Blast, Ricochet };
-enum ContactEffect { Sparks = 15, Fragments = 18, PlayerFragments, RocketImpact, ColdGas, HotGas };
+enum ContactEffect { Sparks = 15, Fragments = 18, PlayerFragments, RocketImpact, ColdGas, HotGas, IonGas };
 constexpr double recoveryTime = 1.15;
 struct Sector {
     double x, z, mineX;
@@ -568,7 +568,7 @@ struct Race {
             if(dz < -8.0 || dz>95)continue;
             const double u=g.age/g.life;
             const double r=g.radius+g.spread*g.age;
-            add(g.x-road(g.z),distance+dz,g.hot?HotGas:ColdGas,u,r,g.y);
+            add(g.x-road(g.z),distance+dz,g.hot?HotGas:(g.ion?IonGas:ColdGas),u,r,g.y);
         }};
         addGas(blastGas);for(const auto &wake:wakes)addGas(wake);
         return out;

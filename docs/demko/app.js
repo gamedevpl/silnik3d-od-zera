@@ -1,5 +1,5 @@
-import {renderer} from './renderer.js?v=contact1';
-import {loadRace} from './race.js?v=contact1';
+import {renderer} from './renderer.js?v=spill1';
+import {loadRace} from './race.js?v=spill1';
 import {Sound} from './audio.js?v=contact1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
