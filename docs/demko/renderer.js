@@ -5,25 +5,26 @@ function camera(s,{LAP,road,slope}){
 }
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;
-uniform vec4 cam;uniform vec2 scale;uniform float moving,pass,clock;
-varying vec3 color;varying float depth,alt;
-float road(float z){float a=z*.00545415391;return 17.*sin(3.*a)+10.*sin(2.*a+.8)+4.*sin(6.*a-.6);}
+uniform vec4 cam;uniform vec2 scale;uniform float moving,pass,clock,lift;
+varying vec3 color;varying float depth,alt,sourceDepth;
+
 void main(){
- float z=pos.z;float y=pos.y;alt=y;
+ float z=pos.z;float y=pos.y;alt=y;sourceDepth=z-cam.y;
  float x=pos.x-cam.x-(z-cam.y)*cam.z;
- if(moving>.5)x+=road(z);
+
  if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){x+=.065*sin(z*1.83+clock*1.8+pos.y);y=-y;}
  float d=z-cam.y; depth=d;
- float h=y-4.15;float px=x+cam.w*h;float py=h-cam.w*x;
- gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.009*d-1.61,d);
+ float h=y-4.15-lift;float px=x+cam.w*h;float py=h-cam.w*x;
+ gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.0044*d-1.61,d);
  color=tint.rgb;
 }`;
 const fragment=`
-precision highp float; varying vec3 color;varying float depth,alt;
-uniform float pass,moving,clock;uniform float shadowOpacity;
+precision highp float; varying vec3 color;varying float depth,alt,sourceDepth;
+uniform float pass,moving,clock;uniform float shadowOpacity;uniform vec2 visibility;
 void main(){
- if(alt<-.04||depth>169.)discard;
- if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity);return;}
+ if(alt<-.04||depth>=visibility.y)discard;
+ float range=1.-smoothstep(visibility.x,visibility.y,depth);
+ if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
  float haze=smoothstep(35.,159.,depth)*.75;
  vec3 c=mix(color,vec3(.40,.30,.43),haze);
  if(pass>.5){
@@ -31,7 +32,7 @@ void main(){
   c=mix(vec3(.055,.105,.16),c,(moving>.5?.16:.32)*(.68+.32*ripple));
  }
  float alpha=(pass>.5 && moving>.5) ? .34*smoothstep(9.,24.,depth) : 1.;
- gl_FragColor=vec4(c,alpha);
+ gl_FragColor=vec4(c,alpha*range);
 }`;
 const skyVertex='attribute vec2 point;varying vec2 uv;void main(){uv=point;gl_Position=vec4(point,0.,1.);}';
 const skyFragment=`
@@ -75,7 +76,7 @@ function gpu(canvas,simulation){
  const engine=simulation.geometry;
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
- const u=locs(world,['cam','scale','moving','pass','clock','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
+ const u=locs(world,['cam','scale','moving','pass','clock','shadowOpacity','lift','visibility']),v=locs(sky,['cam','aspect','time','framing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  const dynamic=gl.createBuffer();
@@ -84,7 +85,7 @@ function gpu(canvas,simulation){
   gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(engine.memory.buffer,engine.vertices(),n*16),usage);
  }
  // Contiguous sections let all visible scenery share one draw call per pass.
- const scenery=[0,1].map(simple=>{
+ const scenery=[0,1,2].map(simple=>{
   const count=engine.buildTrack(simple);
   const sections=new Int32Array(engine.memory.buffer,engine.trackSections(),count).slice();
   const data=new Uint8Array(engine.memory.buffer,engine.trackVertices(),16*sections[count-1]);
@@ -106,18 +107,24 @@ function gpu(canvas,simulation){
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
   const n=engine.raceActors(s.elapsed);upload(dynamic,n,gl.DYNAMIC_DRAW);
-  gl.useProgram(world);gl.uniform4fv(u.cam,cam);gl.uniform1f(u.clock,s.elapsed%180);
+  gl.useProgram(world);gl.uniform4fv(u.cam,cam);gl.uniform1f(u.lift,s.deck);gl.uniform1f(u.clock,s.elapsed%180);
   const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
    if(pass!==0)gl.clear(gl.DEPTH_BUFFER_BIT);
    if(pass!==0){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(pass===2?gl.LESS:gl.LEQUAL);}
-   else {gl.disable(gl.BLEND);gl.depthFunc(gl.LEQUAL);}
+   else {gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(gl.LEQUAL);}
    gl.uniform1f(u.pass,pass);gl.uniform1f(u.shadowOpacity,.26);
-   const {buf,sections}=scenery[pass===0?0:1],near=cam[1]-8,far=cam[1]+(pass===2?58:150);
-   const first=sections[Math.max(0,Math.floor(near/24)+1)];
-   const stop=sections[Math.min(sections.length-1,Math.ceil(far/24)+1)];
-   gl.uniform1f(u.moving,0);bind(buf);gl.drawArrays(gl.TRIANGLES,first,stop-first);
+   const strip=(kind,near,fade,far)=>{
+    const {buf,sections}=scenery[kind];
+    const first=sections[Math.max(0,Math.floor((cam[1]+near)/24)+1)];
+    const stop=sections[Math.min(sections.length-1,Math.ceil((cam[1]+far)/24)+1)];
+    gl.uniform2f(u.visibility,fade,far);bind(buf);gl.drawArrays(gl.TRIANGLES,first,stop-first);
+   };
+   gl.uniform1f(u.moving,0);
+   if(pass===0)strip(2,96,236,336);
+   if(pass===2)strip(1,-12,80,198);
+   else strip(pass===0?0:1,-12,112,174);
    gl.uniform1f(u.moving,1);bind(dynamic);gl.drawArrays(gl.TRIANGLES,0,n);
   }
  };
@@ -138,6 +145,7 @@ function canvasFlight(canvas,simulation){
   // See CanvasScene::Op. Positions and painter order come from C++.
   for(let i=0;i<size;){
    const op=data[i++];
+   if(op===-5){ctx.globalAlpha=data[i++];continue;}
    if(op===-3){const y=data[i++];ctx.save();ctx.beginPath();ctx.rect(0,y,w,h-y);ctx.clip();continue;}
    if(op===-4){ctx.restore();continue;}
    const paint=color(data[i++]);

@@ -2,6 +2,8 @@
 #include "raceway.hpp"
 #include "scene-cues.hpp"
 #include "circuit.hpp"
+#include "bridge.hpp"
+#include "race.hpp"
 
 static std::vector<Vertex> mesh;
 static float objects[64*4]; // Lane X, world Z, object kind, animation phase.
@@ -88,8 +90,15 @@ int circuitSection(int section,int simple){
     int k=neon::circuitIndex(section);
     double z=k*24;f.cz=z;
     auto district=neon::district(k);
-    f.skyline();f.rings(district==neon::District::Quay && k!=0 && k%2);f.lightBays();
+    f.skyline();
+    if(simple==2)return int(mesh.size());
+    f.rings(district==neon::District::Quay && k!=0 && k%2);f.lightBays();
     landmark(f,k,z+15);
+    auto face=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
+        f.quad({a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},{d.x,d.y,d.z},
+               {(rgb>>16)&255,(rgb>>8)&255,rgb&255});
+    };
+    for(int j=0;j<4;j++)neon::courseSpan(z+6*j,face);
     C edge=district==neon::District::Locks?C{80,229,210}:district==neon::District::Shipyard?C{255,178,79}:C{111,159,241};
     for(int side:{-1,1}){
         double x=side*18.4;
@@ -101,6 +110,7 @@ int circuitSection(int section,int simple){
     }
     for(int lane=-2;lane<=2;lane++)for(int j=0;j<2;j++){
         double x=lane*7.0,zz=z+j*12.;
+        if(neon::islandHalf(zz+2)>0 && (x<0 || x<neon::islandHalf(zz+2)+.2))continue;
         f.quad({x-.10,.08,zz},{x+.10,.08,zz},{x+.10,.08,zz+4},{x-.10,.08,zz+4},
                lane==0?C{190,169,130}:C{104,163,179});
     }
@@ -129,8 +139,31 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
-    lockTurbine(f,distance,time);
+    size_t first=0;
+    auto place=[&](double x,double z,bool onTrack){
+        double origin=neon::road(z),tangent=neon::slope(z);
+        double deck=onTrack?neon::bridgeHeight(x,z):0;
+        for(;first<mesh.size();++first){
+            auto &v=mesh[first];
+            v.x+=origin+(v.z-z)*tangent;
+            v.y+=deck;
+        }
+    };
+    lockTurbine(f,distance,time);place(0,7*24+13,false);
+    for(double pump:{336.,384.,432.}){
+        if(pump<distance-4 || pump>distance+145)continue;
+        neon::lockSpray(pump,time,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
+            f.quad({a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},{d.x,d.y,d.z},{rgb>>16,(rgb>>8)&255,rgb&255});
+        });
+        place(0,pump,false);
+    }
     f.ship(true);
+    if(neon::bridgeHeight(x,distance)>.1){
+        auto shadow=[&](double dx,double dz){return V{x+dx-.35,.16+neon::bridgeHeight(x,distance+dz)-neon::bridgeHeight(x,distance),distance+dz-.4};};
+        for(int side:{-1,1})
+            f.quad(shadow(0,2.2),shadow(side*.62,.28),shadow(side*1.5,-1.1),shadow(0,-.82),{36,49,60});
+    }
+    place(x,distance,true);
     for(int i=0;i<std::clamp(count,0,64);i++){
         const float *o=objects+4*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
@@ -178,6 +211,7 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
                 f.tri(p,p+V{.2,.1,.2},p+V{.1,.45,.16},j%2?C{255,191,86}:C{255,91,68});
             }
         }
+        place(xx,z,true);
     }
     return int(mesh.size());
 }

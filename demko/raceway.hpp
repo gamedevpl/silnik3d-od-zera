@@ -145,6 +145,15 @@ struct Frame{
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
             box(x,0,z,w,h,4,dark,mix(dark,{17,21,48},.48));
+            if(block && (id%5==0 || id%5==1)){
+                double crown=h*.22;
+                box(x+.22*w,h,z+.6,w*.60,crown,2.8,mix(dark,{94,87,109},.28),dark);
+                if(!simple){
+                    box(x+w*.32,h+crown,z+1,.10,1.8,.13,light,light);
+                    for(int band=0;band<3;band++)
+                        box(x+.23*w,h+.35+band*crown*.26,z+.54,w*.56,.11,.12,light,dark);
+                }
+            }
             if(simple)continue;
             box(x+.3,h,z+.35,w*.66,1.2,2.6,{67,63,90},{37,43,71});
             if(id%4==0)box(x+w*.5,h+1,z+1,.08,2.5,.1,light,light);

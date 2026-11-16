@@ -71,3 +71,5 @@ noscript{position:absolute;bottom:0;background:#131c2b}
 @media(max-width:650px) and (orientation:portrait){
  .card{width:calc(100% - var(--left) - var(--right));max-height:calc(50dvh - 46px)}
 }
+
+#route:not(:empty){display:block;color:#ffdc9c;font-weight:700}#route:empty{display:none}

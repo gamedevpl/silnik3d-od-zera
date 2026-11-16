@@ -4,6 +4,8 @@
 
 Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
+At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin before the shipyard chicane. The airbrake helps hold the inside line through its two reversals.
+
 Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. Gold brackets mark a rival your rocket can track. You can also fire straight down an empty lane to clear a mine. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
 
 | Control | Action |

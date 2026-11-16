@@ -11,7 +11,8 @@ struct TrackMesh {
 
     explicit TrackMesh(int simple) {
 
-        const int last = int(std::ceil((lapLength + 168) / 24));
+        const int reach = simple == 2 ? 360 : simple ? 216 : 192;
+        const int last = int(std::ceil((lapLength + reach) / 24));
         for (int sector = -1; sector <= last; ++sector) {
             const int tile = circuitIndex(sector);
             const int count = circuitSection(tile, simple);
