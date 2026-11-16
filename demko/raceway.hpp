@@ -78,10 +78,12 @@ struct Frame{
     }
     void pixel(int i,C c){for(int j=0;j<3;j++)rgb[3*i+j]=std::clamp(c[j],0,255);}
     std::vector<Vertex>* geometry=nullptr;
+    enum Surface : uint8_t { Plain, Deck, FacadeFront, FacadeSide };
+    Surface surface=Plain;
     bool block=false, simple=false;
     void tri(V a,V b,V c,C color){
         if(geometry){
-            for(V p:{a,b,c})geometry->push_back({float(p.x),float(p.y),float(p.z),uint8_t(color[0]),uint8_t(color[1]),uint8_t(color[2]),255});
+            for(V p:{a,b,c})geometry->push_back({float(p.x),float(p.y),float(p.z),uint8_t(color[0]),uint8_t(color[1]),uint8_t(color[2]),uint8_t(surface)});
             return;
         }
         if(casting){
@@ -132,8 +134,10 @@ struct Frame{
     }
     void box(double x,double y,double z,double dx,double dy,double dz,C lit,C shade){
         V a{x,y,z},b{x+dx,y,z},c{x+dx,y+dy,z},d{x,y+dy,z},back{0,0,dz};
-        quad(a,b,c,d,haze(lit,z));quad(b,b+back,c+back,c,haze(shade,z));
-        quad(a,a+back,d+back,d,haze(shade,z));quad(d,c,c+back,d+back,haze(mix(lit,{200,178,190},.23),z));
+        quad(a,b,c,d,haze(lit,z));
+        auto original=surface;if(surface==FacadeFront)surface=FacadeSide;
+        quad(b,b+back,c+back,c,haze(shade,z));
+        quad(a,a+back,d+back,d,haze(shade,z));surface=Plain;quad(d,c,c+back,d+back,haze(mix(lit,{200,178,190},.23),z));surface=original;
     }
     void skyline(){
         if(stage<2)return;
@@ -144,7 +148,9 @@ struct Frame{
             double w=2+random01(id+3)*3.8,h=4+random01(id+2)*(lane?28:16);
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
+            surface=FacadeFront;
             box(x,0,z,w,h,4,dark,mix(dark,{17,21,48},.48));
+            surface=Plain;
             if(block && (id%5==0 || id%5==1)){
                 double crown=h*.22;
                 box(x+.22*w,h,z+.6,w*.60,crown,2.8,mix(dark,{94,87,109},.28),dark);
@@ -254,10 +260,15 @@ struct Frame{
             }
         }
     }
-    void ship(bool manual=false){
+    void ship(bool manual=false,int wing=0){
         double x=cx+.52*pilot+.65*std::sin(t*pi/4)-1.85*dodge(t),y=1.95+.18*std::sin(t*pi/2);
         if(manual){x=pilot;y=1.85+.06*std::sin(anim*4);}
-        auto p=[&](double sx,double sy,double sz){return V{x+sx*std::cos(bank)-sy*std::sin(bank),y+sy*std::cos(bank)+sx*std::sin(bank),cz+chaseLag+6.4+sz};};
+        auto p=[&](double sx,double sy,double sz){
+            if(wing*sx>0 && std::abs(sx)>.86){
+                double dent=(std::abs(sx)-.86)*std::abs(wing);
+                sx-=std::copysign(.29*dent,sx);sy-=.23*dent;sz-=.18*dent;
+            }
+            return V{x+sx*std::cos(bank)-sy*std::sin(bank),y+sy*std::cos(bank)+sx*std::sin(bank),cz+chaseLag+6.4+sz};};
         if(!casting)wake(x,y,bank);
         V nose=p(0,.29,2.35),base=p(0,.10,-1.15),spine=p(0,.53,.25);
         for(int side:{-1,1}){
@@ -282,7 +293,8 @@ struct Frame{
                 quad(p(sx-.28,-.02,-1.33),p(sx+.28,-.02,-1.33),p(sx+.23,.32,-1.23),p(sx-.23,.32,-1.23),{32,53,71});
                 quad(p(sx-.20,.03,-1.35),p(sx+.20,.03,-1.35),p(sx+.16,.18,-1.35),p(sx-.16,.18,-1.35),{160,255,243});
                 quad(p(side*.92,.07,-1.22),p(side*1.56,-.04,-.92),p(side*1.48,.03,-.8),p(side*.92,.16,-1.03),{255,240,170});
-                tri(p(0,.69,.03),p(side*.38,.39,-.48),p(side*.26,.46,.76),side<0?C{39,109,148}:C{113,214,228});
+                double glint=std::pow(std::max(0.,std::cos(bank+side*.65-.3)),8);
+                tri(p(0,.69,.03),p(side*.38,.39,-.48),p(side*.26,.46,.76),mix({28,76,111},{186,235,229},glint*.78));
                 tri(p(0,.69,.03),p(side*.26,.46,.76),p(0,.34,1.44),{67,144,180});
             }
         }

@@ -58,7 +58,7 @@ const tools = [
       const overlay = document.querySelector(".overlay");
       const racing = overlay && overlay.hidden;
       let best = 0;
-      try { best = Number(localStorage.getItem("neon.lap.v4")) || 0; } catch (_) {}
+      try { best = Number(localStorage.getItem("neon.lap.v5")) || 0; } catch (_) {}
       const hud = document.querySelector(".hud");
       return [
         racing ? "A race is running." : `Not racing. The menu shows "${text("#title")}".`,

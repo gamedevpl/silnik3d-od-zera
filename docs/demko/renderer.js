@@ -6,10 +6,10 @@ function camera(s,{LAP,road,slope}){
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;
 uniform vec4 cam;uniform vec2 scale;uniform float moving,pass,clock,lift;
-varying vec3 color;varying float depth,alt,sourceDepth;
+varying vec3 world,color;varying float mat;varying float depth,alt,sourceDepth;
 
 void main(){
- float z=pos.z;float y=pos.y;alt=y;sourceDepth=z-cam.y;
+ mat=tint.a*255.;world=pos;float z=pos.z;float y=pos.y;alt=y;sourceDepth=z-cam.y;
  float x=pos.x-cam.x-(z-cam.y)*cam.z;
 
  if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){x+=.065*sin(z*1.83+clock*1.8+pos.y);y=-y;}
@@ -19,14 +19,29 @@ void main(){
  color=tint.rgb;
 }`;
 const fragment=`
-precision highp float; varying vec3 color;varying float depth,alt,sourceDepth;
-uniform float pass,moving,clock;uniform float shadowOpacity;uniform vec2 visibility;
+precision highp float; varying vec3 world,color;varying float mat;varying float depth,alt,sourceDepth;
+uniform float pass,moving,clock;uniform sampler2D steel,glass;uniform vec4 cam;uniform float lift;uniform float shadowOpacity;uniform vec2 visibility;
 void main(){
  if(alt<-.04||depth>=visibility.y)discard;
  float range=1.-smoothstep(visibility.x,visibility.y,depth);
  if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
  float haze=smoothstep(35.,159.,depth)*.75;
  vec3 c=mix(color,vec3(.40,.30,.43),haze);
+ if(mat>.5 && pass<.5){
+  bool deck=mat<1.5;
+  vec2 uv=deck?world.xz/6.:(mat<2.5?world.xy:world.zy)/5.;
+  vec4 tex=deck?texture2D(steel,uv):texture2D(glass,uv);
+  vec2 bump=tex.rg*2.-1.;
+  vec3 n=normalize(deck?vec3(bump.x,1.,bump.y):(mat<2.5?vec3(bump.x,bump.y,-1.):vec3(sign(cam.x-world.x),bump.y,bump.x)));
+  vec3 eye=normalize(vec3(cam.x,4.15+lift,cam.y)-world);
+  vec3 light=normalize(vec3(.42,.36,.94));
+  float gloss=pow(max(dot(n,normalize(eye+light)),0.),mix(64.,9.,tex.a));
+  float fres=pow(1.-clamp(abs(dot(n,eye)),0.,1.),3.);
+  vec3 shaded=color*(.66+.48*tex.b+.19*dot(n,light))+
+      vec3(.86,.56,.35)*gloss*(1.-tex.a)*.52+
+      vec3(.27,.43,.55)*fres*(deck?.14:.25);
+  c=mix(shaded,vec3(.40,.30,.43),haze);
+ }
  if(pass>.5){
   float ripple=.5+.5*sin(depth*1.7+alt*6.+clock*1.8);
   c=mix(vec3(.055,.105,.16),c,(moving>.5?.16:.32)*(.68+.32*ripple));
@@ -79,6 +94,14 @@ function gpu(canvas,simulation){
  const u=locs(world,['cam','scale','moving','pass','clock','shadowOpacity','lift','visibility']),v=locs(sky,['cam','aspect','time','framing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+ // Two repeating power-of-two tiles share the C++ baker with Metal.
+ for(const [unit,name,p] of [[0,'steel',world],[1,'glass',world]]){
+  const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,tex);
+  const ptr=engine.surfaceMap(unit);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,64,64,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(engine.memory.buffer,ptr,64*64*4));
+  gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+  gl.useProgram(p);gl.uniform1i(gl.getUniformLocation(p,name),unit);
+ }
  const dynamic=gl.createBuffer();
  function upload(buf,n,usage){
   gl.bindBuffer(gl.ARRAY_BUFFER,buf);

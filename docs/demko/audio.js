@@ -65,7 +65,7 @@ export class Sound{
   const cues={launch:[240,1060,.44,.24,'triangle'],fire:[680,150,.115,.24,'triangle'],rocket:[135,650,.36,.19,'sawtooth'],
    break:[210,39,.28,.32,'sawtooth'],hit:[120,34,.36,.40,'square'],
    pad:[640,1180,.17,.22,'sine'],miss:[180,128,.12,.14,'triangle'],
-   lap:[440,880,.36,.19,'triangle'],repair:[160,46,.32,.20,'sawtooth'],rail:[160,95,.09,.11,'triangle']};
+   lap:[440,880,.36,.19,'triangle'],wreck:[110,26,.42,.2,'sawtooth'],repair:[160,46,.32,.20,'sawtooth'],rail:[160,95,.09,.11,'triangle']};
   if(cues[event])this.tone(...cues[event]);
  }
 }

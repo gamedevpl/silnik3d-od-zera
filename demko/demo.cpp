@@ -4,6 +4,7 @@
 #include "circuit.hpp"
 #include "bridge.hpp"
 #include "race.hpp"
+#include "damage_fx.hpp"
 
 static std::vector<Vertex> mesh;
 static float objects[64*4]; // Lane X, world Z, object kind, animation phase.
@@ -98,7 +99,10 @@ int circuitSection(int section,int simple){
         f.quad({a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},{d.x,d.y,d.z},
                {(rgb>>16)&255,(rgb>>8)&255,rgb&255});
     };
-    for(int j=0;j<4;j++)neon::courseSpan(z+6*j,face);
+    auto plate=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
+        f.surface=Frame::Deck;face(a,b,c,d,rgb);f.surface=Frame::Plain;
+    };
+    for(int j=0;j<4;j++)neon::courseSpan(z+6*j,face,plate);
     C edge=district==neon::District::Locks?C{80,229,210}:district==neon::District::Shipyard?C{255,178,79}:C{111,159,241};
     for(int side:{-1,1}){
         double x=side*18.4;
@@ -135,7 +139,7 @@ static void lockTurbine(Frame &f,double distance,double time){
     }
     f.box(x-.55,y-.55,z-.12,1.1,1.1,.3,{93,236,214},{60,85,103});
 }
-int actors(double time,double distance,double x,double lean,double thrust,int count){
+int actors(double time,double distance,double x,double lean,double thrust,int count,int wing){
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
@@ -157,8 +161,10 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
         });
         place(0,pump,false);
     }
-    f.ship(true);
-    if(neon::bridgeHeight(x,distance)>.1){
+    bool wreck=false;
+    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*4+2])==neon::PlayerFragments;
+    if(!wreck)f.ship(true,wing);
+    if(!wreck && neon::bridgeHeight(x,distance)>.1){
         auto shadow=[&](double dx,double dz){return V{x+dx-.35,.16+neon::bridgeHeight(x,distance+dz)-neon::bridgeHeight(x,distance),distance+dz-.4};};
         for(int side:{-1,1})
             f.quad(shadow(0,2.2),shadow(side*.62,.28),shadow(side*1.5,-1.1),shadow(0,-.82),{36,49,60});
@@ -168,7 +174,11 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
         const float *o=objects+4*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
-        if(kind==12){ // A pair of lanes in the active slipstream.
+        if(int(kind)>=neon::Sparks){
+            neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
+                f.tri({xx+a.x,a.y,z+a.z},{xx+b.x,b.y,z+b.z},{xx+c.x,c.y,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
+            });
+        }else if(kind==12){ // A pair of lanes in the active slipstream.
             for(int j=0;j<5;j++)for(int side:{-1,1}){
                 double zz=z-4-j*2.6,ox=xx+side*(1.25+j*.13);
                 C col=mix({44,119,154},{125,255,230},.32+.48*age+.20*std::sin(time*6-j));

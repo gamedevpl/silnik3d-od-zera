@@ -2,7 +2,8 @@
 using namespace metal;
 struct MeshVertex { packed_float3 p; uchar4 tint; };
 struct View { float4 camera, lens, effects, visibility; }; // scale X/Y, aspect, framing; clock, pass, moving
-struct Varying { float4 pos [[position]]; float3 color; float distance,alt,sourceDepth; };
+struct Varying { float4 pos [[position]]; float3 color,world; float mat; float distance,alt,sourceDepth; };
+constexpr sampler repeatMap(coord::normalized,address::repeat,filter::linear,mip_filter::linear);
 struct Sky { float4 pos [[position]]; float2 uv; };
 vertex Sky skyVertex(uint id [[vertex_id]]){
     float2 p=id==0?float2(-1,-1):id==1?float2(3,-1):float2(-1,3);
@@ -36,13 +37,30 @@ vertex Varying worldVertex(uint id [[vertex_id]], const device MeshVertex *verti
     if(v.effects.y>1.5){x-=y*.94;z-=y*3.5;y=.014;}
     else if(v.effects.y>.5){x+=.065*sin(z*1.83+v.effects.x*1.8+p.y);y=-y;}
     float d=z-v.camera.y,h=y-4.15-v.effects.w;
-    return {float4((x+v.camera.w*h)*v.lens.x,(h-v.camera.w*x)*v.lens.y+.14*d,1.0022*d-.805,d),float3(vert.tint.rgb)/255,d,p.y,p.z-v.camera.y};
+    return {float4((x+v.camera.w*h)*v.lens.x,(h-v.camera.w*x)*v.lens.y+.14*d,1.0022*d-.805,d),float3(vert.tint.rgb)/255,p,float(vert.tint.a),d,p.y,p.z-v.camera.y};
 }
-fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]]){
+fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]],texture2d<float> steel [[texture(0)]],texture2d<float> glass [[texture(1)]]){
     if(in.alt<-.04||in.distance>=v.visibility.y)discard_fragment();
     float range=1-smoothstep(v.visibility.x,v.visibility.y,in.distance);
     if(v.effects.y>1.5)return float4(.04,.075,.13,.26*range*(1-smoothstep(152.f,192.f,in.sourceDepth)));
     float3 c=mix(in.color,float3(.40,.30,.43),.75*smoothstep(35.f,159.f,in.distance));
+    float mat=in.mat,pass=v.effects.y,lift=v.effects.w,haze=.75f*smoothstep(35.f,159.f,in.distance);
+    float3 world=in.world,color=in.color;float4 cam=v.camera;
+    if(mat>.5f && pass<.5f){
+  bool deck=mat<1.5f;
+  float2 uv=deck?world.xz/6.f:(mat<2.5f?world.xy:world.zy)/5.f;
+  float4 tex=deck?steel.sample(repeatMap,uv):glass.sample(repeatMap,uv);
+  float2 bump=tex.rg*2.f-1.f;
+  float3 n=normalize(deck?float3(bump.x,1.f,bump.y):(mat<2.5f?float3(bump.x,bump.y,-1.f):float3(sign(cam.x-world.x),bump.y,bump.x)));
+  float3 eye=normalize(float3(cam.x,4.15f+lift,cam.y)-world);
+  float3 light=normalize(float3(.42f,.36f,.94f));
+  float gloss=pow(max(dot(n,normalize(eye+light)),0.f),mix(64.f,9.f,tex.a));
+  float fres=pow(1.f-clamp(abs(dot(n,eye)),0.f,1.f),3.f);
+  float3 shaded=color*(.66f+.48f*tex.b+.19f*dot(n,light))+
+      float3(.86f,.56f,.35f)*gloss*(1.f-tex.a)*.52f+
+      float3(.27f,.43f,.55f)*fres*(deck?.14f:.25f);
+  c=mix(shaded,float3(.40f,.30f,.43f),haze);
+ }
     if(v.effects.y>.5){
         float ripple=.5+.5*sin(in.distance*1.7+in.alt*6+v.effects.x*1.8);
         c=mix(float3(.055,.105,.16),c,(v.effects.z>.5?.16:.32)*(.68+.32*ripple));

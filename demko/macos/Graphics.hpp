@@ -2,6 +2,7 @@
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
 #include "../track_mesh.hpp"
+#include "../materials.hpp"
 
 class Graphics {
     struct Strip {
@@ -16,6 +17,7 @@ class Graphics {
     id<MTLRenderPipelineState> sky, solid, shadow;
     id<MTLDepthStencilState> depth, shadowDepth, background;
     Strip scenery[3];
+    id<MTLTexture> maps[2];
     void makeStrip(Strip &strip, int simple) {
         neon::TrackMesh track(simple);
         strip.starts = std::move(track.sections);
@@ -66,6 +68,28 @@ class Graphics {
         background = state(MTLCompareFunctionAlways, false);
         depth = state(MTLCompareFunctionLessEqual, true);
         shadowDepth = state(MTLCompareFunctionLess, true);
+        auto desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+                                                                       width:64
+                                                                      height:64
+                                                                   mipmapped:YES];
+        desc.storageMode = MTLStorageModeShared;
+        auto upload = [queue commandBuffer];
+        auto blit = [upload blitCommandEncoder];
+        for (int i = 0; i < 2; i++) {
+            maps[i] = [device newTextureWithDescriptor:desc];
+            if (!maps[i])
+                return false;
+            [maps[i] replaceRegion:MTLRegionMake2D(0, 0, 64, 64)
+                       mipmapLevel:0
+                         withBytes:neon::materialTile(i).data()
+                       bytesPerRow:256];
+            [blit generateMipmapsForTexture:maps[i]];
+        }
+        [blit endEncoding];
+        [upload commit];
+        [upload waitUntilCompleted];
+        if (upload.status != MTLCommandBufferStatusCompleted)
+            return false;
         makeStrip(scenery[0], 0);
         makeStrip(scenery[1], 1);
         makeStrip(scenery[2], 2);
@@ -91,6 +115,8 @@ class Graphics {
         pass.colorAttachments[0].storeAction = MTLStoreActionStore;
         auto enc = [cmd renderCommandEncoderWithDescriptor:pass];
         auto uniforms = [&] {
+            for (int i = 0; i < 2; i++)
+                [enc setFragmentTexture:maps[i] atIndex:i];
             [enc setVertexBytes:&u length:sizeof(u) atIndex:1];
             [enc setFragmentBytes:&u length:sizeof(u) atIndex:1];
         };

@@ -22,11 +22,35 @@ int main() {
     assert(p.stun > 0);
     p.x = race.x;
     p.z = race.distance;
+    p.speed = race.speed + 18;
     race.shield = 1;
     race.immunity = 0;
     race.advance(1. / 90, {});
+    assert(race.shield == 0 && race.recovery > 0 && race.vx * p.kick < 0);
+    const auto hasEffect = [&](int kind) {
+        auto effects = race.visible();
+        return std::any_of(effects.begin(), effects.end(), [&](auto o) { return int(o[2]) == kind; });
+    };
+    assert(hasEffect(neon::PlayerFragments));
+    auto rounds = race.rockets;
+    race.shoot(true);
+    assert(rounds == race.rockets);
+    for (int i = 0; i < 110; i++)
+        race.advance(1. / 90, {});
     assert(std::find(race.cues.begin(), race.cues.end(), neon::Cue::Repair) != race.cues.end());
     assert(race.shield == 3);
+    race = neon::Race{};
+    race.vx = 4;
+    race.scrapeRail(-1, 1. / 90);
+    assert(race.shield == 3 && race.vx < 0 && hasEffect(neon::Sparks));
+    const double glance = race.speed;
+    race = neon::Race{};
+    race.vx = 22;
+    race.scrapeRail(-1, 1. / 90);
+    assert(race.shield == 2 && race.speed < glance && hasEffect(neon::Smoke) && race.damagedSide == 1);
+    race.immunity = 0;
+    race.impact();
+    assert(hasEffect(neon::FireTrail));
     // Cross the fork twice, deliberately steering into the island on each side.
     for (int lap : {0, 3})
         for (int side : {-1, 1}) {

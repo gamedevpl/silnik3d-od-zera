@@ -34,6 +34,6 @@ inline int buildActors(const Race &race, double time) {
     for (int i = 0; i < count; ++i)
         std::copy(visible[i].begin(), visible[i].end(), objectBuffer() + 4 * i);
     return actors(std::fmod(time, 240.), race.distance - race.laps * lapLength, race.x, race.lean,
-                  race.thrust, count);
+                  race.thrust, count, (3 - race.shield) * race.damagedSide);
 }
 } // namespace neon

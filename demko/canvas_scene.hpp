@@ -2,6 +2,7 @@
 #include "race.hpp"
 #include "circuit.hpp"
 #include "bridge.hpp"
+#include "damage_fx.hpp"
 
 namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
@@ -53,7 +54,7 @@ class CanvasScene {
                     auto q = [&](CoursePoint p) { return project(p.x, sign * p.y, p.z); };
                     polygon(mirror ? 0x343746 : rgb, {q(a), q(b), q(c), q(d)});
                 };
-                courseSpan(z + offset, face);
+                courseSpan(z + offset, face, face);
                 if (!mirror)
                     lockSpray(z + offset, turbineAngle / .85, face);
             }
@@ -135,7 +136,13 @@ class CanvasScene {
         double deck = bridgeHeight(x, z);
         auto [cx, cy] = project(x, 1.85 + deck, z);
         double r = focal / (z - camZ);
-        if (kind == 12) {
+        if (int(kind) >= Sparks) {
+            damageMesh(int(kind), turbineAngle / .85, age,
+                       [&](CoursePoint a, CoursePoint b, CoursePoint c, int rgb) {
+                           auto q = [&](CoursePoint p) { return project(x + p.x, deck + p.y, z + p.z); };
+                           polygon(rgb, {q(a), q(b), q(c)});
+                       });
+        } else if (kind == 12) {
             for (int j = 0; j < 5; j++)
                 for (int side : {-1, 1}) {
                     double ox = x + side * (1.3 + j * .14), zz = z - 4 - j * 2.6;
@@ -212,7 +219,15 @@ class CanvasScene {
         std::stable_sort(visible.begin(), visible.end(), [](auto &a, auto &b) { return a[1] > b[1]; });
         for (auto &o : visible)
             actor(o);
+        if (race.recovery > 0)
+            return;
         auto p = [&](double x, double y, double z) {
+            if (x * race.damagedSide > 0 && std::abs(x) > .86) {
+                double dent = (std::abs(x) - .86) * (3 - race.shield);
+                x -= std::copysign(.29 * dent, x);
+                y -= .23 * dent;
+                z -= .18 * dent;
+            }
             return project(race.x + x, cameraLift + 1.85 + y + x * race.lean, camZ + 9.2 + z);
         };
         for (int s : {-1, 1}) {

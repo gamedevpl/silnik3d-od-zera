@@ -24,7 +24,9 @@ struct Input {
     int steer = 0;
     bool boost = false, brake = false;
 };
-enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch };
+enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck };
+enum ContactEffect { Sparks = 15, Smoke, FireTrail, Fragments, PlayerFragments };
+constexpr double recoveryTime = 1.15;
 struct Sector {
     double x, z, mineX;
     bool mine, used = false;
@@ -39,7 +41,8 @@ inline Sector sector(int i) {
     return {x, z, mine, i % 3 != 0 && (islandHalf(z - 17) == 0 || std::abs(mine) > islandHalf(z - 17) + 2)};
 }
 struct Pilot {
-    double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0;
+    double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0, kick = 0, recovery = 0;
+    int hull = 3;
 };
 struct Shot {
     double x, z;
@@ -58,6 +61,8 @@ struct Race {
     int laps = 0, shield = 3, rockets = 2, rank = 7, refills = 0, nextSector = 3;
     bool drafting = false, spent = false;
     double wakeCharge = 0, launchTime = 0, chargedLane = 0, steerMemory = 0;
+    double scrape = 0, scrapeSide = 1, recovery = 0, contactLock = 0;
+    int damagedSide = 1;
     int wakePilot = -1, forkSide = 0;
     std::array<Pilot, 6> rivals{};
     std::vector<Sector> sectors = {sector(0), sector(1), sector(2)};
@@ -76,6 +81,8 @@ struct Race {
         for (int i = 0; i < int(rivals.size()); ++i) {
             const auto &p = rivals[i];
             double dz = gap(p.z, distance), lateral = std::abs(p.x - x);
+            if (p.recovery > 0)
+                continue;
             if (islandHalf(distance) > 0 && islandHalf(p.z) > 0 && routeSign(x) != routeSign(p.x))
                 continue;
             if (dz < 3 || dz > 64 || lateral > 2.8 + .12 * dz)
@@ -89,6 +96,8 @@ struct Race {
         return id;
     }
     void shoot(bool rocket) {
+        if (recovery > 0)
+            return;
         if (rocket) {
             if (!rockets || rocketCooldown > 0)
                 return;
@@ -102,19 +111,36 @@ struct Race {
         shots.push_back({x, distance + 2, rocket, false, rocket ? targetAhead() : -1});
         cues.push_back(rocket ? Cue::Rocket : Cue::Fire);
     }
-    void impact() {
+    void impact(double strength = 1., int side = 1) {
         if (immunity > 0)
             return;
+        damagedSide = side;
         immunity = 1.2;
-        speed *= .75;
+        speed *= 1. - .24 * strength;
         if (--shield == 0) {
-            shield = 3;
+            recovery = recoveryTime;
+            launchTime = padBoost = wakeCharge = 0;
             energy = std::max(25., energy * .5);
             speed = 20;
             immunity = 2;
-            cues.push_back(Cue::Repair);
+            cues.push_back(Cue::Wreck);
         } else
             cues.push_back(Cue::Hit);
+    }
+    void scrapeRail(int inward, double dt) {
+        const double normal = std::max(0., -inward * vx);
+        speed *= std::exp(-(.33 + .026 * normal) * dt);
+        scrape = .24;
+        scrapeSide = -inward;
+        if (wallLock <= 0 && normal > 2) {
+            speed *= 1. - std::min(.16, normal * .006);
+            vx = inward * normal * .26;
+            if (normal > 17)
+                impact(.32, -inward);
+            cues.push_back(Cue::Rail);
+            wallLock = .42;
+        } else
+            vx = inward * std::max(0., inward * vx);
     }
     void movePilots(double dt) {
         drafting = false;
@@ -146,7 +172,8 @@ struct Race {
             if (island > 0)
                 line = routeSign(p.x) * std::max(island + 3., routeSign(p.x) * line);
             double dx = bound((line - p.x) * 1.5, -10, 10);
-            p.x = bound(p.x + dx * dt, -16.4, 16.4);
+            p.kick *= std::exp(-4 * dt);
+            p.x = bound(p.x + (dx + p.kick) * dt, -16.4, 16.4);
             if (island > 0)
                 p.x = routeSign(line) * std::max(island + 1.35, std::abs(p.x));
             p.lean = -dx * .035;
@@ -160,6 +187,12 @@ struct Race {
             if (approach >= 0 && approach < p.speed * dt && fabs(p.x - pad.x) < 3)
                 p.boost = 1.2;
             p.speed += ((p.stun > 0 ? target * .53 : target) - p.speed) * (1 - exp(-2 * dt));
+            if (p.recovery > 0) {
+                p.recovery = std::max(0., p.recovery - dt);
+                p.speed = std::min(20., p.speed);
+                if (p.recovery == 0)
+                    p.hull = 3;
+            }
             p.z += p.speed * dt;
             if ((islandHalf(distance) == 0 || routeSign(p.x) == routeSign(x)) && ahead > 2 &&
                 ahead < nearestWake && fabs(p.x - x) < 3) {
@@ -188,6 +221,8 @@ struct Race {
                        fabs(xx - shot.x) < (shot.rocket ? 4 : 1.55);
             };
             for (auto &p : rivals) {
+                if (p.recovery > 0)
+                    continue;
                 double z = prev + gap(p.z, prev);
                 if (inPath(p.x, z)) {
                     best = z;
@@ -206,6 +241,9 @@ struct Race {
                 if (pilot) {
                     pilot->stun = shot.rocket ? 2.4 : 1;
                     pilot->hitGlow = .75;
+                    pilot->hull = std::max(0, pilot->hull - (shot.rocket ? 2 : 1));
+                    if (!pilot->hull)
+                        pilot->recovery = recoveryTime;
                 } else
                     mine->mine = false;
                 shot.spent = true;
@@ -222,17 +260,23 @@ struct Race {
         elapsed += dt;
         for (double *t : {&cooldown, &rocketCooldown, &immunity, &wallLock, &padBoost})
             *t = std::max(0., *t - dt);
+        scrape = std::max(0., scrape - dt);
+        contactLock = std::max(0., contactLock - dt);
+        if (recovery > 0) {
+            recovery = std::max(0., recovery - dt);
+            in = {0, false, true};
+            if (recovery == 0) {
+                shield = 3;
+                cues.push_back(Cue::Repair);
+            }
+        }
         movePilots(dt);
         double bend = slope(distance + 16) - slope(distance - 8);
         double target = in.steer * (in.brake ? 29 : 22) - bend * speed * (in.brake ? .28 : .75);
-        vx += (target - vx) * (1 - exp(-7 * dt));
+        vx += (target - vx) * (1 - exp(-(in.brake ? 10. : in.steer ? 6.2 : 3.9) * dt));
         x = bound(x + vx * dt, -18, 18);
-        if (fabs(x) >= 18 && vx * x > 0 && wallLock == 0) {
-            speed *= .82;
-            vx *= .15;
-            wallLock = .9;
-            cues.push_back(Cue::Rail);
-        }
+        if (fabs(x) >= 18 && vx * x > 0)
+            scrapeRail(-routeSign(x), dt);
         lean += (-vx * .027 - bend * .44 - lean) * (1 - exp(-8 * dt));
         launchTime = std::max(0., launchTime - dt);
         steerMemory = in.steer ? 0.5 : std::max(0., steerMemory - dt);
@@ -276,12 +320,7 @@ struct Race {
             double clearance = forkSide * x - island;
             if (clearance < 1.3) {
                 x = forkSide * (island + 1.3);
-                if (clearance < 1.2 && wallLock == 0) {
-                    speed *= .86;
-                    wallLock = .8;
-                    cues.push_back(Cue::Rail);
-                }
-                vx = forkSide * std::max(0., forkSide * vx);
+                scrapeRail(forkSide, dt);
             }
         } else
             forkSide = 0;
@@ -292,11 +331,11 @@ struct Race {
             if (s.mine && before < s.z - 17 && distance >= s.z - 17) {
                 s.mine = false;
                 if (fabs(s.mineX - x) < 1.55)
-                    impact();
+                    impact(1., routeSign(s.mineX - x));
             }
             if (!s.used && before < s.z && distance >= s.z) {
                 s.used = true;
-                if (fabs(s.x - x) < 2.9) {
+                if (recovery == 0 && fabs(s.x - x) < 2.9) {
                     energy = std::min(100., energy + 24);
                     padBoost = 1.05;
                     if (++refills % 2 == 0)
@@ -307,10 +346,24 @@ struct Race {
             }
         }
         for (auto &p : rivals)
-            if (fabs(gap(p.z, distance)) < 1.8 && fabs(x - p.x) < 2 && immunity == 0) {
-                impact();
-                p.stun = .7;
-                vx += (x >= p.x ? 7 : -7);
+            if (fabs(gap(p.z, distance)) < 1.8 && fabs(x - p.x) < 2 && contactLock == 0 && recovery == 0 &&
+                p.recovery == 0) {
+                int side = routeSign(x - p.x);
+                double closing = std::abs(speed - p.speed), lateral = std::max(0., -side * (vx - p.kick));
+                double shove = bound(3. + .65 * lateral + .23 * closing, 3., 17.);
+                vx += side * shove;
+                p.kick -= side * shove;
+                double exchange = (p.speed - speed) * .30;
+                speed += exchange;
+                p.speed -= exchange;
+                if (closing + .8 * lateral > 8)
+                    impact(bound((closing + lateral) / 26, .32, 1.), -side);
+                else {
+                    scrape = .20;
+                    scrapeSide = -side;
+                    cues.push_back(Cue::Rail);
+                }
+                contactLock = .42;
             }
         stepShots(dt);
         rank = 1;
@@ -331,17 +384,30 @@ struct Race {
         auto add = [&](double xx, double z, int k, double age = 0) {
             out.push_back({float(xx), float(z - offset), float(k), float(age)});
         };
+        if (recovery > 0)
+            add(x, distance, PlayerFragments, 1 - recovery / recoveryTime);
+        else if (shield < 3)
+            add(x, distance, shield == 1 ? FireTrail : Smoke, damagedSide);
+        if (scrape > 0)
+            add(x + scrapeSide * 1.35, distance, Sparks, scrapeSide * scrape / .24);
         for (int i = 0; i < 6; i++) {
-            auto &p = rivals[i];
+            const auto &p = rivals[i];
             double dz = gap(p.z, distance);
-            if (dz > -10 && dz < 158)
+            if (dz <= -10 || dz >= 158)
+                continue;
+            if (p.recovery > 0)
+                add(p.x, distance + dz, Fragments, 1 - p.recovery / recoveryTime);
+            else {
                 add(p.x, distance + dz, 6 + i, p.lean);
+                if (p.hull < 3 && dz < 85)
+                    add(p.x, distance + dz, p.hull == 1 ? FireTrail : Smoke, i * .13);
+            }
         }
         const int locked = rockets > 0 ? targetAhead() : -1;
         for (int i = 0; i < int(rivals.size()); i++) {
             const auto &p = rivals[i];
             double dz = gap(p.z, distance);
-            if (dz < 0 || dz > 100)
+            if (p.recovery > 0 || dz < 0 || dz > 100)
                 continue;
             if (p.hitGlow > 0)
                 add(p.x, distance + dz, 14, p.hitGlow / .75);

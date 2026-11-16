@@ -6,7 +6,7 @@ struct CoursePoint {
     double x, y, z;
 };
 // Six-metre spans keep the ramp, island rails and catenary cables continuous.
-template <class Quad> void courseSpan(double z, Quad quad) {
+template <class Quad, class Deck> void courseSpan(double z, Quad quad, Deck plate) {
     const double p = lapPosition(z), end = z + 6;
     auto signboard = [&](double x, double y, double tip, int ink) {
         quad({x - 2, y - .5, z}, {x + 2, y - .5, z}, {x + 2, y + .5, z}, {x - 2, y + .5, z}, 0x263744);
@@ -27,7 +27,7 @@ template <class Quad> void courseSpan(double z, Quad quad) {
         return;
     const double a = islandHalf(z), b = islandHalf(end), h = bridgeHeight(-10, z), j = bridgeHeight(-10, end);
     // Raised deck, fascia, illuminated parapet and expansion joints.
-    quad({-19, h + .10, z}, {-a, h + .10, z}, {-b, j + .10, end}, {-19, j + .10, end},
+    plate({-19, h + .10, z}, {-a, h + .10, z}, {-b, j + .10, end}, {-19, j + .10, end},
          int(p) % 12 ? 0x354755 : 0x394a57);
     quad({-a, h + .10, z}, {-a, std::max(.04, h - .62), z}, {-b, std::max(.04, j - .62), end},
          {-b, j + .10, end}, 0x435465);

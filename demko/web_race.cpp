@@ -1,5 +1,6 @@
 // Browser ABI. State is copied after a simulation step so JS never owns race rules.
 #include "track_mesh.hpp"
+#include "materials.hpp"
 #include "canvas_scene.hpp"
 #include <optional>
 #include <algorithm>
@@ -14,6 +15,7 @@ std::vector<float> canvasCommands;
 } // namespace
 extern "C" {
 // The upload views remain valid until releaseTrack() or the next buildTrack().
+const uint8_t *surfaceMap(int id) { return neon::materialTile(id).data(); }
 int buildTrack(int simple) {
     track.emplace(simple);
     return int(track->sections.size());
