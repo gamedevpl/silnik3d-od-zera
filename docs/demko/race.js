@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=duel1',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=plasma1',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }

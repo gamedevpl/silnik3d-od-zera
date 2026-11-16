@@ -11,7 +11,7 @@ const ROLES = {
   "demko/race.hpp": "race physics, rival pilots, weapons and collisions (the rules of the race)",
   "demko/raceway.hpp": "track geometry and a small perspective rasterizer for the canal",
   "demko/racer.hpp": "ship geometry, team liveries and cockpit materials",
-  "demko/sound_bank.hpp": "synthesized turbine, airflow and race sound effects",
+  "demko/sound_bank.hpp": "synthesized weapons and contact sounds",
   "demko/demo.cpp": "ship models, lane markings and track meshes, reused by the browser",
   "demko/race_fx.inc": "raceway lighting and the arcade encounter, in ship world coordinates",
   "demko/lighting.h": "a small diffuse lightmap for the recessed neon panels",
@@ -23,7 +23,7 @@ const ROLES = {
   "docs/demko/app.js": "browser controls, HUD, pause and language switch",
   "docs/demko/renderer.js": "WebGL renderer with a Canvas 2D fallback",
   "docs/demko/race.js": "loads the required WebAssembly game and reads its state for the HUD",
-  "docs/demko/audio.js": "soundtrack loop and synthesized engine and weapon sounds",
+  "docs/demko/audio.js": "soundtrack, sampled ion drive and weapon playback",
 };
 
 let files;

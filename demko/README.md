@@ -20,12 +20,12 @@ Tuck into the teal wake behind a rival and ease off the boost for about a second
 
 Press **Space**, click the race view or tap it to start or resume. During the race, drag sideways to steer. On a trackpad, a horizontal two-finger swipe also steers. On a touchscreen, steer with one thumb and hold **Boost** with the other. The game opens in English. Select **PL** in the browser to switch to Polish.
 
-Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. Chamber pressure, exhaust and the ion-drive tone follow airspeed and thrust. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
+Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. A stereo ion-drive sample bank (ElevenLabs sound effects) crossfades from cruise to beam thrust, with separate ignition and cutoff cues. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
 
 ## Source code
 
 - [Ship hulls, turbine nacelles, cockpits and team paint](racer.hpp)
-- [Engine, wind and race effects](sound_bank.hpp)
+- [Ion-drive recordings](../docs/demko/ion-drive.flac) and [synthesized race effects](sound_bank.hpp)
 - [Lane markings, exhausts and track geometry](demo.cpp)
 - [Color and emission map for harbor windows, surface maps for the bridge, cladding and hull, and soft smoke and flame textures](materials.hpp)
 - [Contact sparks, damaged engines and hull fragments](damage_fx.hpp)

@@ -1,6 +1,6 @@
 import {renderer} from './renderer.js?v=duel1';
-import {loadRace} from './race.js?v=duel1';
-import {Sound} from './audio.js?v=duel1';
+import {loadRace} from './race.js?v=plasma1';
+import {Sound} from './audio.js?v=plasma1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);

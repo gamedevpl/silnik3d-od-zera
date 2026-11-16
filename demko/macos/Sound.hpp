@@ -4,8 +4,10 @@
 
 class Sound {
     AVAudioEngine *engine;
-    AVAudioPlayerNode *music, *voices[8], *layers[3];
-    AVAudioUnitVarispeed *rates[3];
+    AVAudioPlayerNode *music, *voices[8], *layers[2], *accent;
+    AVAudioUnitVarispeed *rates[2];
+    AVAudioPCMBuffer *drive[4];
+    bool boosting=false;
     AVAudioPCMBuffer *tones[neon::audio::count];
     int nextVoice = 0;
     AVAudioPCMBuffer *segment(AVAudioFile *file, double from, double until, NSError **error) {
@@ -28,6 +30,13 @@ class Sound {
         auto intro = segment(file, 0, 48, error), loop = segment(file, 16, 48, error);
         if (!intro || !loop)
             return false;
+        auto bank=[[AVAudioFile alloc] initForReading:[NSBundle.mainBundle URLForResource:@"ion-drive" withExtension:@"flac"] error:error];
+        if(!bank)return false;
+        constexpr double cuts[]={0,4,8,8.95,10.05};
+        for(int i=0;i<4;i++){
+            drive[i]=segment(bank,cuts[i],cuts[i+1],error);
+            if(!drive[i])return false;
+        }
         engine = [AVAudioEngine new];
         music = [AVAudioPlayerNode new];
         [engine attachNode:music];
@@ -51,13 +60,16 @@ class Sound {
             std::copy(samples.begin(),samples.end(),b.floatChannelData[0]);
             tones[id]=b;
         }
-        for(int i=0;i<3;i++){
+        accent=[AVAudioPlayerNode new];
+        [engine attachNode:accent];
+        [engine connect:accent to:engine.mainMixerNode format:bank.processingFormat];
+        for(int i=0;i<2;i++){
             layers[i]=[AVAudioPlayerNode new];
             rates[i]=[AVAudioUnitVarispeed new];
             [engine attachNode:layers[i]]; [engine attachNode:rates[i]];
-            [engine connect:layers[i] to:rates[i] format:fmt];
-            [engine connect:rates[i] to:engine.mainMixerNode format:fmt];
-            [layers[i] scheduleBuffer:tones[neon::audio::turbine+i] atTime:nil options:AVAudioPlayerNodeBufferLoops completionHandler:nil];
+            [engine connect:layers[i] to:rates[i] format:bank.processingFormat];
+            [engine connect:rates[i] to:engine.mainMixerNode format:bank.processingFormat];
+            [layers[i] scheduleBuffer:drive[i] atTime:nil options:AVAudioPlayerNodeBufferLoops completionHandler:nil];
             layers[i].volume=0;
         }
         return true;
@@ -76,6 +88,7 @@ class Sound {
         return true;
     }
     void pause() {
+        [accent stop];boosting=false;
         for(auto layer:layers)[layer pause];
         [music pause];
         for (auto &v : voices)
@@ -88,12 +101,16 @@ class Sound {
     }
     void power(double speed,double thrust) {
         double flow=std::min(1.25,speed/82.);
-        rates[0].rate=.67+.69*flow+.09*thrust;
-        rates[2].rate=.62+.57*flow+.48*thrust;
-        layers[2].volume=.029+.205*thrust;
-        rates[1].rate=.68+.55*flow;
-        layers[0].volume=.19+.15*thrust;
-        layers[1].volume=.012+.092*flow*flow;
+        rates[0].rate=.92+.14*flow;
+        rates[1].rate=.90+.13*flow+.09*thrust;
+        layers[0].volume=.63-.39*thrust;
+        layers[1].volume=.72*thrust*thrust;
+        if((!boosting && thrust>.43) || (boosting && thrust<.20)){
+            boosting=!boosting;
+            [accent stop];accent.volume=boosting?.63:.47;
+            [accent scheduleBuffer:drive[boosting?2:3] completionHandler:nil];
+            [accent play];
+        }
     }
     void cue(neon::Cue c,double strength) {
         if (!engine.running || muted)
