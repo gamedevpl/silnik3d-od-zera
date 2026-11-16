@@ -8,7 +8,7 @@ At the amber and teal arrows, pick a side before the island. Take the raised sus
 
 A full boost cell lasts about 12 seconds on its own. Release the boost to recharge. The ship carries speed into the next bend until you apply the airbrake.
 
-Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. Gold brackets mark a rival your rocket can track. You can also fire straight down an empty lane to clear a mine. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. A glancing contact pushes both ships apart. A hard impact costs shield, and holding a wing against a rail scrubs speed and throws sparks. A damaged ship smokes at two shield points and trails flame at one. Losing the last point breaks the hull apart before an automatic restart. Rivals can also be disabled and rejoin the race.
+Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. The mint sight shows where the nose is pointing. Lead crossing ships: both bolts and rockets keep their launch direction, even over a crest. Amber barriers sweep across the track. Watch the red light on their leading end and pass behind them or shoot them out. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. A glancing contact pushes both ships apart. A hard impact costs shield, and holding a wing against a rail scrubs speed and throws sparks. A damaged ship smokes at two shield points and trails flame at one. Losing the last point breaks the hull apart before an automatic restart. Rivals can also be disabled and rejoin the race.
 
 | Control | Action |
 | --- | --- |
@@ -20,7 +20,7 @@ Tuck into the teal wake behind a rival and ease off the boost for about a second
 
 Press **Space**, click the race view or tap it to start or resume. During the race, drag sideways to steer. On a trackpad, a horizontal two-finger swipe also steers. On a touchscreen, steer with one thumb and hold **Boost** with the other. The game opens in English. Select **PL** in the browser to switch to Polish.
 
-Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. Two engine layers follow airspeed and throttle independently. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
+Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. Chamber pressure, exhaust and the ion-drive tone follow airspeed and thrust. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
 
 ## Source code
 

@@ -24,6 +24,7 @@ uniform float pass,moving,clock;uniform sampler2D steel,glass,cladding,hull,smok
 void main(){
  if(alt<-.04||depth>=visibility.y)discard;
  float range=1.-smoothstep(visibility.x,visibility.y,depth);
+ if(mat>23.5 && mat<24.5){if(pass>.5)discard;gl_FragColor=vec4(color,.88);return;}
  if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
  if(mat>7.5 && mat<8.5){
   if(pass>.5)discard;

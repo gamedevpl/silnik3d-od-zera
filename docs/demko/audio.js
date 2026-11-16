@@ -7,7 +7,7 @@ export class Sound{
     const Context=window.AudioContext||window.webkitAudioContext;this.ctx=new Context();
     const c=this.ctx;this.volume=c.createGain();this.volume.gain.value=this.muted?0:.48;
     const limiter=c.createDynamicsCompressor();this.volume.connect(limiter);limiter.connect(c.destination);
-    this.motor=this.loop(10);this.wind=this.loop(11);
+    this.motor=this.loop(10);this.wind=this.loop(11);this.ion=this.loop(12);
    }
    if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
   }catch{return;}
@@ -40,7 +40,7 @@ export class Sound{
    if(this.musicOffset>=end)this.musicOffset=16+(this.musicOffset-end)%(end-16);
    this.music.stop();this.music=null;
   }
-  for(const layer of [this.motor,this.wind])layer.gain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);
+  for(const layer of [this.motor,this.wind,this.ion])layer.gain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);
  }
  clip(id){
   if(this.clips[id])return this.clips[id];
@@ -57,16 +57,19 @@ export class Sound{
  tick(speed,thrust){
   if(!this.running||!this.ctx||this.ctx.state!=='running')return;
   const flow=Math.min(1.25,speed/82),now=this.ctx.currentTime;
-  this.motor.src.playbackRate.setTargetAtTime(.63+.83*flow+.17*thrust,now,.08);
+  this.motor.src.playbackRate.setTargetAtTime(.67+.69*flow+.09*thrust,now,.08);
+  this.ion.src.playbackRate.setTargetAtTime(.62+.57*flow+.48*thrust,now,.25);
+  this.ion.gain.gain.setTargetAtTime(.029+.205*thrust,now,.16);
   this.wind.src.playbackRate.setTargetAtTime(.68+.55*flow,now,.11);
-  this.motor.gain.gain.setTargetAtTime(.12+.13*thrust,now,.09);
-  this.wind.gain.gain.setTargetAtTime(.016+.19*flow*flow,now,.11);
+  this.motor.gain.gain.setTargetAtTime(.19+.15*thrust,now,.09);
+  this.wind.gain.gain.setTargetAtTime(.012+.092*flow*flow,now,.11);
  }
- cue(event){
+ cue(event,strength=.5){
   const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);
   if(id<0||!this.ctx||this.muted||!this.running)return;
   const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
-  src.buffer=this.clip(id);gain.gain.value=id===0?.42:id===5?.39:.72;
+  src.buffer=this.clip(id);
+  gain.gain.value=id===0?.42:id===5?.22+.32*strength:id===3?.36+.55*strength:.72;
   src.connect(gain).connect(this.volume);src.onended=()=>{src.disconnect();gain.disconnect();};src.start();
  }
 }

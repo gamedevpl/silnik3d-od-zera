@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=turbine1',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=duel1',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }
@@ -23,7 +23,7 @@ export async function loadRace(bytes) {
    pilot.x=data[fields.length+1+2*i];pilot.z=data[fields.length+2+2*i];
   }
   const extras=fields.length+1+2*count;
-  race.wakeCharge=data[extras];race.launchTime=data[extras+1];race.speed=data[extras+2];race.lock=data[extras+3];race.deck=data[extras+4];race.route=data[extras+5];
+  race.wakeCharge=data[extras];race.launchTime=data[extras+1];race.speed=data[extras+2];race.contactStrength=data[extras+3];race.deck=data[extras+4];race.route=data[extras+5];
   const n=core.raceCueCount();
   for(let i=0;i<n;i++)notify(events[core.raceCue(i)]);
   core.raceClearCues();
@@ -32,8 +32,8 @@ export async function loadRace(bytes) {
  function advance(dt,input,fire,notify){core.raceAdvance(dt,input.steer,input.boost,input.brake,fire);sync(notify);}
  function shoot(rocket,notify){core.raceShoot(rocket);sync(notify);}
  function visible(){
-  const n=core.raceVisible(),address=core.raceObjects(),data=new Float32Array(core.memory.buffer,address,5*n);
-  return Array.from({length:n},(_,i)=>data.subarray(i*5,i*5+5));
+  const n=core.raceVisible(),address=core.raceObjects(),data=new Float32Array(core.memory.buffer,address,6*n);
+  return Array.from({length:n},(_,i)=>data.subarray(i*6,i*6+6));
  }
  return {geometry:core,reset,advance,shoot,visible,road:core.roadX,slope:core.roadSlopeAt,LAP:core.lapLength()};
 }

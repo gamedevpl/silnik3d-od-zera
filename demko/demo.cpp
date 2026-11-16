@@ -10,7 +10,7 @@
 static std::vector<Vertex> mesh;
 static int firstPuff;
 extern "C" int particleStart(){return firstPuff;}
-static float objects[64*5]; // Lane X, world Z, object kind, animation phase and emitter speed.
+static float objects[64*6]; // Lane X, world Z, object kind, animation phase and emitter speed.
 static_assert(sizeof(Vertex)==16);
 
 static Frame geometryFrame(double time){
@@ -189,7 +189,7 @@ static void lockTurbine(Frame &f,double distance,double time){
     }
     f.box(x-.55,y-.55,z-.12,1.1,1.1,.3,{93,236,214},{60,85,103});
 }
-int actors(double time,double distance,double x,double lean,double thrust,double speed,int count,int wing){
+int actors(double time,double distance,double x,double lean,double thrust,double speed,double noseSteer,int count,int wing){
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
@@ -199,10 +199,11 @@ int actors(double time,double distance,double x,double lean,double thrust,double
     auto place=[&](double x,double z,bool onTrack){
         double origin=neon::road(z),tangent=neon::slope(z);
         double deck=onTrack?neon::bridgeHeight(x,z)+neon::viaductHeight(z):0;
+        const double grade=onTrack?(neon::Race::deckAt(x,z+1)-neon::Race::deckAt(x,z-1))*.5:0.;
         for(;first<mesh.size();++first){
             auto &v=mesh[first];
             v.x+=origin+(v.z-z)*tangent;
-            v.y+=deck+(onTrack?(v.z-z)*neon::viaductGrade(z):0.);
+            v.y+=deck+(v.z-z)*grade;
         }
     };
     lockTurbine(f,distance,time);place(0,7*24+13,false);
@@ -214,8 +215,12 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         place(0,pump,false);
     }
     bool wreck=false;
-    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*5+2])==neon::PlayerFragments;
-    if(!wreck)racer(f,0,x,distance,lean,wing,speed,thrust,time);
+    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*6+2])==neon::PlayerFragments;
+    if(!wreck){
+        size_t start=mesh.size();
+        racer(f,0,x,distance,lean,wing,speed,thrust,time);
+        for(size_t i=start;i<mesh.size();i++)mesh[i].x+=(mesh[i].z-distance)*noseSteer;
+    }
     if(!wreck && (neon::bridgeHeight(x,distance)+neon::viaductHeight(distance))>.1){
         auto shadow=[&](double dx,double dz){return V{x+dx-.35,.16+neon::bridgeHeight(x,distance+dz)-neon::bridgeHeight(x,distance),distance+dz-.4};};
         for(int side:{-1,1})
@@ -223,13 +228,13 @@ int actors(double time,double distance,double x,double lean,double thrust,double
     }
     place(x,distance,true);
     for(int i=0;i<std::clamp(count,0,64);i++){
-        const float *o=objects+5*i;
+        const float *o=objects+6*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
         if(int(kind)>=neon::Sparks || kind==5){
             neon::damagePuffs(int(kind),time,age,o[4],[&](neon::Puff puff){
                 puff.center.z+=z;puff.center.x+=xx+neon::road(puff.center.z);
-                puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z);puffs.push_back(puff);
+                puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z)+(kind==5?o[5]:0);puffs.push_back(puff);
             });
             neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
                 f.tri({xx+a.x,a.y,z+a.z},{xx+b.x,b.y,z+b.z},{xx+c.x,c.y,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
@@ -241,10 +246,14 @@ int actors(double time,double distance,double x,double lean,double thrust,double
                 f.quad({ox,.32,zz+1.4},{ox+side*.18,.32,zz+1.4},{ox+side*.48,.32,zz},{ox+side*.18,.32,zz},col);
             }
         }else if(kind==13){
+            f.surface=Frame::Sight;
             for(int side:{-1,1}){
-                f.box(xx+side*2.25-.07,1.8,z,.14,1.25,.10,{255,204,112},{255,204,112});
-                f.box(xx+side*2.0-.28,2.92,z,.56,.13,.10,{255,223,145},{255,223,145});
+                const double a=xx+side*1.02,b=xx+side*.28;
+                f.quad({a,age-.27,z+.025},{b,age-.08,z+.025},{b,age+.25,z+.025},{a,age+.10,z+.025},{15,33,46});
+                f.quad({a,age-.18,z},{b,age,z},{b,age+.18,z},{a,age+.02,z},{176,255,228});
             }
+            f.quad({xx-.083,age-.09,z},{xx+.083,age-.09,z},{xx+.083,age+.09,z},{xx-.083,age+.09,z},{255,238,173});
+            f.surface=Frame::Plain;place(xx,z,false);continue;
         }else if(kind==14){
             for(int j=0;j<12;j++){
                 double a=j*pi/6,r=2.1+1.5*(1-age),b=a+.32;
@@ -267,9 +276,19 @@ int actors(double time,double distance,double x,double lean,double thrust,double
                 f.tri(bottom,v(j+1),v(j),{123,46,62});
             }
             f.box(xx-.82,y-.10,z-.73,1.64,.20,.18,{255,202,105},{199,91,61});
+        }else if(kind==4){
+            const C amber={255,178,65},steel={68,74,98};
+            f.box(xx-2.6,1.2,z-.48,5.2,.85,.96,steel,{35,40,52});
+            for(int j=-2;j<=2;j++)f.box(xx+j-.24,1.38,z-.52,.42,.46,.09,amber,amber);
+            const double nose=xx+(age>=0?2.35:-2.35);
+            f.box(nose-.18,1.96,z-.42,.36,.44,.65,{255,108,72},amber);
         }else if(kind==2 || kind==3){
-            double width=kind==3?.28:.11;
-            f.box(xx-width,y-.06,z,2*width,.14,kind==3?2.4:1.6,{255,226,118},{84,234,255});
+            double width=kind==3?.22:.11, tail=kind==3?2.0:2.7;
+            double dx=o[4]-neon::slope(z),dy=o[5];
+            V head{xx,age,z},end{xx-tail*dx,age-tail*dy,z-tail};
+            f.quad(head+V{-width,0,0},head+V{width,0,0},end+V{width,0,0},end+V{-width,0,0},{255,213,108});
+            f.quad(head+V{0,width,0},head-V{0,width,0},end-V{0,width,0},end+V{0,width,0},{252,247,187});
+            place(xx,z,false);continue;
         }
         place(xx,z,true);
     }

@@ -187,7 +187,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             left -= step;
         }
         for (auto c : race.cues) {
-            sound.cue(c);
+            sound.cue(c,race.contactStrength);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
                 [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit6"];

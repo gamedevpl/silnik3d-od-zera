@@ -78,7 +78,7 @@ struct Frame{
     }
     void pixel(int i,C c){for(int j=0;j<3;j++)rgb[3*i+j]=std::clamp(c[j],0,255);}
     std::vector<Vertex>* geometry=nullptr;
-    enum Surface : uint8_t { Plain, Deck, FacadeFront, FacadeSide, CladFront, CladSide, CladTop, Hull, SkyDeck };
+    enum Surface : uint8_t { Plain, Deck, FacadeFront, FacadeSide, CladFront, CladSide, CladTop, Hull, SkyDeck, Sight=24 };
     Surface surface=Plain;
     bool block=false, simple=false;
     void tri(V a,V b,V c,C color){

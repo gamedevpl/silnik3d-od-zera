@@ -4,8 +4,8 @@
 
 class Sound {
     AVAudioEngine *engine;
-    AVAudioPlayerNode *music, *voices[8], *layers[2];
-    AVAudioUnitVarispeed *rates[2];
+    AVAudioPlayerNode *music, *voices[8], *layers[3];
+    AVAudioUnitVarispeed *rates[3];
     AVAudioPCMBuffer *tones[neon::audio::count];
     int nextVoice = 0;
     AVAudioPCMBuffer *segment(AVAudioFile *file, double from, double until, NSError **error) {
@@ -51,7 +51,7 @@ class Sound {
             std::copy(samples.begin(),samples.end(),b.floatChannelData[0]);
             tones[id]=b;
         }
-        for(int i=0;i<2;i++){
+        for(int i=0;i<3;i++){
             layers[i]=[AVAudioPlayerNode new];
             rates[i]=[AVAudioUnitVarispeed new];
             [engine attachNode:layers[i]]; [engine attachNode:rates[i]];
@@ -88,17 +88,19 @@ class Sound {
     }
     void power(double speed,double thrust) {
         double flow=std::min(1.25,speed/82.);
-        rates[0].rate=.63+.83*flow+.17*thrust;
+        rates[0].rate=.67+.69*flow+.09*thrust;
+        rates[2].rate=.62+.57*flow+.48*thrust;
+        layers[2].volume=.029+.205*thrust;
         rates[1].rate=.68+.55*flow;
-        layers[0].volume=.12+.13*thrust;
-        layers[1].volume=.016+.19*flow*flow;
+        layers[0].volume=.19+.15*thrust;
+        layers[1].volume=.012+.092*flow*flow;
     }
-    void cue(neon::Cue c) {
+    void cue(neon::Cue c,double strength) {
         if (!engine.running || muted)
             return;
         auto voice = voices[nextVoice++ % 8];
         [voice stop];
-        voice.volume=c==neon::Cue::Fire?.42:c==neon::Cue::Rail?.39:.72;
+        voice.volume=c==neon::Cue::Fire?.42:c==neon::Cue::Rail?.22+.32*strength:c==neon::Cue::Hit?.36+.55*strength:.72;
         [voice scheduleBuffer:tones[int(c)] completionHandler:nil];
         [voice play];
     }

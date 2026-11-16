@@ -1,6 +1,6 @@
-import {renderer} from './renderer.js?v=turbine1';
-import {loadRace} from './race.js?v=turbine1';
-import {Sound} from './audio.js?v=turbine1';
+import {renderer} from './renderer.js?v=duel1';
+import {loadRace} from './race.js?v=duel1';
+import {Sound} from './audio.js?v=duel1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -9,9 +9,9 @@ const keys=new Set(),pointers=new Map(),buttonKeys=new Set();
 const words={
  fork:['← Most · Kanał →','← Bridge · Canal →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
- brief:['Wejdź w turkusową smugę za rywalem. Gdy się naładuje, wciśnij dopalacz i wyjdź z niej na zakręcie. Złote nawiasy oznaczają cel rakiety.','Follow the teal wake behind a rival. When it charges, press Boost and pull out to pass. Gold brackets mark a rocket target.'],
+ brief:['Wejdź w turkusową smugę za rywalem. Gdy się naładuje, wciśnij dopalacz i wyjdź z niej na zakręcie. Celuj przed rywala. Działko i rakiety strzelają po prostej.','Follow the teal wake behind a rival. When it charges, press Boost and pull out to pass. Lead your rival. Cannon shots and rockets fly straight.'],
  boost:['Dopalacz','Boost'],launch:['Wyrzut ze smugi','Slingshot'],ready:['Zapas smugi · skręć + dopalacz','Wake stored · steer + boost'],
- empty:['Brak rakiet · zbierz zielone pola','Out of rockets · collect boost pads'],fired:['Rakieta odpalona','Rocket away'],lock:['Cel','Lock'],
+ empty:['Brak rakiet · zbierz zielone pola','Out of rockets · collect boost pads'],fired:['Rakieta odpalona','Rocket away'],
  loading:['Ładowanie…','Loading…'],start:['Graj · spacja lub kliknięcie','Race · Space or click'],tapStart:['Dotknij, aby zagrać','Tap to race'],resumeKey:['Wznów · spacja lub kliknięcie','Resume · Space or click'],tapResume:['Dotknij, aby wznowić','Tap to resume'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],
  paused:['Pauza','Paused'],
  sound:['♫ Dźwięk','♫ Sound'],muted:['♫ Wyciszono','♫ Muted'],shield:['Osłona','Shield'],rocket:['Rakieta','Rocket'],
@@ -37,7 +37,7 @@ function updateHUD(){
  $('#shield').textContent=tr('shield')+' '+race.shield+'/3';
  $('#lap').textContent=tr('lap')+' '+(race.laps+1)+' · '+time(race.elapsed-race.lapStart);
  $('#meter i').style.transform='scaleX('+race.energy/100+')';
- const rocketLabel=(race.lock>=0&&race.rockets?'◎ ':'')+tr('rocket')+' · '+race.rockets;
+ const rocketLabel=tr('rocket')+' · '+race.rockets;
  if($('#rocket').textContent!==rocketLabel)$('#rocket').textContent=rocketLabel;
  $('#speed').textContent=Math.round(race.speed*3.6)+' km/h';
  $('#reserve').textContent=tr('boost')+' '+Math.round(race.energy)+'%';
@@ -108,7 +108,7 @@ $('#pause').onclick=()=>mode==='run'?pause():start();
 $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
- sound.cue(k);
+ sound.cue(k,race.contactStrength);
  if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v7',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }

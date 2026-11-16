@@ -151,14 +151,14 @@ class CanvasScene {
         }
         emit({Opacity, 1});
     }
-    void ship(int team,double x,double z,double bank,int damage,double speed) {
+    void ship(int team,double x,double z,double bank,int damage,double speed,double noseSteer=0) {
         struct Face { Point a,b,c; double depth; int color; };
         std::vector<Face> faces;
         const auto &hull=racerBody(team,true);
         faces.reserve(hull.size());
         const double cs=std::cos(bank),sn=std::sin(bank);
         auto projected=[&](BodyVertex p) {
-            return project(x+p.x,1.85+p.y+bridgeHeight(x,z)+viaductHeight(z+p.z),z+p.z);
+            return project(x+p.x+p.z*noseSteer,1.85+p.y+Race::deckAt(x,z+p.z),z+p.z);
         };
         for(int side:{-1,1}){
             auto jet=[&](double offset,double length) {
@@ -179,10 +179,10 @@ class CanvasScene {
         for(const auto &f:faces)polygon(f.color,{f.a,f.b,f.c});
     }
     void actor(const Object &o) {
-        auto [x, z, kind, age, speed] = o;
+        auto [x, z, kind, age, speed, rise] = o;
         if (z <= camZ + 1)
             return;
-        double deck = bridgeHeight(x, z) + viaductHeight(z);
+        double deck = bridgeHeight(x, z) + viaductHeight(z) + (kind==5?rise:0);
         auto [cx, cy] = project(x, 1.85 + deck, z);
         double r = focal / (z - camZ);
         if (int(kind) >= Sparks || kind == 5) {
@@ -210,11 +210,10 @@ class CanvasScene {
                                        project(ox + side * .17, deck + .32, zz)});
                 }
         } else if (kind == 13) {
-            for (int side : {-1, 1}) {
-                double xx = cx + side * 2.25 * r;
-                emit({Rect, 0xffc870, xx, cy - r, r * .17, r});
-                emit({Rect, 0xffc870, xx - (side > 0 ? .45 * r : 0), cy - r, r * .6, r * .16});
-            }
+            auto aim=project(x,age,z);
+            emit({Rect,0xffeead,aim[0]-1,aim[1]-1,2,2});
+            for(int side:{-1,1})polygon(0x9bf8de,{{aim[0]+side*.65*r,aim[1]+.14*r},
+                {aim[0]+side*.28*r,aim[1]},{aim[0]+side*.28*r,aim[1]-1.3},{aim[0]+side*.65*r,aim[1]-1.}});
         } else if (kind == 14) {
             emit({Ellipse, 0xffdc93, std::max(1., age * r * .24), cx, cy, (2.1 + (1 - age) * 1.5) * r,
                   (1.6 + (1 - age)) * r, 0});
@@ -240,6 +239,16 @@ class CanvasScene {
                             {project(x, deck + .14, zz + 1.8), project(x + s * 2.9, deck + .14, zz),
                              project(x + s * 2.9, deck + .14, zz - .65), project(x, deck + .14, zz + 1.1)});
                 }
+        } else if(kind==4){
+            emit({Rect,0x50546c,cx-2.6*r,cy-.2*r,5.2*r,.85*r});
+            for(int j=-2;j<=2;j++)emit({Rect,0xffb241,cx+(j-.24)*r,cy,.42*r,.48*r});
+            emit({Rect,0xff7760,cx+(age>=0?2.17:-2.53)*r,cy-.56*r,.36*r,.45*r});
+        } else if(kind==2 || kind==3){
+            const double shaft=kind==3?2.:2.7;
+            auto nose=project(x,age,z);
+            auto tail=project(x+road(z)-road(z-shaft)-shaft*speed,age-rise*shaft,z-shaft);
+            const double w=std::max(1.,r*(kind==3?.22:.11));
+            polygon(0xffdc86,{{nose[0]-w,nose[1]},{nose[0]+w,nose[1]},{tail[0]+w,tail[1]},{tail[0]-w,tail[1]}});
         } else if (kind == 1) {
             polygon(0xff664e, {{cx, cy - r}, {cx + r, cy}, {cx, cy + r}, {cx - r, cy}});
         } else {
@@ -281,7 +290,7 @@ class CanvasScene {
         if (race.recovery > 0)
             return;
         ship(0,race.x,race.distance-race.laps*lapLength,race.lean,
-             (3-race.shield)*race.damagedSide,race.speed);
+             (3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
     }
 };
 } // namespace neon

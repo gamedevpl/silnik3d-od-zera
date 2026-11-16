@@ -9,7 +9,7 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[2036.286230279,1,3],[4081.173872294,3,6],[6119.442932410,5,2],[8225.384988333,7,1]];
+  const checkpoints=[[2087.612670184,1,6],[4169.975934130,3,5],[6222.714434520,5,7],[8316.238673942,7,6]];
   for(let i=0;i<10800;i++){
    if(i%821===0)sim.shoot(true,cue);
    sim.advance(1/90,{steer:Math.floor(i/57)%3-1,boost:i%890<570,brake:i%341<19},i%4===0,cue);
@@ -24,9 +24,9 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-16.303052859)<.0001);
-  assert.equal(s.rockets,0);assert.equal(s.shield,1);
-  assert.deepEqual(counts,{fire:522,rocket:9,break:52,hit:22,pad:15,rail:35,repair:4,lap:7,launch:1,wreck:4});
+  assert(Math.abs(s.lastLap-16.274324273)<.0001);
+  assert.equal(s.rockets,0);assert.equal(s.shield,3);
+  assert.deepEqual(counts,{fire:517,rocket:10,break:66,hit:25,pad:17,rail:26,repair:5,lap:7,launch:4,wreck:5});
   assert.equal(sim.reset().distance,0);
  });
 
@@ -60,4 +60,22 @@ test('smoke is a transparent sprite batch following the solid meshes',async()=>{
   return;
  }
  assert.fail('no damage in replay');
+});
+
+test('the sight and both rendered projectiles use the same world-space ray',async()=>{
+ const sim=await loadRace(binary);
+ for(const rocket of [false,true]){
+  sim.reset();
+  for(let i=0;i<30;i++)sim.advance(1/90,{steer:1,boost:true,brake:false},false,()=>{});
+  const sight=Array.from(sim.visible().find(o=>o[2]===13));
+  sim.shoot(rocket,()=>{});
+  const kind=rocket?3:2;
+  const [x,z,,y,yaw,pitch]=sim.visible().find(o=>o[2]===kind);
+  const world=x+sim.road(z);
+  assert(Math.abs(sight[0]+sim.road(sight[1])-world-(sight[1]-z)*yaw)<.0001);
+  assert(Math.abs(sight[3]-y-(sight[1]-z)*pitch)<.0001);
+  sim.advance(.035,{steer:-1,boost:false,brake:false},false,()=>{});
+  const next=sim.visible().find(o=>o[2]===kind);
+  assert(Math.abs(next[0]+sim.road(next[1])-world-(next[1]-z)*yaw)<.0001);
+ }
 });

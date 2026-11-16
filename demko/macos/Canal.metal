@@ -42,6 +42,7 @@ vertex Varying worldVertex(uint id [[vertex_id]], const device MeshVertex *verti
 fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]],texture2d<float> steel [[texture(0)]],texture2d<float> glass [[texture(1)]],texture2d<float> cladding [[texture(2)]],texture2d<float> hull [[texture(3)]],texture2d<float> smoke [[texture(4)]],texture2d<float> flame [[texture(5)]],texture2d<float> ember [[texture(6)]],texture2d<float> city [[texture(7)]]){
     if(in.alt<-.04||in.distance>=v.visibility.y)discard_fragment();
     float range=1-smoothstep(v.visibility.x,v.visibility.y,in.distance);
+    if(in.mat>23.5f && in.mat<24.5f){if(v.effects.y>.5f)discard_fragment();return float4(in.color,.88f);}
     if(v.effects.y>1.5)return float4(.04,.075,.13,.26*range*(1-smoothstep(152.f,192.f,in.sourceDepth)));
     if(in.mat>7.5 && in.mat<8.5){
         if(v.effects.y>.5)discard_fragment();

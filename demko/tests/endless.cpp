@@ -10,6 +10,55 @@ int main() {
         assert(neon::viaductGrade(offset + 940) < -.15);
         assert(neon::viaductHeight(offset + 1060) == 0);
     }
+    // Check both weapons over the lap seam. Steering after launch cannot bend their path.
+    for(bool rocket:{false,true}){
+        neon::Race r;
+        r.distance=neon::lapLength-12;r.vx=-5;
+        for(auto &p:r.rivals)p.z=r.distance+400;
+        r.sectors.clear();r.shoot(rocket);
+        auto start=r.shots.front();
+        r.vx=20;
+        for(int i=0;i<14;i++)r.stepShots(1./90);
+        const auto &shot=r.shots.at(0);
+        assert(shot.z>neon::lapLength);
+        assert(std::abs(shot.x-start.x-start.vx*14/90)<1e-7);
+        assert(std::abs(shot.y-start.y-start.vy*14/90)<1e-7);
+        neon::Race duel;
+        for(auto &p:duel.rivals)p.z=400;
+        auto &target=duel.rivals[0];target.z=25;target.speed=0;
+        duel.shoot(rocket);
+        const auto ray=duel.shots.front();
+        const double lane=ray.x+(target.z-ray.z)*ray.vx/ray.vz-neon::road(target.z);
+        target.x=lane+3.6;
+        for(int i=0;i<24;i++)duel.stepShots(1./90);
+        assert(target.hull==3);
+        target.x=lane;
+        duel.rocketCooldown=duel.cooldown=0;duel.shoot(rocket);
+        for(int i=0;i<24;i++)duel.stepShots(1./90);
+        assert(target.hull==(rocket?1:2));
+    }
+    for(bool avoid:{false,true}){
+        neon::Race course;auto obstacle=neon::sector(2);
+        assert(obstacle.sweeping);
+        course.sectors={obstacle};course.nextSector=12;
+        course.distance=obstacle.z-17-.1;
+        course.x=obstacle.obstacleX(0)+(avoid?6.:0.);
+        for(auto &p:course.rivals)p.z=course.distance+100;
+        course.advance(1./90,{});
+        assert(course.shield==(avoid?3:2));
+    }
+    // Holding boost down a central lane should draw challenges throughout multiple laps.
+    neon::Race pack;
+    int lostLead=0,close=0,previous=7;
+    for(int tick=0;tick<90*100;++tick){
+        pack.advance(1./90,{int(pack.x<-.5)-int(pack.x>.5),true,false});
+        if(tick>900){
+            lostLead+=previous==1 && pack.rank>1;
+            for(auto &p:pack.rivals)if(std::abs(p.z-pack.distance)<45){++close;break;}
+        }
+        previous=pack.rank;
+    }
+    assert(lostLead>=2 && close>90*70);
     neon::Race race;
     for (int i = 0; i < 60 * 95; ++i)
         race.advance(1. / 60, {});

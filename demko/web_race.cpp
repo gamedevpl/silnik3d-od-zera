@@ -73,7 +73,7 @@ const double *raceState() {
     snapshot[i++] = race.wakeCharge;
     snapshot[i++] = race.launchTime;
     snapshot[i++] = race.speed;
-    snapshot[i++] = race.targetAhead();
+    snapshot[i++] = race.contactStrength;
     snapshot[i++] = neon::bridgeHeight(race.x,race.distance);
     snapshot[i++] = neon::routeHint(race.x,race.distance);
     return snapshot.data();
