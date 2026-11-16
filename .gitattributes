@@ -1,5 +1,4 @@
 # GitHub language stats should show the engine (C++), not the series website,
 # the Lumen Lab demo or build helpers. These files stay normal in diffs.
 docs/** linguist-detectable=false
-lumen-lab/** linguist-detectable=false
 web/*.mjs linguist-detectable=false
