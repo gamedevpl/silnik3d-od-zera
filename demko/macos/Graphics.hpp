@@ -1,8 +1,7 @@
 #pragma once
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
-#include "../race.hpp"
-#include "../geometry_api.hpp"
+#include "../track_mesh.hpp"
 
 class Graphics {
     struct Strip {
@@ -10,29 +9,18 @@ class Graphics {
         std::vector<int> starts;
     };
     struct View {
-        simd_float4 camera, lens, effects;
+        simd_float4 camera, lens, effects, visibility;
     };
     id<MTLDevice> device;
     id<MTLCommandQueue> queue;
     id<MTLRenderPipelineState> sky, solid, shadow;
     id<MTLDepthStencilState> depth, shadowDepth, background;
-    Strip scenery[2];
+    Strip scenery[3];
     void makeStrip(Strip &strip, int simple) {
-        sceneBlock(simple);
-        std::vector<Vertex> data;
-        for (int sector = -1; sector <= int(ceil((neon::lapLength + 168) / 24)); sector++) {
-            int k = (sector % 6 + 6) % 6;
-            strip.starts.push_back(int(data.size()));
-            for (int j = sectionStart(k); j < sectionStart(k + 1); j++) {
-                Vertex v = vertices()[j];
-                v.z += (sector - k) * 24;
-                v.x += neon::road(v.z);
-                data.push_back(v);
-            }
-        }
-        strip.starts.push_back(int(data.size()));
-        strip.buffer = [device newBufferWithBytes:data.data()
-                                           length:data.size() * sizeof(Vertex)
+        neon::TrackMesh track(simple);
+        strip.starts = std::move(track.sections);
+        strip.buffer = [device newBufferWithBytes:track.data.data()
+                                           length:track.data.size() * sizeof(Vertex)
                                           options:MTLResourceStorageModeShared];
     }
 
@@ -63,7 +51,7 @@ class Graphics {
         sky = pipeline(@"skyVertex", @"skyPixel", false);
         if (!sky)
             return false;
-        solid = pipeline(@"worldVertex", @"worldPixel", false);
+        solid = pipeline(@"worldVertex", @"worldPixel", true);
         if (!solid)
             return false;
         shadow = pipeline(@"worldVertex", @"worldPixel", true);
@@ -80,7 +68,8 @@ class Graphics {
         shadowDepth = state(MTLCompareFunctionLess, true);
         makeStrip(scenery[0], 0);
         makeStrip(scenery[1], 1);
-        return queue && scenery[0].buffer && scenery[1].buffer;
+        makeStrip(scenery[2], 2);
+        return queue && scenery[0].buffer && scenery[1].buffer && scenery[2].buffer;
     }
     id<MTLCommandBuffer> paint(MTKView *view, const neon::Race &s) {
         auto pass = view.currentRenderPassDescriptor;
@@ -88,21 +77,17 @@ class Graphics {
         if (!pass || !drawable)
             return nil;
         double local = s.distance - s.laps * neon::lapLength, cz = local - 9.2;
-        auto objects = s.visible();
-        int count = int(std::min<size_t>(64, objects.size()));
-        for (int i = 0; i < count; i++)
-            std::copy(objects[i].begin(), objects[i].end(), objectBuffer() + i * 4);
-        int n = actors(fmod(s.elapsed, 240.), local, s.x, s.lean, s.thrust, count);
+        int n = neon::buildActors(s, s.elapsed);
         auto moving = [device newBufferWithBytes:vertices()
                                           length:n * sizeof(Vertex)
                                          options:MTLResourceStorageModeShared];
         auto cmd = [queue commandBuffer];
         float aspect = float(drawable.texture.width) / drawable.texture.height;
         float framing = std::min(1.f, aspect), f = framing * (1.55 - .12 * s.thrust);
-        View u = {
-            {float(s.x * .87 + neon::road(cz)), float(cz), float(neon::slope(cz)), float(s.lean * .15)},
-            {f / aspect, f, aspect, framing},
-            {float(fmod(s.elapsed, 180.)), 0, 0, 0}};
+        View u = {{float(s.x * .87 + neon::road(cz)), float(cz), float(neon::slope(cz)), float(s.lean * .15)},
+                  {f / aspect, f, aspect, framing},
+                  {float(fmod(s.elapsed, 180.)), 0, 0, float(neon::bridgeHeight(s.x, s.distance))},
+                  {0, 0, 0, 0}};
         pass.colorAttachments[0].storeAction = MTLStoreActionStore;
         auto enc = [cmd renderCommandEncoderWithDescriptor:pass];
         auto uniforms = [&] {
@@ -120,19 +105,27 @@ class Graphics {
                 pass.depthAttachment.loadAction = MTLLoadActionClear;
                 enc = [cmd renderCommandEncoderWithDescriptor:pass];
             }
-            auto &strip = scenery[mode == 0 ? 0 : 1];
-            int first = std::max(0, int(floor((cz - 8) / 24)) + 1);
-            int stop = std::min(int(strip.starts.size() - 1),
-                                int(ceil((cz + (mode == 2 ? 58 : 150)) / 24)) + 1);
-            [enc setRenderPipelineState:mode == 2 ? shadow : solid];
+            [enc setRenderPipelineState:mode == 0 ? solid : shadow];
             [enc setDepthStencilState:mode == 2 ? shadowDepth : depth];
             u.effects.y = mode;
             u.effects.z = 0;
-            uniforms();
-            [enc setVertexBuffer:strip.buffer offset:0 atIndex:0];
-            [enc drawPrimitives:MTLPrimitiveTypeTriangle
-                    vertexStart:strip.starts[first]
-                    vertexCount:strip.starts[stop] - strip.starts[first]];
+            auto drawStrip = [&](int kind, int near, int fade, int far) {
+                auto &strip = scenery[kind];
+                int first = std::max(0, int(floor((cz + near) / 24)) + 1);
+                int stop = std::min(int(strip.starts.size() - 1), int(ceil((cz + far) / 24)) + 1);
+                u.visibility = {float(fade), float(far), 0, 0};
+                uniforms();
+                [enc setVertexBuffer:strip.buffer offset:0 atIndex:0];
+                [enc drawPrimitives:MTLPrimitiveTypeTriangle
+                        vertexStart:strip.starts[first]
+                        vertexCount:strip.starts[stop] - strip.starts[first]];
+            };
+            if (mode == 0)
+                drawStrip(2, 96, 236, 336);
+            if (mode == 2)
+                drawStrip(1, -12, 80, 198);
+            else
+                drawStrip(mode == 0 ? 0 : 1, -12, 112, 174);
             u.effects.z = 1;
             uniforms();
             [enc setVertexBuffer:moving offset:0 atIndex:0];

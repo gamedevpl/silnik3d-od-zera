@@ -1,34 +1,38 @@
-const horizon=.43, eye=4.15;
-const colors=['#34e4d0','#f96198','#f6c547','#7d91ff','#d372f8','#88e26b'];
 function camera(s,{LAP,road,slope}){
  const z=s.distance-s.laps*LAP-9.2;
- return [s.x*.87+road(z),z,slope(z),s.lean*.15];
+ const pan=s.previewPan??0;
+ return [s.x*.87+road(z)+pan,z,slope(z)-pan/48,s.lean*.15];
 }
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;
-uniform vec4 cam;uniform vec2 scale;uniform float moving,pass;
-varying vec3 color;varying float depth,alt;
-float road(float z){float a=z*.00545415391;return 17.*sin(3.*a)+10.*sin(2.*a+.8)+4.*sin(6.*a-.6);}
+uniform vec4 cam;uniform vec2 scale;uniform float moving,pass,clock,lift;
+varying vec3 color;varying float depth,alt,sourceDepth;
+
 void main(){
- float z=pos.z;float y=pos.y;alt=y;
+ float z=pos.z;float y=pos.y;alt=y;sourceDepth=z-cam.y;
  float x=pos.x-cam.x-(z-cam.y)*cam.z;
- if(moving>.5)x+=road(z);
- if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){y=-y;}
+
+ if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){x+=.065*sin(z*1.83+clock*1.8+pos.y);y=-y;}
  float d=z-cam.y; depth=d;
- float h=y-4.15;float px=x+cam.w*h;float py=h-cam.w*x;
- gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.009*d-1.61,d);
+ float h=y-4.15-lift;float px=x+cam.w*h;float py=h-cam.w*x;
+ gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.0044*d-1.61,d);
  color=tint.rgb;
 }`;
 const fragment=`
-precision highp float; varying vec3 color;varying float depth,alt;
-uniform float pass;uniform float shadowOpacity;
+precision highp float; varying vec3 color;varying float depth,alt,sourceDepth;
+uniform float pass,moving,clock;uniform float shadowOpacity;uniform vec2 visibility;
 void main(){
- if(alt<-.04||depth>169.)discard;
- if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity);return;}
+ if(alt<-.04||depth>=visibility.y)discard;
+ float range=1.-smoothstep(visibility.x,visibility.y,depth);
+ if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
  float haze=smoothstep(35.,159.,depth)*.75;
  vec3 c=mix(color,vec3(.40,.30,.43),haze);
- if(pass>.5)c=mix(vec3(.065,.14,.21),c,.48);
- gl_FragColor=vec4(c,1.);
+ if(pass>.5){
+  float ripple=.5+.5*sin(depth*1.7+alt*6.+clock*1.8);
+  c=mix(vec3(.055,.105,.16),c,(moving>.5?.16:.32)*(.68+.32*ripple));
+ }
+ float alpha=(pass>.5 && moving>.5) ? .34*smoothstep(9.,24.,depth) : 1.;
+ gl_FragColor=vec4(c,alpha*range);
 }`;
 const skyVertex='attribute vec2 point;varying vec2 uv;void main(){uv=point;gl_Position=vec4(point,0.,1.);}';
 const skyFragment=`
@@ -45,8 +49,15 @@ void main(){
  if(dist<.16)sky=mix(vec3(1.,.69,.41),vec3(1.,.91,.65),smoothstep(-.15,.15,p.y));
  if(ring<.13&&(tilt.y<0.||dist>.16))sky=vec3(1.,.84,.57);
  vec2 star=floor(vec2(x,sy)*220.);
- if(sy>.31 && dist>.19 && fract(sin(dot(mod(star,61.),vec2(17.7,45.3)))*299.)>.996)sky+=.28;
- if(water)sky=mix(vec3(.045,.11,.16),sky,.46)+.012*sin(y*118.+time*2.);
+ if(!water && sy>.31 && dist>.19 && fract(sin(dot(mod(star,61.),vec2(17.7,45.3)))*299.)>.996)sky+=.28;
+ float ridge=.018+.014*sin(8.*(x+cam.z))+.009*sin(23.*(x+cam.z));
+ vec3 mist=vec3(.38,.27,.38);
+ if(!water && sy<ridge)sky=mix(mist,vec3(.48,.34,.43),sy/ridge);
+ if(water){
+  float waves=sin(5./(.075+sy)+x*2.+time*.9);
+  vec3 surface=mix(vec3(.045,.11,.16),sky,.18+.10*waves)+.012*waves;
+  sky=mix(mist,surface,smoothstep(0.,.11,sy));
+ }
  gl_FragColor=vec4(sky,1.);
 }`;
 function program(gl,vs,fs){
@@ -60,13 +71,12 @@ function program(gl,vs,fs){
  return p;
 }
 function gpu(canvas,simulation){
- const {LAP,road,visible}=simulation;
  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
  const engine=simulation.geometry;
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
- const u=locs(world,['cam','scale','moving','pass','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
+ const u=locs(world,['cam','scale','moving','pass','clock','shadowOpacity','lift','visibility']),v=locs(sky,['cam','aspect','time','framing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  const dynamic=gl.createBuffer();
@@ -75,24 +85,12 @@ function gpu(canvas,simulation){
   gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(engine.memory.buffer,engine.vertices(),n*16),usage);
  }
  // Contiguous sections let all visible scenery share one draw call per pass.
- const scenery=[0,1].map(simple=>{
-  const count=engine.sceneBlock(simple),raw=new Uint8Array(engine.memory.buffer,engine.vertices(),count*16);
-  const starts=Array.from({length:7},(_,i)=>engine.sectionStart(i));
-  const end=Math.ceil((LAP+168)/24),data=new Uint8Array((Math.ceil((end+2)/6)+1)*count*16);
-  const dst=new DataView(data.buffer),sections=[];
-  let cursor=0;
-  for(let sector=-1;sector<=end;sector++){
-   const k=((sector%6)+6)%6,base=(sector-k)*24,n=starts[k+1]-starts[k];
-   sections.push(cursor);
-   data.set(raw.subarray(16*starts[k],16*starts[k+1]),16*cursor);
-   for(let j=cursor;j<cursor+n;j++){
-    const i=j*16,z=base+dst.getFloat32(i+8,true);
-    dst.setFloat32(i,dst.getFloat32(i,true)+road(z),true);dst.setFloat32(i+8,z,true);
-   }
-   cursor+=n;
-  }
-  sections.push(cursor);
-  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,data.subarray(0,cursor*16),gl.STATIC_DRAW);
+ const scenery=[0,1,2].map(simple=>{
+  const count=engine.buildTrack(simple);
+  const sections=new Int32Array(engine.memory.buffer,engine.trackSections(),count).slice();
+  const data=new Uint8Array(engine.memory.buffer,engine.trackVertices(),16*sections[count-1]);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+  engine.releaseTrack();
   return {buf,sections};
  });
  function bind(buf){
@@ -108,22 +106,25 @@ function gpu(canvas,simulation){
   const framing=Math.min(1,canvas.width/canvas.height);
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
-  const list=visible();
-  const data=new Float32Array(engine.memory.buffer,engine.objectBuffer(),256);
-  list.forEach((o,i)=>data.set(o,4*i));
-  const n=engine.actors(s.elapsed%240,s.distance-s.laps*LAP,s.x,s.lean,s.thrust,list.length);upload(dynamic,n,gl.DYNAMIC_DRAW);
-  gl.useProgram(world);gl.uniform4fv(u.cam,cam);
+  const n=engine.raceActors(s.elapsed);upload(dynamic,n,gl.DYNAMIC_DRAW);
+  gl.useProgram(world);gl.uniform4fv(u.cam,cam);gl.uniform1f(u.lift,s.deck);gl.uniform1f(u.clock,s.elapsed%180);
   const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
    if(pass!==0)gl.clear(gl.DEPTH_BUFFER_BIT);
-   if(pass===2){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(gl.LESS);}
-   else {gl.disable(gl.BLEND);gl.depthFunc(gl.LEQUAL);}
+   if(pass!==0){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(pass===2?gl.LESS:gl.LEQUAL);}
+   else {gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(gl.LEQUAL);}
    gl.uniform1f(u.pass,pass);gl.uniform1f(u.shadowOpacity,.26);
-   const {buf,sections}=scenery[pass===0?0:1],near=cam[1]-8,far=cam[1]+(pass===2?58:150);
-   const first=sections[Math.max(0,Math.floor(near/24)+1)];
-   const stop=sections[Math.min(sections.length-1,Math.ceil(far/24)+1)];
-   gl.uniform1f(u.moving,0);bind(buf);gl.drawArrays(gl.TRIANGLES,first,stop-first);
+   const strip=(kind,near,fade,far)=>{
+    const {buf,sections}=scenery[kind];
+    const first=sections[Math.max(0,Math.floor((cam[1]+near)/24)+1)];
+    const stop=sections[Math.min(sections.length-1,Math.ceil((cam[1]+far)/24)+1)];
+    gl.uniform2f(u.visibility,fade,far);bind(buf);gl.drawArrays(gl.TRIANGLES,first,stop-first);
+   };
+   gl.uniform1f(u.moving,0);
+   if(pass===0)strip(2,96,236,336);
+   if(pass===2)strip(1,-12,80,198);
+   else strip(pass===0?0:1,-12,112,174);
    gl.uniform1f(u.moving,1);bind(dynamic);gl.drawArrays(gl.TRIANGLES,0,n);
   }
  };
@@ -131,67 +132,33 @@ function gpu(canvas,simulation){
 
 // A lightweight chase view also keeps the course playable when a browser disables WebGL.
 function canvasFlight(canvas,simulation){
- const {LAP,road,visible}=simulation;
- const ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height,span=Math.min(w,h),f=span*.76;
+ const core=simulation.geometry,ctx=canvas.getContext('2d',{alpha:false}),w=canvas.width,h=canvas.height;
  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#161b3d');sky.addColorStop(.43,'#9c6177');sky.addColorStop(.44,'#333448');sky.addColorStop(1,'#101e32');
+ const palette=new Map();
+ function color(rgb){
+  if(!palette.has(rgb))palette.set(rgb,'#'+rgb.toString(16).padStart(6,'0'));
+  return palette.get(rgb);
+ }
  return s=>{
-  const cam=camera(s,simulation);
-  const pt=(x,y,z)=>{const d=Math.max(.4,z-cam[1]);return [w/2+f*(x+road(z)-cam[0]-d*cam[2])/d,h*horizon-f*(y-eye)/d];};
-  function poly(points,color,stroke=false){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();if(stroke){ctx.strokeStyle=color;ctx.stroke();}else{ctx.fillStyle=color;ctx.fill();}}
+  const size=core.canvasFrame(w,h,s.previewPan??0),data=new Float32Array(core.memory.buffer,core.canvasData(),size);
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-  const sunX=w*.5+span*.256-cam[2]*f;
-  ctx.fillStyle='#ffdc9f';ctx.beginPath();ctx.arc(sunX,h*horizon-span*.17,span*.065,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#ffcd96';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sunX,h*horizon-span*.17,span*.13,span*.018,-.2,0,Math.PI*2);ctx.stroke();
-  // Paint distant reflections under the track before its near structures.
-  ctx.save();ctx.beginPath();ctx.rect(0,h*horizon,w,h*(1-horizon));ctx.clip();
-  ctx.fillStyle='#87726d';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.063,span*.061,0,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#b39370';ctx.beginPath();ctx.ellipse(sunX,h*horizon+span*.17,span*.128,span*.014,.2,0,Math.PI*2);ctx.stroke();
-  for(let k=Math.floor((cam[1]+144)/12);k*12>cam[1]+1;k--){
-   const z=k*12;
-   for(const side of [-1,1]){
-    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
-    poly([pt(x,0,z),pt(x,-top,z),pt(x+side*5,-top,z),pt(x+side*5,0,z)],'#252c40');
+  // See CanvasScene::Op. Positions and painter order come from C++.
+  for(let i=0;i<size;){
+   const op=data[i++];
+   if(op===-5){ctx.globalAlpha=data[i++];continue;}
+   if(op===-3){const y=data[i++];ctx.save();ctx.beginPath();ctx.rect(0,y,w,h-y);ctx.clip();continue;}
+   if(op===-4){ctx.restore();continue;}
+   const paint=color(data[i++]);
+   if(op===-2){ctx.fillStyle=paint;ctx.fillRect(data[i++],data[i++],data[i++],data[i++]);continue;}
+   const stroke=data[i++];ctx.beginPath();
+   if(op===-1)ctx.ellipse(data[i++],data[i++],data[i++],data[i++],data[i++],0,Math.PI*2);
+   else{
+    ctx.moveTo(data[i++],data[i++]);
+    for(let j=1;j<op;j++)ctx.lineTo(data[i++],data[i++]);
+    ctx.closePath();
    }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.12/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),-4-7*Math.sin(i*Math.PI/6),z)),'#645265',true);}
-  }
-  ctx.restore();
-  for(let k=Math.floor((cam[1]+156)/12);k*12>cam[1]+1;k--){
-   const z=k*12;
-   for(const side of [-1,1]){
-    const x=side*(28+Math.abs(k%4)),top=8+Math.abs(Math.sin(k*21+side))*15;
-    poly([pt(x,0,z),pt(x,top,z),pt(x+side*5,top,z),pt(x+side*5,0,z)],'#272840');
-    poly([pt(x,top*.7,z),pt(x+side*4,top*.7,z),pt(x+side*4,top*.68,z),pt(x,top*.68,z)],'#ab8294');
-    poly([pt(side*19.3,0,z),pt(side*19.55,0,z),pt(side*19.55,0,z+11),pt(side*19.3,0,z+11)],'#68c8d3');
-   }
-   for(let lane=-2;lane<=2;lane++){
-    const x=lane*7;poly([pt(x-.12,.08,z),pt(x+.12,.08,z),pt(x+.12,.08,z+4),pt(x-.12,.08,z+4)],'#84a9af');
-   }
-   if(k%2===0){ctx.lineWidth=Math.max(1,f*.17/(z-cam[1]));poly(Array.from({length:12},(_,i)=>pt(22*Math.cos(i*Math.PI/6),4+7*Math.sin(i*Math.PI/6),z)),'#e7aa87',true);}
-  }
-  for(const [x,z,kind,age] of visible().sort((a,b)=>b[1]-a[1])){
-   if(z<=cam[1]+1)continue;
-   const [cx,cy]=pt(x,1.85,z),r=f/(z-cam[1]);
-   if(kind>=6){
-    const color=colors[kind-6],p=(dx,dy,dz)=>pt(x+dx,1.85+dy+dx*age,z+dz);
-    for(const side of [-1,1]){
-     poly([p(0,.12,2.4),p(side*.58,.32,.1),p(0,.38,-1.3)],'#c4ddd9');
-     poly([p(side*.58,.32,.1),p(side*1.75,0,-1.2),p(side*.7,.1,-1.4),p(0,.15,-1.3)],color);
-     poly([p(side*.6,.08,-1.3),p(side*.86,.08,-1.3),p(side*.72,.06,-3.5)],color);
-    }
-   }else if(kind===0){
-    for(let j=0;j<3;j++)for(const side of [-1,1]){
-     const zz=z-2+j*1.9;poly([pt(x,.14,zz+1.8),pt(x+side*2.9,.14,zz),pt(x+side*2.9,.14,zz-.65),pt(x,.14,zz+1.1)],'#50f6b7');
-    }
-   }
-   else if(kind===1)poly([[cx,cy-r],[cx+r,cy],[cx,cy+r],[cx-r,cy]],'#ff664e');
-   else if(kind===5){ctx.fillStyle='#ffc36c';ctx.fillRect(cx-r,cy-r,r*(1+age),r);}
-   else {ctx.fillStyle='#ffc875';ctx.fillRect(cx,cy,Math.max(2,r*.19),Math.max(3,r));}
-  }
-  const p=(x,y,z)=>pt(s.x+x,1.85+y+x*s.lean,s.distance-s.laps*LAP+z);
-  for(const side of [-1,1]){
-   poly([p(0,.3,2.35),p(side*.55,.1,.54),p(0,.4,-1)],'#d4d9dd');
-   poly([p(side*.55,.1,.54),p(side*1.55,-.09,-.91),p(side*.56,.08,-1.12)],'#f19b55');
-   poly([p(side*.49,0,-1.16),p(side*.66,0,-1.16),p(side*.57,0,-1.7-s.thrust*.8)],'#59e6ff');
+   if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=paint;ctx.stroke();}
+   else{ctx.fillStyle=paint;ctx.fill();}
   }
  };
 }
@@ -217,7 +184,7 @@ export async function renderer(canvas,simulation){
   screen.dataset.renderer=backend;
   if(lastScene)draw(lastScene);
  }
- try{if(!simulation.geometry)throw Error('WebAssembly unavailable');draw=gpu(canvas,simulation);canvas.addEventListener('webglcontextlost',simplify);}
+ try{draw=gpu(canvas,simulation);canvas.addEventListener('webglcontextlost',simplify);}
  catch(e){console.warn('Canal renderer:',e.message);simplify();}
  const observer=new ResizeObserver(resize);
  observer.observe(screen);resize();

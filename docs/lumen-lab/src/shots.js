@@ -111,6 +111,10 @@ export const SHOTS = {
   'D6-a': (t, v) => ({ ...defBase, shade: 11, ...camLm(t, v), ...walkAround(t), lights: manyLights(50), bulbs: true }),
   'D6-a-def': (t, v) => ({ ...defBase, ...camLm(t, v), ...walkAround(t), lights: manyLights(50), bulbs: true }),
   'D6-b': (t, v) => ({ ...defBase, ...camLm(0, v), view: 1 }),
+  // EN film: light-reach heat map (what tiled / clustered light culling exploits) and static bench shots for the light sweep.
+  'D6-tiles': (t, v) => ({ ...defBase, ...camLm(t, v), ...walkAround(t), lights: manyLights(50), bulbs: true, view: 3 }),
+  ...Object.fromEntries([1, 2, 4, 8, 16, 32, 64].flatMap((n) => [[`B-fwd-${n}`, (t, v) => ({ ...defBase, shade: 11, ...camLm(0, v), lights: manyLights(n), bulbs: true, forwardGlass: false })],
+    [`B-def-${n}`, (t, v) => ({ ...defBase, ...camLm(0, v), lights: manyLights(n), bulbs: true, forwardGlass: false })]])),
   'D6-c': (t, v) => ({ ...defBase, eye: [0.3, 1.9, 5.6], target: [-0.9, 1.5, 2.6], fov: v ? 40 : 30, forwardGlass: t > 3 }),
   'D6-d': (t, v) => ({ ...defBase, ambient: 0.35, eye: [1.6 - 0.5 * smooth(t / 6), 1.0, 5.2 - 2.2 * smooth(t / 6)], target: [0, 0.3, 1], fov: 36, char: [0.55, 0, 1.25], ao: Math.floor(t / 1.5) % 2 === 1, view: 0 }),
   'D6-d-ao': (t, v) => ({ ...SHOTS['D6-d'](t, v), view: 2, ao: true }),

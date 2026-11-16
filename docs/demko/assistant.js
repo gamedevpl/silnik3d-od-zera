@@ -14,18 +14,22 @@ const ROLES = {
   "demko/race_fx.inc": "raceway lighting and the arcade encounter, in ship world coordinates",
   "demko/lighting.h": "a small diffuse lightmap for the recessed neon panels",
   "demko/web_race.cpp": "the browser ABI: JavaScript calls the C++ simulation and copies its state",
+  "demko/canvas_scene.hpp": "projects racers, track scenery and reflections for Canvas 2D",
+  "demko/track_mesh.hpp": "bakes the curved track and builds visible ships for both Metal and WebGL",
   "demko/geometry_api.hpp": "vertex layout shared with the renderer",
   "demko/scene-cues.hpp": "music cue timings",
   "docs/demko/app.js": "browser controls, HUD, pause and language switch",
   "docs/demko/renderer.js": "WebGL renderer with a Canvas 2D fallback",
-  "docs/demko/race.js": "loads flight.wasm, or the JavaScript build of the same C++ when WebAssembly is off",
+  "docs/demko/race.js": "loads the required WebAssembly game and reads its state for the HUD",
   "docs/demko/audio.js": "soundtrack loop and synthesized engine and weapon sounds",
 };
 
 let files;
 async function sources() {
   if (files) return files;
-  const cpp = (await import("./source.js")).default;
+  const response = await fetch(new URL("./source.json", import.meta.url));
+  if (!response.ok) throw Error("Source index HTTP " + response.status);
+  const cpp = await response.json();
   const web = await Promise.all(WEB_FILES.map(async f => [f, await fetch(new URL(f.replace(/^docs\/demko\//, ""), import.meta.url)).then(r => r.ok ? r.text() : "").catch(() => "")]));
   return files = { ...cpp, ...Object.fromEntries(web.filter(([, text]) => text)) };
 }
@@ -54,7 +58,7 @@ const tools = [
       const overlay = document.querySelector(".overlay");
       const racing = overlay && overlay.hidden;
       let best = 0;
-      try { best = Number(localStorage.getItem("neon.lap.v2")) || 0; } catch (_) {}
+      try { best = Number(localStorage.getItem("neon.lap.v4")) || 0; } catch (_) {}
       const hud = document.querySelector(".hud");
       return [
         racing ? "A race is running." : `Not racing. The menu shows "${text("#title")}".`,

@@ -122,7 +122,7 @@ class Sound {
             return;
         auto voice = voices[nextVoice++ % 8];
         [voice stop];
-        [voice scheduleBuffer:tones[int(c)] completionHandler:nil];
+        [voice scheduleBuffer:tones[int(c==neon::Cue::Launch ? neon::Cue::Pad : c)] completionHandler:nil];
         [voice play];
     }
 };

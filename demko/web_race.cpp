@@ -1,14 +1,33 @@
 // Browser ABI. State is copied after a simulation step so JS never owns race rules.
-#include "race.hpp"
+#include "track_mesh.hpp"
+#include "canvas_scene.hpp"
+#include <optional>
 #include <algorithm>
 
 namespace {
 neon::Race race;
 constexpr size_t stateFields = 14;
-std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)>> snapshot;
+std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)> + 6> snapshot;
 std::vector<neon::Object> objects;
+std::optional<neon::TrackMesh> track;
+std::vector<float> canvasCommands;
 } // namespace
 extern "C" {
+// The upload views remain valid until releaseTrack() or the next buildTrack().
+int buildTrack(int simple) {
+    track.emplace(simple);
+    return int(track->sections.size());
+}
+const int *trackSections() { return track->sections.data(); }
+const Vertex *trackVertices() { return track->data.data(); }
+void releaseTrack() { track.reset(); }
+int raceActors(double time) { return neon::buildActors(race, time); }
+
+int canvasFrame(int width, int height, double pan) {
+    neon::CanvasScene scene(race, width, height, pan, canvasCommands);
+    return int(canvasCommands.size());
+}
+const float *canvasData() { return canvasCommands.data(); }
 void raceReset() { race = neon::Race{}; }
 double lapLength() { return neon::lapLength; }
 double roadX(double z) { return neon::road(z); }
@@ -43,6 +62,12 @@ const double *raceState() {
         snapshot[i++] = p.x;
         snapshot[i++] = p.z;
     }
+    snapshot[i++] = race.wakeCharge;
+    snapshot[i++] = race.launchTime;
+    snapshot[i++] = race.speed;
+    snapshot[i++] = race.targetAhead();
+    snapshot[i++] = neon::bridgeHeight(race.x,race.distance);
+    snapshot[i++] = neon::routeHint(race.x,race.distance);
     return snapshot.data();
 }
 int raceVisible() {

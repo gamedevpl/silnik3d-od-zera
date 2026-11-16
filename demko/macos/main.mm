@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLap"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCircuit3"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -95,12 +95,18 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
 }
 - (void)updateHUD {
     NSString *time = best > 0 ? [NSString stringWithFormat:@"%.2f s", best] : @"—";
+    const int route=neon::routeHint(race.x,race.distance);
+    NSString *branch=route==1?localized(@"    ← Bridge · Canal →",@"    ← Most · Kanał →"):
+        route==2?localized(@"    Bridge · tailwind",@"    Most · wiatr w plecy"):
+        route==3?localized(@"    Canal · recharge",@"    Kanał · ładowanie"):@"";
     hud.stringValue = [NSString
         stringWithFormat:localized(@"  %d / 7     LAP %d     SHIELD %d / 3     ROCKETS %d\n  Boost "
-                                   @"%.0f%%     Best lap %@%@%@",
+                                   @"%.0f%%     Best lap %@%@%@%@",
                                    @"  %d / 7     OKR %d     OSŁONA %d / 3     RAKIETY %d\n  Dopalacz "
-                                   @"%.0f%%     Rekord %@%@%@"),
-                         race.rank, race.laps + 1, race.shield, race.rockets, race.energy, time,
+                                   @"%.0f%%     Rekord %@%@%@%@"),
+                         race.rank, race.laps + 1, race.shield, race.rockets, race.energy, time, branch,
+                         race.launchTime>0 ? localized(@"     Slingshot", @"     Wyrzut") :
+                         race.wakeCharge>=1 ? localized(@"     Steer + boost", @"     Skręć + dopalacz") :
                          race.drafting ? localized(@"     Slipstream", @"     W smudze") : @"",
                          started && !audioOK
                              ? localized(@"     No audio output", @"     Brak wyjścia audio")
@@ -184,7 +190,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLap"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit3"];
             }
         }
         race.cues.clear();

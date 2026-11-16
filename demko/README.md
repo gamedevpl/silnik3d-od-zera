@@ -4,7 +4,9 @@
 
 Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
-Tuck in behind a rival to gain speed and recharge your boost, then pull out to pass on either side. Green boost pads give you a burst of speed and restore one shield point. Use the cannon or rockets to slow rivals and clear orange mines. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
+At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin before the shipyard chicane. The airbrake helps hold the inside line through its two reversals.
+
+Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. Gold brackets mark a rival your rocket can track. You can also fire straight down an empty lane to clear a mine. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
 
 | Control | Action |
 | --- | --- |
@@ -22,7 +24,9 @@ Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for
 
 - [Ship models, lane markings and track geometry in C++](demo.cpp)
 - [Race physics, rival pilots and collisions in C++](race.hpp)
-- [WebGL renderer and Canvas 2D fallback](../docs/demko/renderer.js)
+- [Curved track meshes shared by Metal and WebGL](track_mesh.hpp)
+- [Projected scenery, ships and reflections for Canvas 2D](canvas_scene.hpp)
+- [WebGL and Canvas browser bindings](../docs/demko/renderer.js)
 - [Browser controls and HUD](../docs/demko/app.js)
 - [Music playback and synthesized sound effects](../docs/demko/audio.js)
 
@@ -34,9 +38,9 @@ To play locally, serve the prebuilt files from the repository root and open [the
 python3 -m http.server --directory docs 8000
 ```
 
-To rebuild, point `WASI_SDK_PATH` at WASI SDK 34. Put Binaryen 133’s `wasm2js` on your `PATH` or set `WASM2JS` to its executable. Then run `./demko/build.sh`. The script compiles the simulation and geometry into `docs/demko/flight.wasm`. It also generates a JavaScript version of the same C++ simulation for browsers with WebAssembly disabled.
+The browser requires WebAssembly. WebGL draws the full scene on the GPU. When WebGL is unavailable, the same WebAssembly module projects the scene for Canvas 2D.
 
-Run `node --test demko/tests/endless.mjs` to check both browser builds against five laps recorded before the simulation moved to C++.
+To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to compare five laps against a native C++ replay and check the slingshot controls.
 
 ## Native macOS version
 

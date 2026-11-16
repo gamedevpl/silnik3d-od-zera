@@ -145,6 +145,15 @@ struct Frame{
             C dark=mix({26,33,66},{63,53,91},random01(id+14));
             C light=(id%3==0)?C{255,137,102}:C{83,208,229};
             box(x,0,z,w,h,4,dark,mix(dark,{17,21,48},.48));
+            if(block && (id%5==0 || id%5==1)){
+                double crown=h*.22;
+                box(x+.22*w,h,z+.6,w*.60,crown,2.8,mix(dark,{94,87,109},.28),dark);
+                if(!simple){
+                    box(x+w*.32,h+crown,z+1,.10,1.8,.13,light,light);
+                    for(int band=0;band<3;band++)
+                        box(x+.23*w,h+.35+band*crown*.26,z+.54,w*.56,.11,.12,light,dark);
+                }
+            }
             if(simple)continue;
             box(x+.3,h,z+.35,w*.66,1.2,2.6,{67,63,90},{37,43,71});
             if(id%4==0)box(x+w*.5,h+1,z+1,.08,2.5,.1,light,light);
@@ -164,7 +173,7 @@ struct Frame{
             if(id%5==0)box(x+.15,h*.55,z-.08,.14,h*.43,.05,light,light);
         }
     }
-    void rings(){
+    void rings(bool overhead=true){
         int first=int(cz/24);
         for(int k=first;k<first+(block?1:7);k++){
             double z=24*k+15,gateX=1.6*std::sin(k*pi/3);
@@ -173,7 +182,7 @@ struct Frame{
                 double angle=j*pi/6+pi/12;
                 return V{gateX+widthFactor*radius*std::cos(angle),4.1+radius*std::sin(angle),z+depth};
             };
-            for(int j=0;j<12;j++){
+            if(overhead)for(int j=0;j<12;j++){
                 quad(v(j,7,0),v(j+1,7,0),v(j+1,6.45,0),v(j,6.45,0),haze(metal,z));
                 quad(v(j,6.45,0),v(j+1,6.45,0),v(j+1,6.45,1),v(j,6.45,1),haze({34,36,67},z));
                 quad(v(j,6.8,-.015),v(j+1,6.8,-.015),v(j+1,6.68,-.015),v(j,6.68,-.015),haze(hot,z));
@@ -265,6 +274,17 @@ struct Frame{
             V a=p(side*.57-.15,.0,-1.19),b=p(side*.57+.15,.0,-1.19);
             tri(a,b,p(side*.57,-.01,-(1.85+.62*boost)-.13*std::sin(anim*5*pi)),{62,214,255});
             tri(a,b,p(side*.57,.03,-1.55),{231,255,252});
+        }
+        if(manual){
+            // Split exhaust housings and a raised glazed canopy mark the player's stern.
+            for(int side:{-1,1}){
+                double sx=side*.74;
+                quad(p(sx-.28,-.02,-1.33),p(sx+.28,-.02,-1.33),p(sx+.23,.32,-1.23),p(sx-.23,.32,-1.23),{32,53,71});
+                quad(p(sx-.20,.03,-1.35),p(sx+.20,.03,-1.35),p(sx+.16,.18,-1.35),p(sx-.16,.18,-1.35),{160,255,243});
+                quad(p(side*.92,.07,-1.22),p(side*1.56,-.04,-.92),p(side*1.48,.03,-.8),p(side*.92,.16,-1.03),{255,240,170});
+                tri(p(0,.69,.03),p(side*.38,.39,-.48),p(side*.26,.46,.76),side<0?C{39,109,148}:C{113,214,228});
+                tri(p(0,.69,.03),p(side*.26,.46,.76),p(0,.34,1.44),{67,144,180});
+            }
         }
         tri(p(-.26,.38,-.14),p(.26,.38,-.14),p(0,.46,.95),{16,82,110});
         tri(p(-.2,.41,-.03),p(-.02,.45,.62),p(.05,.45,.68),{122,234,238});

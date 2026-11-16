@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 using namespace metal;
 struct MeshVertex { packed_float3 p; uchar4 tint; };
-struct View { float4 camera, lens, effects; }; // scale X/Y, aspect, framing; clock, pass, moving
-struct Varying { float4 pos [[position]]; float3 color; float distance,alt; };
+struct View { float4 camera, lens, effects, visibility; }; // scale X/Y, aspect, framing; clock, pass, moving
+struct Varying { float4 pos [[position]]; float3 color; float distance,alt,sourceDepth; };
 struct Sky { float4 pos [[position]]; float2 uv; };
 vertex Sky skyVertex(uint id [[vertex_id]]){
     float2 p=id==0?float2(-1,-1):id==1?float2(3,-1):float2(-1,3);
@@ -20,25 +20,33 @@ fragment float4 skyPixel(Sky in [[stage_in]],constant View &v [[buffer(1)]]){
     if(dist<.16)sky=mix(float3(1,.69,.41),float3(1,.91,.65),smoothstep(-.15f,.15f,p.y));
     if(ring<.13&&(tilt.y<0||dist>.16))sky=float3(1,.84,.57);
     float2 star=floor(float2(x,sy)*220);star-=61*floor(star/61);
-    if(sy>.31&&dist>.19&&fract(sin(dot(star,float2(17.7,45.3)))*299)>.996)sky+=.28;
-    if(water)sky=mix(float3(.045,.11,.16),sky,.46)+.012*sin(y*118+v.effects.x*2);
+    if(!water&&sy>.31&&dist>.19&&fract(sin(dot(star,float2(17.7,45.3)))*299)>.996)sky+=.28;
+    float ridge=.018+.014*sin(8*(x+v.camera.z))+.009*sin(23*(x+v.camera.z));
+    float3 mist=float3(.38,.27,.38);
+    if(!water && sy<ridge)sky=mix(mist,float3(.48,.34,.43),sy/ridge);
+    if(water){
+        float waves=sin(5/(.075+sy)+x*2+v.effects.x*.9);
+        sky=mix(mist,mix(float3(.045,.11,.16),sky,.18+.10*waves)+.012*waves,smoothstep(0.f,.11f,sy));
+    }
     return float4(sky,1);
 }
 vertex Varying worldVertex(uint id [[vertex_id]], const device MeshVertex *vertices [[buffer(0)]],constant View &v [[buffer(1)]]){
     MeshVertex vert=vertices[id];float3 p=vert.p;float z=p.z,y=p.y;
     float x=p.x-v.camera.x-(z-v.camera.y)*v.camera.z;
-    if(v.effects.z>.5){
-        float a=z*.00545415391;x+=17*sin(3*a)+10*sin(2*a+.8)+4*sin(6*a-.6);
-    }
     if(v.effects.y>1.5){x-=y*.94;z-=y*3.5;y=.014;}
-    else if(v.effects.y>.5)y=-y;
-    float d=z-v.camera.y,h=y-4.15;
-    return {float4((x+v.camera.w*h)*v.lens.x,(h-v.camera.w*x)*v.lens.y+.14*d,1.0045*d-.805,d),float3(vert.tint.rgb)/255,d,p.y};
+    else if(v.effects.y>.5){x+=.065*sin(z*1.83+v.effects.x*1.8+p.y);y=-y;}
+    float d=z-v.camera.y,h=y-4.15-v.effects.w;
+    return {float4((x+v.camera.w*h)*v.lens.x,(h-v.camera.w*x)*v.lens.y+.14*d,1.0022*d-.805,d),float3(vert.tint.rgb)/255,d,p.y,p.z-v.camera.y};
 }
 fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]]){
-    if(in.alt<-.04||in.distance>169)discard_fragment();
-    if(v.effects.y>1.5)return float4(.04,.075,.13,.26);
+    if(in.alt<-.04||in.distance>=v.visibility.y)discard_fragment();
+    float range=1-smoothstep(v.visibility.x,v.visibility.y,in.distance);
+    if(v.effects.y>1.5)return float4(.04,.075,.13,.26*range*(1-smoothstep(152.f,192.f,in.sourceDepth)));
     float3 c=mix(in.color,float3(.40,.30,.43),.75*smoothstep(35.f,159.f,in.distance));
-    if(v.effects.y>.5)c=mix(float3(.065,.14,.21),c,.48);
-    return float4(c,1);
+    if(v.effects.y>.5){
+        float ripple=.5+.5*sin(in.distance*1.7+in.alt*6+v.effects.x*1.8);
+        c=mix(float3(.055,.105,.16),c,(v.effects.z>.5?.16:.32)*(.68+.32*ripple));
+    }
+    float alpha=v.effects.y>.5 && v.effects.z>.5 ? .34*smoothstep(9.f,24.f,in.distance) : 1;
+    return float4(c,alpha*range);
 }

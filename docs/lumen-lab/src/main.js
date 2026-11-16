@@ -207,12 +207,5 @@ const LL = (window.LL = {
   async imagesReady() { await Promise.all([...document.images].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; })))); },
 });
 
-// Interactive preview: ?shot=D1-a
-const q = new URLSearchParams(location.search);
-if (q.get('shot')) {
-  const id = q.get('shot'), t0 = performance.now();
-  resize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
-  const loop = () => { LL.render(id, ((performance.now() - t0) / 1000) % 12, { spp: 1 }); requestAnimationFrame(loop); };
-  loop();
-}
+// The page UI (src/app.js) drives LL.render; the recorder drives it directly.
 window.LLready = true;

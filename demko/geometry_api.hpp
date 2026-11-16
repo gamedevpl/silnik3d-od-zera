@@ -6,8 +6,7 @@ struct Vertex {
     std::uint8_t r, g, b, a;
 };
 extern "C" {
-int sceneBlock(int simple);
-int sectionStart(int index);
+int circuitSection(int section, int simple);
 const Vertex *vertices();
 float *objectBuffer();
 int actors(double time, double distance, double x, double lean, double thrust, int count);

@@ -63,8 +63,16 @@ void main(){
   if (P.w <= 0.0) { o = vec4(mix(u_skyBot, u_skyTop, smoothstep(0.25, 1.0, v_uv.y)), 1.0); return; }
   float ao = 0.0; for (int i = -1; i <= 2; i++) for (int j = -1; j <= 2; j++) ao += texture(u_ao, v_uv + (vec2(float(i), float(j)) - 0.5) * u_texel).r; ao /= 16.0;
   if (u_view == 2) { o = vec4(vec3(pow(ao, 2.2)), 1.0); return; }
-  if (!u_useAo) ao = 1.0;
-  if (dot(N.xyz, N.xyz) < 0.5) { o = vec4(A.rgb * 2.5, 1.0); return; } // emissive
+  if (u_view == 3) { // light list per 16x16 screen tile, as a tiled renderer builds it: lights reaching any of 5 sample points of the tile
+    vec2 res = 1.0 / u_texel, t0 = floor(gl_FragCoord.xy / 16.0) * 16.0; int hits = 0;
+    vec4 Q[5]; Q[0] = texture(u_pos, (t0 + vec2(1.0, 1.0)) / res); Q[1] = texture(u_pos, (t0 + vec2(15.0, 1.0)) / res); Q[2] = texture(u_pos, (t0 + vec2(1.0, 15.0)) / res);
+    Q[3] = texture(u_pos, (t0 + vec2(15.0, 15.0)) / res); Q[4] = texture(u_pos, (t0 + vec2(8.0)) / res);
+    for (int i = 0; i < u_count; i++) { bool any = false; for (int j = 0; j < 5; j++) { vec3 L = u_lpos[i].xyz - Q[j].xyz; if (Q[j].w > 0.0 && dot(L, L) <= u_lpos[i].w * u_lpos[i].w) any = true; } if (any) hits++; }
+    vec3 heat = hits <= 1 ? vec3(0.08, 0.16, 0.45) : hits <= 3 ? vec3(0.1, 0.55, 0.6) : hits <= 7 ? vec3(0.95, 0.8, 0.25) : hits <= 15 ? vec3(1.0, 0.5, 0.12) : vec3(0.95, 0.15, 0.1);
+    float lum = dot(A.rgb, vec3(0.3, 0.55, 0.15)) * 0.55 + 0.04;
+    vec3 c = hits == 0 ? vec3(lum * 0.6) : mix(vec3(lum), heat, 0.62);
+    vec2 g = gl_FragCoord.xy - t0; if (g.x < 1.0 || g.y < 1.0) c *= 0.75;
+    o = vec4(pow(c, vec3(2.2)), 1.0); return; } // emissive
   vec3 n = normalize(N.xyz), V = normalize(u_eye - P.xyz); float rough = max(A.a, 0.04), metal = N.a, a = rough * rough, a2 = a * a;
   vec3 F0 = mix(vec3(0.04), A.rgb, metal), diff = A.rgb * (1.0 - metal);
   vec3 c = diff * u_ambient * ao + F0 * u_ambient * ao * metal * 2.0;

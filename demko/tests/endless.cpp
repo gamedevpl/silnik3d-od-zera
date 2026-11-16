@@ -27,6 +27,25 @@ int main() {
     race.advance(1. / 90, {});
     assert(std::find(race.cues.begin(), race.cues.end(), neon::Cue::Repair) != race.cues.end());
     assert(race.shield == 3);
+    // Cross the fork twice, deliberately steering into the island on each side.
+    for (int lap : {0, 3})
+        for (int side : {-1, 1}) {
+            neon::Race fork;
+            fork.distance = lap * neon::lapLength + neon::forkStart - .1;
+            fork.laps = lap;
+            fork.x = side * 12;
+            fork.energy = 20;
+            for (int i = 0; i < 180; i++) {
+                fork.advance(1. / 90, {i > 4 ? -side : 0, false, false});
+                assert(fork.forkSide == side);
+                assert(side * fork.x >= neon::islandHalf(fork.distance) + 1.29);
+            }
+            assert((neon::bridgeHeight(fork.x, fork.distance) > 4) == (side < 0));
+            assert(side < 0 ? fork.energy < 47 : fork.energy > 70);
+            while (neon::lapPosition(fork.distance) < neon::forkEnd + .1)
+                fork.advance(1. / 90, {});
+            assert(fork.forkSide == 0 && neon::bridgeHeight(fork.x, fork.distance) == 0);
+        }
     double before = race.distance;
     race.advance(1. / 60, {});
     assert(race.distance > before);
