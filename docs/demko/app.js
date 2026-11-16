@@ -1,6 +1,6 @@
-import {renderer} from './renderer.js?v=mesh1';
-import {loadRace} from './race.js?v=mesh1';
-import {Sound} from './audio.js?v=grid2';
+import {renderer} from './renderer.js?v=locks1';
+import {loadRace} from './race.js?v=locks1';
+import {Sound} from './audio.js?v=locks1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -8,7 +8,9 @@ const englishTitle=document.title;
 const keys=new Set(),pointers=new Map(),buttonKeys=new Set(),sound=new Sound();
 const words={
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
- brief:['Sześciu rywali. Jedź w smudze za statkiem, a przed zakrętem wyjdź z niej na dopalaczu. Zielone strzałki dodają prędkości.','Six rivals. Slipstream behind a ship, then boost past it before the bend. Green chevrons give you a burst of speed.'],
+ brief:['Wejdź w turkusową smugę za rywalem. Gdy się naładuje, wciśnij dopalacz i wyjdź z niej na zakręcie. Złote nawiasy oznaczają cel rakiety.','Follow the teal wake behind a rival. When it charges, press Boost and pull out to pass. Gold brackets mark a rocket target.'],
+ boost:['Dopalacz','Boost'],launch:['Wyrzut ze smugi','Slingshot'],ready:['Zapas smugi · skręć + dopalacz','Wake stored · steer + boost'],
+ empty:['Brak rakiet · zbierz zielone pola','Out of rockets · collect boost pads'],fired:['Rakieta odpalona','Rocket away'],lock:['Cel','Lock'],
  loading:['Ładowanie…','Loading…'],start:['Graj · spacja lub kliknięcie','Race · Space or click'],tapStart:['Dotknij, aby zagrać','Tap to race'],resumeKey:['Wznów · spacja lub kliknięcie','Resume · Space or click'],tapResume:['Dotknij, aby wznowić','Tap to resume'],pause:['Ⅱ Pauza','Ⅱ Pause'],resume:['▶ Wznów','▶ Resume'],
  paused:['Pauza','Paused'],
  sound:['♫ Dźwięk','♫ Sound'],muted:['♫ Wyciszono','♫ Muted'],shield:['Osłona','Shield'],rocket:['Rakieta','Rocket'],
@@ -25,7 +27,7 @@ const simulation=await loadRace().catch(error=>{
 const {reset,advance,shoot,LAP}=simulation??{};
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
-let best=Number(read('neon.lap.v2'))||0;const tr=k=>words[k][+en];
+let best=Number(read('neon.lap.v3'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
@@ -33,8 +35,13 @@ function updateHUD(){
  $('#shield').textContent=tr('shield')+' '+race.shield+'/3';
  $('#lap').textContent=tr('lap')+' '+(race.laps+1)+' · '+time(race.elapsed-race.lapStart);
  $('#meter i').style.transform='scaleX('+race.energy/100+')';
- $('#rocket').textContent=tr('rocket')+' · '+race.rockets;
- $('#flash').textContent=flash&&race.elapsed<flashUntil?(flash==='lap'?tr('lap')+' '+race.laps+' · '+time(race.lastLap):tr(flash)):(race.drafting?tr('draft'):'');
+ const rocketLabel=(race.lock>=0&&race.rockets?'◎ ':'')+tr('rocket')+' · '+race.rockets;
+ if($('#rocket').textContent!==rocketLabel)$('#rocket').textContent=rocketLabel;
+ $('#speed').textContent=Math.round(race.speed*3.6)+' km/h';
+ $('#reserve').textContent=tr('boost')+' '+Math.round(race.energy)+'%';
+ $('#wake').textContent=race.launchTime>0?tr('launch'):race.wakeCharge>=1?tr('ready'):race.drafting?tr('draft')+' '+Math.floor(race.wakeCharge*100)+'%':'';
+ $('#drivehud').classList.toggle('charged',race.wakeCharge>=1||race.launchTime>0);
+ $('#flash').textContent=flash&&race.elapsed<flashUntil?(flash==='lap'?tr('lap')+' '+race.laps+' · '+time(race.lastLap):tr(flash)):'';
  updateRadar();
 }
 const radar=$('#radar');
@@ -69,7 +76,7 @@ function panel(){
   return;
  }
  $('.controls').hidden=mode!=='run';
- $('.overlay').hidden=mode==='run';$('.hud').hidden=radar.hidden=$('#meter').hidden=['loading','menu'].includes(mode);
+ $('.overlay').hidden=mode==='run';$('.hud').hidden=radar.hidden=$('#drivehud').hidden=['loading','menu'].includes(mode);
  const coarse=matchMedia('(pointer: coarse)').matches;
  let heading='Neon Grand Prix',info=tr('brief'),label=tr(coarse?'tapStart':'start');
  if(best)info+=' '+tr('record')+' '+time(best)+'.';
@@ -99,10 +106,15 @@ $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
  sound.cue(k);
- if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v2',String(best));}
- if(['pad','hit','break','rail','repair','lap'].includes(k)){flash=k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
+ if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v3',String(best));}
+ if(['pad','hit','break','rail','repair','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
-function fire(rocket){if(mode==='run')shoot(rocket,cue);}
+function fire(rocket){
+ if(mode!=='run')return;
+ if(rocket&&!race.rockets){flash='empty';flashUntil=race.elapsed+.95;}
+ else shoot(rocket,cue);
+ if(rocket)updateHUD();
+}
 $('#fire').onclick=()=>fire(false);$('#rocket').onclick=()=>fire(true);
 for(const b of document.querySelectorAll('[data-hold]')){
  const action=b.dataset.hold;

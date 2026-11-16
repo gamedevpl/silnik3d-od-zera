@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=mesh1',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=locks1',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }
@@ -11,7 +11,7 @@ export async function loadRace(bytes) {
  const {instance}=await WebAssembly.instantiate(bytes,{wasi_snapshot_preview1:wasi});
  const core=instance.exports;
  core._initialize();
- const events=['fire','rocket','break','hit','pad','rail','repair','lap'];
+ const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch'];
  const fields=['distance','elapsed','x','lean','thrust','energy','rank','shield','laps','lapStart','lastLap','rockets','drafting'];
  const race={rivals:[]};
  function sync(notify) {
@@ -22,6 +22,8 @@ export async function loadRace(bytes) {
    const pilot=race.rivals[i]??={};
    pilot.x=data[fields.length+1+2*i];pilot.z=data[fields.length+2+2*i];
   }
+  const extras=fields.length+1+2*count;
+  race.wakeCharge=data[extras];race.launchTime=data[extras+1];race.speed=data[extras+2];race.lock=data[extras+3];
   const n=core.raceCueCount();
   for(let i=0;i<n;i++)notify(events[core.raceCue(i)]);
   core.raceClearCues();

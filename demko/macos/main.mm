@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLap"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCircuit2"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -101,6 +101,8 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
                                    @"  %d / 7     OKR %d     OSŁONA %d / 3     RAKIETY %d\n  Dopalacz "
                                    @"%.0f%%     Rekord %@%@%@"),
                          race.rank, race.laps + 1, race.shield, race.rockets, race.energy, time,
+                         race.launchTime>0 ? localized(@"     Slingshot", @"     Wyrzut") :
+                         race.wakeCharge>=1 ? localized(@"     Steer + boost", @"     Skręć + dopalacz") :
                          race.drafting ? localized(@"     Slipstream", @"     W smudze") : @"",
                          started && !audioOK
                              ? localized(@"     No audio output", @"     Brak wyjścia audio")
@@ -184,7 +186,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLap"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit2"];
             }
         }
         race.cues.clear();

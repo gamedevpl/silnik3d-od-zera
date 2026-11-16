@@ -1,12 +1,13 @@
 #pragma once
 #include "race.hpp"
+#include "circuit.hpp"
 
 namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
 class CanvasScene {
     using Point = std::array<double, 2>;
     enum Op { Ellipse = -1, Rect = -2, ClipBelow = -3, Restore = -4 };
-    double width, focal, horizon, camZ, camX, heading;
+    double width, focal, horizon, camZ, camX, heading, turbineAngle;
     std::vector<float> &out;
 
     Point project(double x, double y, double z) const {
@@ -47,7 +48,58 @@ class CanvasScene {
                     polygon(0x84a9af, {project(x - .12, .08, z), project(x + .12, .08, z),
                                        project(x + .12, .08, z + 4), project(x - .12, .08, z + 4)});
                 }
-            if (k % 2 == 0) {
+            int section = circuitIndex(int(std::floor(z / 24)));
+            if (!mirror) {
+                int edge = district(section) == District::Shipyard ? 0xffb24f : 0x64ddda;
+                for (int side : {-1, 1}) {
+                    double x = side * 18.4;
+                    polygon(edge, {project(x - .13, .09, z), project(x + .13, .09, z),
+                                   project(x + .13, .09, z + 12), project(x - .13, .09, z + 12)});
+                }
+            }
+            if (!mirror && k % 2 == 1 && (section == 0 || section == 7 || section == 16)) {
+                double gate = z + 3, top = sign * (section ? 12 : 9);
+                auto beam = [&](double x, double y, double w, double h, int rgb) {
+                    polygon(rgb,
+                            {project(x, sign * y, gate), project(x + w, sign * y, gate),
+                             project(x + w, sign * (y + h), gate), project(x, sign * (y + h), gate)});
+                };
+                for (int side : {-1, 1})
+                    beam(side * 19.4 - 1, 0, 2, section ? 15 : 9, 0x42516b);
+                beam(-20, std::abs(top), 40, 1.2, 0x47596e);
+                if (section) {
+                    beam(-20, 15, 40, .65, 0x47596e);
+                    for (int j = 0; j < 8; j++) {
+                        double x = -19 + j * 4.7;
+                        polygon(0x50657b,
+                                {project(x, top, gate), project(x + .5, top, gate),
+                                 project(x + 4.9, sign * 15, gate), project(x + 4.4, sign * 15, gate)});
+                    }
+                    beam(-19, 12, 38, .21, 0x64ddda);
+                } else
+                    for (int j = 0; j < 24; j++)
+                        beam(-12 + j, 9, 1, .6, j % 2 ? 0x243044 : 0xdce7d7);
+            }
+            if (!mirror && k % 2 == 1 && section == 7) {
+                double zz = z + 1;
+                auto blade = [&](double a, double r) {
+                    return project(-20.6 + r * std::cos(a), 11.7 + r * std::sin(a), zz);
+                };
+                for (int i = 0; i < 6; i++) {
+                    double a = i * tau / 6 + turbineAngle;
+                    polygon(0xe69d56, {blade(a, .52), blade(a + .34, .52), blade(a + .72, 3.9),
+                                       blade(a + .43, 4)});
+                }
+            }
+            if (k % 8 == 1 && district(section) == District::Shipyard) {
+                int side = section % 8 == 0 ? 1 : -1;
+                polygon(0x56677e, {project(side * 22, 0, z), project(side * 24, 0, z),
+                                   project(side * 24, sign * 21, z), project(side * 22, sign * 21, z)});
+                polygon(0xf4a456,
+                        {project(side * 22, sign * 20, z), project(side * 6, sign * 15, z),
+                         project(side * 6, sign * 14.5, z), project(side * 22, sign * 19, z)});
+            }
+            if (k % 2 == 0 && section % 2 && district(section) == District::Quay) {
                 emit({12, double(mirror ? 0x645265 : 0xe7aa87),
                       std::max(1., focal * (mirror ? .12 : .17) / (z - camZ))});
                 for (int i = 0; i < 12; i++) {
@@ -64,7 +116,24 @@ class CanvasScene {
             return;
         auto [cx, cy] = project(x, 1.85, z);
         double r = focal / (z - camZ);
-        if (kind >= 6) {
+        if (kind == 12) {
+            for (int j = 0; j < 5; j++)
+                for (int side : {-1, 1}) {
+                    double ox = x + side * (1.3 + j * .14), zz = z - 4 - j * 2.6;
+                    polygon(0x65ddd0,
+                            {project(ox, .32, zz + 1.4), project(ox + side * .22, .32, zz + 1.4),
+                             project(ox + side * .48, .32, zz), project(ox + side * .17, .32, zz)});
+                }
+        } else if (kind == 13) {
+            for (int side : {-1, 1}) {
+                double xx = cx + side * 2.25 * r;
+                emit({Rect, 0xffc870, xx, cy - r, r * .17, r});
+                emit({Rect, 0xffc870, xx - (side > 0 ? .45 * r : 0), cy - r, r * .6, r * .16});
+            }
+        } else if (kind == 14) {
+            emit({Ellipse, 0xffdc93, std::max(1., age * r * .24), cx, cy, (2.1 + (1 - age) * 1.5) * r,
+                  (1.6 + (1 - age)) * r, 0});
+        } else if (kind >= 6) {
             constexpr int colors[] = {0x34e4d0, 0xf96198, 0xf6c547, 0x7d91ff, 0xd372f8, 0x88e26b};
             int color = colors[int(kind) - 6];
             auto p = [&](double dx, double dy, double dz) {
@@ -96,15 +165,24 @@ class CanvasScene {
     CanvasScene(const Race &race, int w, int h, double pan, std::vector<float> &commands)
         : width(w), focal(std::min(w, h) * .76), horizon(h * .43),
           camZ(race.distance - race.laps * lapLength - 9.2), camX(race.x * .87 + road(camZ) + pan),
-          heading(slope(camZ) - pan / 48), out(commands) {
+          heading(slope(camZ) - pan / 48), turbineAngle(race.elapsed * .85), out(commands) {
         out.clear();
         double span = std::min(w, h), sunX = w * .5 + span * .256 - heading * focal,
                skyY = horizon - span * .17, waterY = horizon + span * .17;
         emit({Ellipse, 0xffdc9f, 0, sunX, skyY, span * .065, span * .065, 0});
         emit({Ellipse, 0xffcd96, 2, sunX, skyY, span * .13, span * .018, -.2});
+        // A distant shore softens the meeting of the skyline and its reflection.
+        for (int i = 0; i < 24; i++) {
+            auto ridge = [&](int j) {
+                return horizon - span * (.023 + .011 * std::sin(j * .9 + heading * 8) +
+                                         .006 * std::cos(j * 1.9 + heading * 19));
+            };
+            double a = width * i / 24, b = width * (i + 1) / 24;
+            polygon(0x705469, {{a, horizon}, {a, ridge(i)}, {b, ridge(i + 1)}, {b, horizon}});
+        }
         emit({ClipBelow, horizon});
-        emit({Ellipse, 0x87726d, 0, sunX, waterY, span * .063, span * .061, 0});
-        emit({Ellipse, 0xb39370, 2, sunX, waterY, span * .128, span * .014, .2});
+        emit({Ellipse, 0x544958, 0, sunX, waterY, span * .063, span * .061, 0});
+        emit({Ellipse, 0x74616a, 2, sunX, waterY, span * .128, span * .014, .2});
         structures(true);
         emit({Restore});
         structures(false);
@@ -118,6 +196,11 @@ class CanvasScene {
         for (int s : {-1, 1}) {
             polygon(0xd4d9dd, {p(0, .3, 2.35), p(s * .55, .1, .54), p(0, .4, -1)});
             polygon(0xf19b55, {p(s * .55, .1, .54), p(s * 1.55, -.09, -.91), p(s * .56, .08, -1.12)});
+            polygon(0xffeba3, {p(s * .9, .09, -1.24), p(s * 1.55, -.06, -.92), p(s * 1.45, .04, -.78),
+                               p(s * .90, .16, -1.0)});
+            polygon(0x80dbe5, {p(0, .68, .03), p(s * .36, .39, -.48), p(s * .25, .46, .76)});
+            polygon(0xc2fff3, {p(s * .74 - .20, .18, -1.35), p(s * .74 + .20, .18, -1.35),
+                               p(s * .74 + .20, .01, -1.35), p(s * .74 - .20, .01, -1.35)});
             polygon(0x59e6ff, {p(s * .49, 0, -1.16), p(s * .66, 0, -1.16),
                                p(s * .57, 0, -1.7 - race.thrust * .8)});
         }

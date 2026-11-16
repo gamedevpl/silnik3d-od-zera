@@ -108,7 +108,7 @@ class Graphics {
             int first = std::max(0, int(floor((cz - 8) / 24)) + 1);
             int stop = std::min(int(strip.starts.size() - 1),
                                 int(ceil((cz + (mode == 2 ? 58 : 150)) / 24)) + 1);
-            [enc setRenderPipelineState:mode == 2 ? shadow : solid];
+            [enc setRenderPipelineState:mode == 0 ? solid : shadow];
             [enc setDepthStencilState:mode == 2 ? shadowDepth : depth];
             u.effects.y = mode;
             u.effects.z = 0;

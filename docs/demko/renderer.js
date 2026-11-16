@@ -5,14 +5,14 @@ function camera(s,{LAP,road,slope}){
 }
 const vertex=`
 attribute vec3 pos;attribute vec4 tint;
-uniform vec4 cam;uniform vec2 scale;uniform float moving,pass;
+uniform vec4 cam;uniform vec2 scale;uniform float moving,pass,clock;
 varying vec3 color;varying float depth,alt;
 float road(float z){float a=z*.00545415391;return 17.*sin(3.*a)+10.*sin(2.*a+.8)+4.*sin(6.*a-.6);}
 void main(){
  float z=pos.z;float y=pos.y;alt=y;
  float x=pos.x-cam.x-(z-cam.y)*cam.z;
  if(moving>.5)x+=road(z);
- if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){y=-y;}
+ if(pass>1.5){x-=y*.94;z-=y*3.5;y=.014;}else if(pass>.5){x+=.065*sin(z*1.83+clock*1.8+pos.y);y=-y;}
  float d=z-cam.y; depth=d;
  float h=y-4.15;float px=x+cam.w*h;float py=h-cam.w*x;
  gl_Position=vec4(px*scale.x,py*scale.y+.14*d,1.009*d-1.61,d);
@@ -20,14 +20,18 @@ void main(){
 }`;
 const fragment=`
 precision highp float; varying vec3 color;varying float depth,alt;
-uniform float pass;uniform float shadowOpacity;
+uniform float pass,moving,clock;uniform float shadowOpacity;
 void main(){
  if(alt<-.04||depth>169.)discard;
  if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity);return;}
  float haze=smoothstep(35.,159.,depth)*.75;
  vec3 c=mix(color,vec3(.40,.30,.43),haze);
- if(pass>.5)c=mix(vec3(.065,.14,.21),c,.48);
- gl_FragColor=vec4(c,1.);
+ if(pass>.5){
+  float ripple=.5+.5*sin(depth*1.7+alt*6.+clock*1.8);
+  c=mix(vec3(.055,.105,.16),c,(moving>.5?.16:.32)*(.68+.32*ripple));
+ }
+ float alpha=(pass>.5 && moving>.5) ? .34*smoothstep(9.,24.,depth) : 1.;
+ gl_FragColor=vec4(c,alpha);
 }`;
 const skyVertex='attribute vec2 point;varying vec2 uv;void main(){uv=point;gl_Position=vec4(point,0.,1.);}';
 const skyFragment=`
@@ -44,8 +48,15 @@ void main(){
  if(dist<.16)sky=mix(vec3(1.,.69,.41),vec3(1.,.91,.65),smoothstep(-.15,.15,p.y));
  if(ring<.13&&(tilt.y<0.||dist>.16))sky=vec3(1.,.84,.57);
  vec2 star=floor(vec2(x,sy)*220.);
- if(sy>.31 && dist>.19 && fract(sin(dot(mod(star,61.),vec2(17.7,45.3)))*299.)>.996)sky+=.28;
- if(water)sky=mix(vec3(.045,.11,.16),sky,.46)+.012*sin(y*118.+time*2.);
+ if(!water && sy>.31 && dist>.19 && fract(sin(dot(mod(star,61.),vec2(17.7,45.3)))*299.)>.996)sky+=.28;
+ float ridge=.018+.014*sin(8.*(x+cam.z))+.009*sin(23.*(x+cam.z));
+ vec3 mist=vec3(.38,.27,.38);
+ if(!water && sy<ridge)sky=mix(mist,vec3(.48,.34,.43),sy/ridge);
+ if(water){
+  float waves=sin(5./(.075+sy)+x*2.+time*.9);
+  vec3 surface=mix(vec3(.045,.11,.16),sky,.18+.10*waves)+.012*waves;
+  sky=mix(mist,surface,smoothstep(0.,.11,sy));
+ }
  gl_FragColor=vec4(sky,1.);
 }`;
 function program(gl,vs,fs){
@@ -64,7 +75,7 @@ function gpu(canvas,simulation){
  const engine=simulation.geometry;
  const world=program(gl,vertex,fragment),sky=program(gl,skyVertex,skyFragment);
  const locs=(p,names)=>Object.fromEntries(names.map(n=>[n,gl.getUniformLocation(p,n)]));
- const u=locs(world,['cam','scale','moving','pass','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
+ const u=locs(world,['cam','scale','moving','pass','clock','shadowOpacity']),v=locs(sky,['cam','aspect','time','framing']);
  const pos=gl.getAttribLocation(world,'pos'),tint=gl.getAttribLocation(world,'tint'),point=gl.getAttribLocation(sky,'point');
  const bg=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bg);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
  const dynamic=gl.createBuffer();
@@ -95,12 +106,12 @@ function gpu(canvas,simulation){
   gl.uniform1f(v.framing,framing);gl.uniform4fv(v.cam,cam);gl.uniform1f(v.aspect,canvas.width/canvas.height);gl.uniform1f(v.time,s.elapsed%180);
   gl.drawArrays(gl.TRIANGLES,0,3);gl.disableVertexAttribArray(point);
   const n=engine.raceActors(s.elapsed);upload(dynamic,n,gl.DYNAMIC_DRAW);
-  gl.useProgram(world);gl.uniform4fv(u.cam,cam);
+  gl.useProgram(world);gl.uniform4fv(u.cam,cam);gl.uniform1f(u.clock,s.elapsed%180);
   const focus=framing*(1.55-.12*s.thrust);gl.uniform2f(u.scale,focus*canvas.height/canvas.width,focus);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   for(const pass of [1,2,0]){
    if(pass!==0)gl.clear(gl.DEPTH_BUFFER_BIT);
-   if(pass===2){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(gl.LESS);}
+   if(pass!==0){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthFunc(pass===2?gl.LESS:gl.LEQUAL);}
    else {gl.disable(gl.BLEND);gl.depthFunc(gl.LEQUAL);}
    gl.uniform1f(u.pass,pass);gl.uniform1f(u.shadowOpacity,.26);
    const {buf,sections}=scenery[pass===0?0:1],near=cam[1]-8,far=cam[1]+(pass===2?58:150);

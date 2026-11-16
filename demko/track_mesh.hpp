@@ -1,20 +1,22 @@
 #pragma once
 #include "geometry_api.hpp"
+#include "circuit.hpp"
 #include "race.hpp"
 
 namespace neon {
-// Expand the repeating block once and upload the curved circuit to either Metal or WebGL.
+// Bake each district into one curved circuit for Metal and WebGL.
 struct TrackMesh {
     std::vector<Vertex> data;
     std::vector<int> sections;
 
     explicit TrackMesh(int simple) {
-        sceneBlock(simple);
+
         const int last = int(std::ceil((lapLength + 168) / 24));
         for (int sector = -1; sector <= last; ++sector) {
-            const int tile = (sector % 6 + 6) % 6;
+            const int tile = circuitIndex(sector);
+            const int count = circuitSection(tile, simple);
             sections.push_back(int(data.size()));
-            for (int i = sectionStart(tile); i < sectionStart(tile + 1); ++i) {
+            for (int i = 0; i < count; ++i) {
                 Vertex v = vertices()[i];
                 v.z += (sector - tile) * 24;
                 v.x += road(v.z);

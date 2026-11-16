@@ -7,7 +7,7 @@
 namespace {
 neon::Race race;
 constexpr size_t stateFields = 14;
-std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)>> snapshot;
+std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)> + 4> snapshot;
 std::vector<neon::Object> objects;
 std::optional<neon::TrackMesh> track;
 std::vector<float> canvasCommands;
@@ -62,6 +62,10 @@ const double *raceState() {
         snapshot[i++] = p.x;
         snapshot[i++] = p.z;
     }
+    snapshot[i++] = race.wakeCharge;
+    snapshot[i++] = race.launchTime;
+    snapshot[i++] = race.speed;
+    snapshot[i++] = race.targetAhead();
     return snapshot.data();
 }
 int raceVisible() {

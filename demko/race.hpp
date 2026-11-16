@@ -23,7 +23,7 @@ struct Input {
     int steer = 0;
     bool boost = false, brake = false;
 };
-enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap };
+enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch };
 struct Sector {
     double x, z, mineX;
     bool mine, used = false;
@@ -34,11 +34,12 @@ inline Sector sector(int i) {
     return {x, 56. + i * 96, x + (x > 0 ? -7 : 7), i % 3 != 0};
 }
 struct Pilot {
-    double x, z, speed, lean = 0, stun = 0, boost = 0;
+    double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0;
 };
 struct Shot {
     double x, z;
     bool rocket, spent = false;
+    int target = -1;
 };
 struct Burst {
     double x, z, age = 0;
@@ -51,15 +52,34 @@ struct Race {
            lastLap = 0;
     int laps = 0, shield = 3, rockets = 2, rank = 7, refills = 0, nextSector = 3;
     bool drafting = false, spent = false;
+    double wakeCharge = 0, launchTime = 0, chargedLane = 0, steerMemory = 0;
+    int wakePilot = -1;
     std::array<Pilot, 6> rivals{};
     std::vector<Sector> sectors = {sector(0), sector(1), sector(2)};
     std::vector<Shot> shots;
     std::vector<Burst> bursts;
     std::vector<Cue> cues;
     Race() {
-        constexpr double lanes[] = {-6, 6, -12, 12, -3, 3};
+        constexpr double lanes[] = {0, 6, -12, 12, -3, 3};
+        constexpr double grid[] = {9, 9, 19, 19, 53, 77};
         for (int i = 0; i < 6; i++)
-            rivals[i] = {lanes[i], 9. + (i / 2) * 10, 37. + i * .8};
+            rivals[i] = {lanes[i], grid[i], 37. + i * .8};
+    }
+    int targetAhead() const {
+        int id = -1;
+        double best = 75;
+        for (int i = 0; i < int(rivals.size()); ++i) {
+            const auto &p = rivals[i];
+            double dz = gap(p.z, distance), lateral = std::abs(p.x - x);
+            if (dz < 3 || dz > 64 || lateral > 2.8 + .12 * dz)
+                continue;
+            const double score = dz + 2 * lateral;
+            if (score < best) {
+                best = score;
+                id = i;
+            }
+        }
+        return id;
     }
     void shoot(bool rocket) {
         if (rocket) {
@@ -72,7 +92,7 @@ struct Race {
                 return;
             cooldown = .20;
         }
-        shots.push_back({x, distance + 2, rocket});
+        shots.push_back({x, distance + 2, rocket, false, rocket ? targetAhead() : -1});
         cues.push_back(rocket ? Cue::Rocket : Cue::Fire);
     }
     void impact() {
@@ -91,6 +111,8 @@ struct Race {
     }
     void movePilots(double dt) {
         drafting = false;
+        wakePilot = -1;
+        double nearestWake = 28;
         for (int i = 0; i < 6; i++) {
             auto &p = rivals[i];
             double ahead = gap(p.z, distance), phase = tau * p.z / lapLength;
@@ -111,9 +133,12 @@ struct Race {
                 if (lead > 0 && lead < 9 && fabs(other.x - p.x) < 2.5)
                     line += p.x >= other.x ? 3 : -3;
             }
+            if (i == 0 && p.z < 66)
+                line *= bound((p.z - 34) / 32, 0, 1);
             double dx = bound((line - p.x) * 1.5, -10, 10);
             p.x = bound(p.x + dx * dt, -16.4, 16.4);
             p.lean = -dx * .035;
+            p.hitGlow = std::max(0., p.hitGlow - dt);
             p.stun = std::max(0., p.stun - dt);
             double surge = pow(std::max(0., sin(phase * 4 + i * 1.9)), 6);
             double target = 46 + i * 1.1 + 8 * surge + (p.boost > 0 ? 12 : 0) - 8 * fabs(bend) +
@@ -123,12 +148,17 @@ struct Race {
                 p.boost = 1.2;
             p.speed += ((p.stun > 0 ? target * .53 : target) - p.speed) * (1 - exp(-2 * dt));
             p.z += p.speed * dt;
-            if (ahead > 3 && ahead < 22 && fabs(p.x - x) < 2.3)
+            if (ahead > 2 && ahead < nearestWake && fabs(p.x - x) < 3) {
                 drafting = true;
+                wakePilot = i;
+                nearestWake = ahead;
+            }
         }
     }
     void stepShots(double dt) {
         for (auto &shot : shots) {
+            if (shot.target >= 0 && gap(rivals[shot.target].z, shot.z) > 0)
+                shot.x += bound(rivals[shot.target].x - shot.x, -17 * dt, 17 * dt);
             double prev = shot.z;
             shot.z += dt * (shot.rocket ? 126 : 116);
             double best = shot.z + 2, hitX = 0;
@@ -154,9 +184,10 @@ struct Race {
                     pilot = nullptr;
                 }
             if (pilot || mine) {
-                if (pilot)
+                if (pilot) {
                     pilot->stun = shot.rocket ? 2.4 : 1;
-                else
+                    pilot->hitGlow = .75;
+                } else
                     mine->mine = false;
                 shot.spent = true;
                 bursts.push_back({hitX, best});
@@ -184,8 +215,23 @@ struct Race {
             cues.push_back(Cue::Rail);
         }
         lean += (-vx * .027 - bend * .44 - lean) * (1 - exp(-8 * dt));
+        launchTime = std::max(0., launchTime - dt);
+        steerMemory = in.steer ? 0.5 : std::max(0., steerMemory - dt);
+        if (wakeCharge >= 1 && in.boost && steerMemory > 0 && std::abs(x - chargedLane) > 1.25 &&
+            !in.brake) {
+            launchTime = 1.2;
+            wakeCharge = 0;
+            immunity = std::max(immunity, .45);
+            cues.push_back(Cue::Launch);
+        }
+        if (drafting && !in.boost && launchTime == 0 && wakeCharge < 1) {
+            wakeCharge = std::min(1., wakeCharge + dt / 1.05);
+            if (wakeCharge == 1)
+                chargedLane = x;
+        } else if (!drafting && wakeCharge < 1)
+            wakeCharge = std::max(0., wakeCharge - dt * .20);
         bool boost = in.boost && !in.brake && energy > 0 && !spent;
-        if (boost) {
+        if (boost && launchTime == 0) {
             energy = std::max(0., energy - 22 * dt);
             if (energy == 0)
                 spent = true;
@@ -194,9 +240,10 @@ struct Race {
             if (!in.boost || energy > 30)
                 spent = false;
         }
-        thrust += ((boost || padBoost > 0) - thrust) * (1 - exp(-6 * dt));
-        speed +=
-            ((in.brake ? 29. : 39 + 24 * thrust + (drafting ? 6 : 0)) - speed) * (1 - exp(-2.4 * dt));
+        thrust += ((boost || padBoost > 0 || launchTime > 0) - thrust) * (1 - exp(-6 * dt));
+        speed += ((in.brake ? 29. : 39 + 24 * thrust + (drafting ? 6 : 0) + (launchTime > 0 ? 20 : 0)) -
+                  speed) *
+                 (1 - exp(-2.4 * dt));
         double before = distance, travel = speed * dt / bound(1 - bend * x / 24, .87, 1.13);
         distance += travel;
         while (nextSector * 96 < distance + 210)
@@ -250,6 +297,19 @@ struct Race {
             double dz = gap(p.z, distance);
             if (dz > -10 && dz < 158)
                 add(p.x, distance + dz, 6 + i, p.lean);
+        }
+        const int locked = rockets > 0 ? targetAhead() : -1;
+        for (int i = 0; i < int(rivals.size()); i++) {
+            const auto &p = rivals[i];
+            double dz = gap(p.z, distance);
+            if (dz < 0 || dz > 100)
+                continue;
+            if (p.hitGlow > 0)
+                add(p.x, distance + dz, 14, p.hitGlow / .75);
+            else if (i == locked)
+                add(p.x, distance + dz, 13);
+            if (i == wakePilot)
+                add(p.x, distance + dz, 12, wakeCharge);
         }
         for (auto &s : sectors) {
             if (!s.used && s.z < distance + 153)

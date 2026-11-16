@@ -4,7 +4,7 @@
 
 Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
-Tuck in behind a rival to gain speed and recharge your boost, then pull out to pass on either side. Green boost pads give you a burst of speed and restore one shield point. Use the cannon or rockets to slow rivals and clear orange mines. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
+Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. Gold brackets mark a rival your rocket can track. You can also fire straight down an empty lane to clear a mine. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. If you lose your last shield point, your ship slows for repairs and rejoins the race.
 
 | Control | Action |
 | --- | --- |
@@ -38,7 +38,7 @@ python3 -m http.server --directory docs 8000
 
 The browser requires WebAssembly. WebGL draws the full scene on the GPU. When WebGL is unavailable, the same WebAssembly module projects the scene for Canvas 2D.
 
-To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to replay five reference laps against the compiled game.
+To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to compare five laps against a native C++ replay and check the slingshot controls.
 
 ## Native macOS version
 
