@@ -1,4 +1,4 @@
-import {renderer} from './renderer.js?v=spill1';
+import {renderer} from './renderer.js?v=display2';
 import {loadRace} from './race.js?v=spill1';
 import {Sound} from './audio.js?v=contact1';
 

@@ -245,7 +245,8 @@ void main(){
  float waves=sin(12.*p.y-phase+1.2*sin(6.*p.x+.47*phase));
  float curls=sin(9.*p.x+5.*p.y+.85*phase+waves);
  float strength=envelope*color.b;
- vec2 bend=vec2(waves,curls*.60)*strength*min(4.,23./max(depth,1.));
+ float resolutionScale=1./(400.*max(texel.x,texel.y));
+ vec2 bend=vec2(waves,curls*.60)*strength*min(4.,23./max(depth,1.))*resolutionScale;
  vec3 behind=texture2D(scene,clamp((gl_FragCoord.xy+bend)*texel,texel*.5,1.-texel*.5)).rgb;
  vec3 tint=mix(vec3(.05,.48,1.),vec3(1.,.28,.035),fire);
  vec3 glow=tint*color.b*(.12+.16*(.5+.5*waves))*edge;
@@ -263,7 +264,7 @@ function program(gl,vs,fs){
  return p;
 }
 function gpu(canvas,simulation){
- const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:true,powerPreference:'high-performance'});
+ const gl=canvas.getContext('webgl',{alpha:false,antialias:true,depth:true,powerPreference:'high-performance'});
  if(!gl)throw Error('WebGL unavailable');
  const engine=simulation.geometry;
  const normals=gl.getExtension('OES_standard_derivatives')?'#extension GL_OES_standard_derivatives : enable\n#define CANAL_NORMALS\n':'';
@@ -435,12 +436,12 @@ function canvasFlight(canvas,simulation){
 }
 export async function renderer(canvas,simulation){
  const screen=canvas.parentElement;
- const budgets=[640*400,480*300,320*200];
+ const budgets=[1920*1080,1600*900,1280*720,960*540];
  let tier=0,draw,lastScene,backend='webgl';
  function resize(){
   const {width,height}=screen.getBoundingClientRect();
   if(!width||!height)return;
-  const scale=Math.min(window.devicePixelRatio||1,Math.sqrt(budgets[tier]/(width*height)));
+  const scale=Math.min(window.devicePixelRatio||1,Math.sqrt((backend==='canvas'?960*600:budgets[tier])/(width*height)));
   const w=Math.max(1,Math.round(width*scale)),h=Math.max(1,Math.round(height*scale));
   if(w===canvas.width&&h===canvas.height)return;
   canvas.width=w;canvas.height=h;
@@ -466,7 +467,7 @@ export async function renderer(canvas,simulation){
   slow=ms>(tier===budgets.length-1?58:26)?slow+1:0;
   fast=ms<19?fast+1:0;
   if(tier<budgets.length-1 && slow>=2){tier++;slow=fast=0;resize();}
-  else if(tier>0 && fast>=14){tier--;slow=fast=0;resize();}
+  else if(tier>0 && fast>=6){tier--;slow=fast=0;resize();}
   else if(tier===budgets.length-1 && slow>=7)simplify();
  }
  return {draw:s=>{lastScene=s;draw(s);},sampleFrameTime,get backend(){return backend;}};
