@@ -26,6 +26,7 @@ html .step:before{border-radius:0;background:var(--amber);color:var(--ink);font-
 html .step p,html .ep p.sum{color:#cbbfae}
 html .ep-num{background:var(--ink);border:0;color:var(--light,#76ddaf);font:700 14px var(--pix)}
 html .pill{border:0;background:var(--amber);color:var(--ink);font-family:var(--pix)}
+html .pill.soon-pill{color:var(--ink)}
 html .thumb{box-shadow:0 0 0 3px var(--ink),0 0 0 5px #a49486}
 html a{color:#76ddaf}
 html .ex a{color:var(--teal)}
