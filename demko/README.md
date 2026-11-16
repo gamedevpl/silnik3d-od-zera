@@ -20,7 +20,7 @@ Tuck into the teal wake behind a rival and ease off the boost for about a second
 
 Press **Space**, click the race view or tap it to start or resume. During the race, drag sideways to steer. On a trackpad, a horizontal two-finger swipe also steers. On a touchscreen, steer with one thumb and hold **Boost** with the other. The game opens in English. Select **PL** in the browser to switch to Polish.
 
-Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. A stereo ion-drive sample bank (ElevenLabs sound effects) crossfades from cruise to beam thrust, with separate ignition and cutoff cues. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
+Starting the race plays the original 150 BPM soundtrack from *I have a vibe, for a new game*. After the first 48 seconds, the section from 0:16 to 0:48 loops. The ion drive loops the stereo cruise recording at a fixed pitch. Boost gradually speeds up its pulse to four beats per second. Releasing boost eases it back into cruise. The cannon, rocket, rail scrape and hull breakup have distinct sounds synthesized in C++.
 
 ## Source code
 

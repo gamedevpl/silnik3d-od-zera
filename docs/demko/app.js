@@ -1,6 +1,6 @@
 import {renderer} from './renderer.js?v=duel1';
 import {loadRace} from './race.js?v=plasma1';
-import {Sound} from './audio.js?v=plasma1';
+import {Sound} from './audio.js?v=pulse1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -181,7 +181,7 @@ function tick(now){
   }
   const input={steer,boost:held('boost'),brake:held('brake')};
   advance(dt,input,held('fire'),cue);
-  sound.tick(race.speed,race.thrust);draw(race);
+  sound.tick(race.thrust);draw(race);
   if(now>=nextHud){updateHUD();nextHud=now+75;}
   if(!windowStart)windowStart=now;
   frameCount++;

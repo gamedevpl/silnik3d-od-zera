@@ -7,7 +7,6 @@ export class Sound{
     const Context=window.AudioContext||window.webkitAudioContext;this.ctx=new Context();
     const c=this.ctx;this.volume=c.createGain();this.volume.gain.value=this.muted?0:.48;
     const limiter=c.createDynamicsCompressor();this.volume.connect(limiter);limiter.connect(c.destination);
-    this.driveBus=c.createGain();this.driveBus.connect(this.volume);
    }
    if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
   }catch{return;}
@@ -40,12 +39,12 @@ export class Sound{
    if(this.musicOffset>=end)this.musicOffset=16+(this.musicOffset-end)%(end-16);
    this.music.stop();this.music=null;
   }
-  if(this.layers){
-   this.driveBus.gain.setTargetAtTime(0,this.ctx.currentTime,.008);
-   for(const layer of this.layers)layer.src.stop(this.ctx.currentTime+.04);
-   this.layers=null;
+  if(this.driveVoice){
+   const {field,pulse,fade}=this.driveVoice,now=this.ctx.currentTime;
+   fade.gain.cancelScheduledValues(now);
+   fade.gain.setTargetAtTime(0,now,.006);
+   field.stop(now+.04);pulse.stop(now+.04);this.driveVoice=null;
   }
-  this.transition?.stop();this.transition=null;this.boosting=false;
  }
  clip(id){
   if(this.clips[id])return this.clips[id];
@@ -61,35 +60,28 @@ export class Sound{
     return response.arrayBuffer();
    }).then(bytes=>this.ctx.decodeAudioData(bytes)).catch(error=>{this.driveLoad=null;console.warn(error);return null;});
   }
-  this.drive=await this.driveLoad;
-  if(!this.running||!this.drive||this.layers)return;
-  const now=this.ctx.currentTime;
-  this.driveBus.gain.cancelScheduledValues(now);this.driveBus.gain.setValueAtTime(1,now);
-  this.layers=[0,4].map((start)=>{
-   const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
-   src.buffer=this.drive;src.loop=true;src.loopStart=start;src.loopEnd=start+4;
-   gain.gain.value=0;src.connect(gain).connect(this.driveBus);
-   src.onended=()=>{src.disconnect();gain.disconnect();};src.start(now,start);
-   return {src,gain};
-  });
+  const buffer=await this.driveLoad;
+  if(!this.running||!buffer||this.driveVoice)return;
+  const c=this.ctx,now=c.currentTime;
+  const field=c.createBufferSource(),pulse=c.createOscillator();
+  const depth=c.createGain(),level=c.createGain(),fade=c.createGain();
+  field.buffer=buffer;field.loop=true;field.loopEnd=4;
+  pulse.frequency.value=1.25;depth.gain.value=0;level.gain.value=.63;
+  pulse.connect(depth).connect(level.gain);
+  field.connect(level).connect(fade).connect(this.volume);
+  fade.gain.setValueAtTime(0,now);fade.gain.setTargetAtTime(1,now,.012);
+  field.onended=()=>{field.disconnect();pulse.disconnect();depth.disconnect();level.disconnect();fade.disconnect();};
+  this.driveVoice={field,pulse,depth,level,fade};
+  field.start(now);pulse.start(now);
  }
- driveAccent(boost){
-  this.transition?.stop();
-  const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
-  src.buffer=this.drive;gain.gain.value=boost?.63:.47;src.connect(gain).connect(this.driveBus);
-  src.onended=()=>{src.disconnect();gain.disconnect();if(this.transition===src)this.transition=null;};
-  this.transition=src;src.start(0,boost?8:8.95,boost?.95:1.10);
- }
- tick(speed,thrust){
-  if(!this.running||!this.layers||this.ctx.state!=='running')return;
-  const flow=Math.min(1.25,speed/82),now=this.ctx.currentTime;
-  const [field,beam]=this.layers;
-  field.src.playbackRate.setTargetAtTime(.92+.14*flow,now,.24);
-  beam.src.playbackRate.setTargetAtTime(.90+.13*flow+.09*thrust,now,.20);
-  field.gain.gain.setTargetAtTime(.63-.39*thrust,now,.10);
-  beam.gain.gain.setTargetAtTime(.72*thrust*thrust,now,.11);
-  if(!this.boosting && thrust>.43){this.boosting=true;this.driveAccent(true);}
-  else if(this.boosting && thrust<.20){this.boosting=false;this.driveAccent(false);}
+ tick(thrust){
+  if(!this.running||!this.driveVoice)return;
+  const {pulse,depth,level}=this.driveVoice,now=this.ctx.currentTime;
+  const amount=.15*thrust;
+  // Modulate the level of the cruise sound, with its original peak and pitch.
+  level.gain.setTargetAtTime(.63-amount,now,.10);
+  depth.gain.setTargetAtTime(amount,now,.10);
+  pulse.frequency.setTargetAtTime(1.25+2.75*thrust,now,.42);
  }
  cue(event,strength=.5){
   const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);

@@ -194,7 +194,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             }
         }
         race.cues.clear();
-        sound.power(race.speed,race.thrust);
+        sound.power(race.thrust);
         if (now - lastHUD > .08) {
             [self updateHUD];
             lastHUD = now;
