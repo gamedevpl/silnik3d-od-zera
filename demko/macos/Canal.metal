@@ -62,6 +62,40 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
   tint+=strip*float3(.12f,.26f,.27f)*nearDetail;
   return float4(tint,mix(.69f,.90f,fres)*range);
     }
+ if(in.mat>39.5f){
+  float3 base=in.mat<40.5f?float3(.96f,.48f,.19f):in.mat<41.5f?float3(.16f,.83f,.69f):in.mat<42.5f?float3(.97f,.32f,.56f):
+    in.mat<43.5f?float3(.98f,.70f,.20f):in.mat<44.5f?float3(.43f,.54f,.96f):in.mat<45.5f?float3(.73f,.43f,.92f):
+    in.mat<46.5f?float3(.48f,.79f,.35f):in.mat<47.5f?float3(.71f,.77f,.79f):in.mat<48.5f?float3(.12f,.31f,.40f):
+    in.mat<49.5f?float3(.16f,.20f,.24f):in.mat<50.5f?float3(.39f,.91f,1.f):float3(.99f,.88f,.63f);
+  float2 uv=in.color.rg;
+  float4 skin=hull.sample(repeatMap,uv*float2(2.f,2.f));
+  float l=in.color.b;
+  float highlight=pow(max(0.f,1.f-abs(l-.79f)*6.f),3.f);
+  float2 bump=skin.rg*2.f-1.f;
+  float light=clamp(l+.20f*bump.y-.14f*bump.x,0.f,1.f);
+  float polish=1.f-skin.a;
+  float3 shaded=base*(.36f+.77f*light+.53f*(skin.b-.53f)) + highlight*float3(.22f,.20f,.17f)*(.58f+.85f*polish);
+  if(in.mat<47.5f){
+   // Circumferential joints and the access stencil stay fixed to the local hull.
+   float joint=1.f-smoothstep(.013f,.050f,abs(fract(uv.y*5.f+.18f)-.5f));
+   shaded*=1.f-.34f*joint;
+   float band=1.f-smoothstep(.036f,.048f,abs(uv.x-.25f));
+   float warning=step(.52f,fract(uv.y*22.f+uv.x*9.f))*band*smoothstep(.12f,.16f,uv.y)*(1.f-smoothstep(.28f,.32f,uv.y));
+   shaded=mix(shaded,float3(.97f,.69f,.27f)*(.65f+.4f*l),warning*.82f);
+  }
+  if(in.mat<46.5f){
+   float stripe=smoothstep(.21f,.24f,uv.y)*(1.f-smoothstep(.26f,.29f,uv.y));
+   shaded=mix(shaded,float3(.90f,.86f,.72f)*(.45f+.55f*l),stripe*.88f);
+  }else if(in.mat>47.5f && in.mat<48.5f){
+   float horizon=smoothstep(.65f,.78f,l);
+   shaded=mix(float3(.025f,.095f,.15f),float3(.28f,.54f,.61f),horizon)+
+          float3(.85f,.68f,.48f)*pow(max(0.f,1.f-abs(l-.76f)*15.f),3.f);
+   shaded*=1.f-.55f*(1.f-smoothstep(.008f,.025f,abs(uv.y-.36f)));
+  }else if(in.mat>49.5f && in.mat<50.5f)shaded=base*(.86f+.14f*l);
+  if(v.effects.y>.5f)shaded=mix(float3(.045f,.082f,.125f),shaded,.47f);
+  float opacity=v.effects.y>.5f ? .065f+.355f*smoothstep(6.f,22.f,in.distance) : 1.f;
+  return float4(mix(shaded,float3(.40f,.30f,.43f),.65f*smoothstep(36.f,155.f,in.distance)),opacity*range);
+ }
     if(in.mat>31.5){
         constexpr sampler spriteMap(coord::normalized,address::clamp_to_edge,filter::linear,mip_filter::linear);
         float4 s=in.mat<32.5?smoke.sample(spriteMap,in.color.rg):in.mat<33.5?flame.sample(spriteMap,in.color.rg):ember.sample(spriteMap,in.color.rg);

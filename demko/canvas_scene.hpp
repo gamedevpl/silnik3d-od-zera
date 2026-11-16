@@ -3,6 +3,7 @@
 #include "circuit.hpp"
 #include "bridge.hpp"
 #include "damage_fx.hpp"
+#include "racer.hpp"
 
 namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
@@ -150,15 +151,42 @@ class CanvasScene {
         }
         emit({Opacity, 1});
     }
+    void ship(int team,double x,double z,double bank,int damage,double speed) {
+        struct Face { Point a,b,c; double depth; int color; };
+        std::vector<Face> faces;
+        const auto &hull=racerBody(team,true);
+        faces.reserve(hull.size());
+        const double cs=std::cos(bank),sn=std::sin(bank);
+        auto projected=[&](BodyVertex p) {
+            return project(x+p.x,1.85+p.y+bridgeHeight(x,z)+viaductHeight(z+p.z),z+p.z);
+        };
+        for(int side:{-1,1}){
+            auto jet=[&](double offset,double length) {
+                auto v=posedVertex({float(side*(1.06+.06*(team%2))+offset),.07f,float(-1.9-length),0,0,0},cs,sn,damage);
+                return projected(v);
+            };
+            polygon(0x62dafa,{jet(-.16,0),jet(.16,0),jet(0,.5+speed/65.)});
+        }
+        for(const auto &f:hull){
+            auto a=posedVertex(f.a,cs,sn,damage),b=posedVertex(f.b,cs,sn,damage),c=posedVertex(f.c,cs,sn,damage);
+            int rgb=bodyColors[f.finish-TeamPaint];double light=(a.light+b.light+c.light)/3;
+            if(f.finish==HotCore)light=1;
+            int color=0;
+            for(int shift:{16,8,0})color|=int(((rgb>>shift)&255)*light)<<shift;
+            faces.push_back({projected(a),projected(b),projected(c),a.z+b.z+c.z-.4*(a.y+b.y+c.y),color});
+        }
+        std::stable_sort(faces.begin(),faces.end(),[](const Face &a,const Face &b){return a.depth>b.depth;});
+        for(const auto &f:faces)polygon(f.color,{f.a,f.b,f.c});
+    }
     void actor(const Object &o) {
-        auto [x, z, kind, age] = o;
+        auto [x, z, kind, age, speed] = o;
         if (z <= camZ + 1)
             return;
         double deck = bridgeHeight(x, z) + viaductHeight(z);
         auto [cx, cy] = project(x, 1.85 + deck, z);
         double r = focal / (z - camZ);
         if (int(kind) >= Sparks || kind == 5) {
-            damagePuffs(int(kind), turbineAngle / .85, age, [&](const Puff &p) {
+            damagePuffs(int(kind), turbineAngle / .85, age, speed, [&](const Puff &p) {
                 double zz = z + p.center.z;
                 if (zz <= camZ + .8)
                     return;
@@ -190,6 +218,8 @@ class CanvasScene {
         } else if (kind == 14) {
             emit({Ellipse, 0xffdc93, std::max(1., age * r * .24), cx, cy, (2.1 + (1 - age) * 1.5) * r,
                   (1.6 + (1 - age)) * r, 0});
+        } else if (kind >= 6 && z-camZ < 42) {
+            ship(int(kind)-5,x,z,age,0,speed);
         } else if (kind >= 6) {
             constexpr int colors[] = {0x34e4d0, 0xf96198, 0xf6c547, 0x7d91ff, 0xd372f8, 0x88e26b};
             int color = colors[int(kind) - 6];
@@ -250,26 +280,8 @@ class CanvasScene {
             actor(o);
         if (race.recovery > 0)
             return;
-        auto p = [&](double x, double y, double z) {
-            if (x * race.damagedSide > 0 && std::abs(x) > .86) {
-                double dent = (std::abs(x) - .86) * (3 - race.shield);
-                x -= std::copysign(.29 * dent, x);
-                y -= .23 * dent;
-                z -= .18 * dent;
-            }
-            return project(race.x + x, bridgeHeight(race.x,race.distance) + viaductHeight(race.distance + z) + 1.85 + y + x * race.lean, camZ + 9.2 + z);
-        };
-        for (int s : {-1, 1}) {
-            polygon(0xd4d9dd, {p(0, .3, 2.35), p(s * .55, .1, .54), p(0, .4, -1)});
-            polygon(0xf19b55, {p(s * .55, .1, .54), p(s * 1.55, -.09, -.91), p(s * .56, .08, -1.12)});
-            polygon(0xffeba3, {p(s * .9, .09, -1.24), p(s * 1.55, -.06, -.92), p(s * 1.45, .04, -.78),
-                               p(s * .90, .16, -1.0)});
-            polygon(0x80dbe5, {p(0, .68, .03), p(s * .36, .39, -.48), p(s * .25, .46, .76)});
-            polygon(0xc2fff3, {p(s * .74 - .20, .18, -1.35), p(s * .74 + .20, .18, -1.35),
-                               p(s * .74 + .20, .01, -1.35), p(s * .74 - .20, .01, -1.35)});
-            polygon(0x59e6ff, {p(s * .49, 0, -1.16), p(s * .66, 0, -1.16),
-                               p(s * .57, 0, -1.7 - race.thrust * .8)});
-        }
+        ship(0,race.x,race.distance-race.laps*lapLength,race.lean,
+             (3-race.shield)*race.damagedSide,race.speed);
     }
 };
 } // namespace neon

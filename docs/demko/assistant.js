@@ -10,6 +10,8 @@ const WEB_FILES = ["docs/demko/app.js", "docs/demko/renderer.js", "docs/demko/ra
 const ROLES = {
   "demko/race.hpp": "race physics, rival pilots, weapons and collisions (the rules of the race)",
   "demko/raceway.hpp": "track geometry and a small perspective rasterizer for the canal",
+  "demko/racer.hpp": "ship geometry, team liveries and cockpit materials",
+  "demko/sound_bank.hpp": "synthesized turbine, airflow and race sound effects",
   "demko/demo.cpp": "ship models, lane markings and track meshes, reused by the browser",
   "demko/race_fx.inc": "raceway lighting and the arcade encounter, in ship world coordinates",
   "demko/lighting.h": "a small diffuse lightmap for the recessed neon panels",
@@ -58,7 +60,7 @@ const tools = [
       const overlay = document.querySelector(".overlay");
       const racing = overlay && overlay.hidden;
       let best = 0;
-      try { best = Number(localStorage.getItem("neon.lap.v6")) || 0; } catch (_) {}
+      try { best = Number(localStorage.getItem("neon.lap.v7")) || 0; } catch (_) {}
       const hud = document.querySelector(".hud");
       return [
         racing ? "A race is running." : `Not racing. The menu shows "${text("#title")}".`,

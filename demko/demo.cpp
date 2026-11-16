@@ -4,12 +4,13 @@
 #include "circuit.hpp"
 #include "bridge.hpp"
 #include "race.hpp"
+#include "racer.hpp"
 #include "damage_fx.hpp"
 
 static std::vector<Vertex> mesh;
 static int firstPuff;
 extern "C" int particleStart(){return firstPuff;}
-static float objects[64*4]; // Lane X, world Z, object kind, animation phase.
+static float objects[64*5]; // Lane X, world Z, object kind, animation phase and emitter speed.
 static_assert(sizeof(Vertex)==16);
 
 static Frame geometryFrame(double time){
@@ -21,28 +22,31 @@ static Frame geometryFrame(double time){
     return f;
 }
 
-static void rival(Frame &f,int id,double x,double z,double bank){
-    const C colors[]={{52,228,208},{249,97,152},{246,197,71},{125,145,255},{211,114,248},{136,226,107}};
-    const C paint=colors[id], trim=mix(paint,{246,248,236},.63);
-    const double cs=std::cos(bank),sn=std::sin(bank),wing=1.5+.23*(id%3);
-    auto p=[&](double a,double b,double c){return V{x+a*cs-b*sn,1.85+b*cs+a*sn,z+c};};
-    V nose=p(0,.05,2.5),canopy=p(0,.60,.05),tail=p(0,.10,-1.4);
-    for(int side:{-1,1}){
-        V shoulder=p(side*.56,.19,.5),tip=p(side*wing,-.1,-.98),jet=p(side*.8,.12,-1.35);
-        f.tri(nose,shoulder,canopy,trim);f.tri(shoulder,tail,canopy,{66,78,98});
-        f.tri(shoulder,tip,jet,paint);f.tri(shoulder,jet,tail,paint);
-        f.tri(tip,jet,p(side*(wing-.14),.50,-1.36),trim);
-        f.tri(jet,p(side*.58,.1,-1.32),p(side*.70,.10,-3.65),paint);
-        for(int j=0;j<4;j++){
-            auto trail=[&](int k,double edge){
-                double u=k/4.;
-                return p(side*.70+bank*u*u*.85+edge*.12*(1-u),.07-.30*u,-1.6-5.7*u);
-            };
-            f.quad(trail(j,-1),trail(j,1),trail(j+1,1),trail(j+1,-1),mix(paint,{87,86,129},j*.18));
+static void racer(Frame &f,int team,double x,double z,double bank,int wing,double speed,double thrust,double time){
+    const double cs=std::cos(bank),sn=std::sin(bank);
+    auto byte=[](float n){return uint8_t(255*std::clamp(n,0.f,1.f));};
+    for(const auto &face:neon::racerBody(team)){
+        for(auto v:{face.a,face.b,face.c}){
+            v=neon::posedVertex(v,cs,sn,wing);
+            mesh.push_back({float(x+v.x),float(1.85+v.y),float(z+v.z),byte(v.u),byte(v.v),byte(v.light),uint8_t(face.finish)});
         }
-        f.tri(jet,p(side*.58,.1,-1.32),p(side*.70,.10,-2.05),{226,251,247});
     }
-    f.tri(p(-.23,.40,.2),p(.23,.40,.2),p(0,.29,1.43),{42,86,110});
+    // A short white core inside a longer turbine plume, anchored in each exhaust throat.
+    const double flow=std::clamp(speed/82.,0.,1.3);
+    for(int side:{-1,1}){
+        double sx=side*(1.06+.06*(team%2)),length=.48+flow*.83+thrust*.89;
+        auto jet=[&](int i,double radius,double aft){
+            double a=neon::tau*i/10;
+            auto p=neon::posedVertex({float(sx+radius*std::cos(a)),float(.062+radius*std::sin(a)),float(-1.94-aft),0,0,0},cs,sn,wing);
+            return V{x+p.x,1.85+p.y,z+p.z};
+        };
+        for(int i=0;i<10;i++){
+            double pulse=.97+.03*std::sin(time*31+side);
+            f.quad(jet(i,.147,0),jet(i+1,.147,0),jet(i+1,.112,.30),jet(i,.112,.30),{184,255,250});
+            f.quad(jet(i,.112,.30),jet(i+1,.112,.30),jet(i+1,.075,.55*length),jet(i,.075,.55*length),{72,213,250});
+            f.tri(jet(i,.075,.55*length),jet(i+1,.075,.55*length),jet(i,0,length*pulse),{70,121,224});
+        }
+    }
 }
 
 // The open lock bridge and cable cranes give each part of a lap a different skyline.
@@ -185,7 +189,7 @@ static void lockTurbine(Frame &f,double distance,double time){
     }
     f.box(x-.55,y-.55,z-.12,1.1,1.1,.3,{93,236,214},{60,85,103});
 }
-int actors(double time,double distance,double x,double lean,double thrust,int count,int wing){
+int actors(double time,double distance,double x,double lean,double thrust,double speed,int count,int wing){
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
@@ -210,8 +214,8 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
         place(0,pump,false);
     }
     bool wreck=false;
-    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*4+2])==neon::PlayerFragments;
-    if(!wreck)f.ship(true,wing);
+    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*5+2])==neon::PlayerFragments;
+    if(!wreck)racer(f,0,x,distance,lean,wing,speed,thrust,time);
     if(!wreck && (neon::bridgeHeight(x,distance)+neon::viaductHeight(distance))>.1){
         auto shadow=[&](double dx,double dz){return V{x+dx-.35,.16+neon::bridgeHeight(x,distance+dz)-neon::bridgeHeight(x,distance),distance+dz-.4};};
         for(int side:{-1,1})
@@ -219,11 +223,11 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
     }
     place(x,distance,true);
     for(int i=0;i<std::clamp(count,0,64);i++){
-        const float *o=objects+4*i;
+        const float *o=objects+5*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
         if(int(kind)>=neon::Sparks || kind==5){
-            neon::damagePuffs(int(kind),time,age,[&](neon::Puff puff){
+            neon::damagePuffs(int(kind),time,age,o[4],[&](neon::Puff puff){
                 puff.center.z+=z;puff.center.x+=xx+neon::road(puff.center.z);
                 puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z);puffs.push_back(puff);
             });
@@ -248,7 +252,7 @@ int actors(double time,double distance,double x,double lean,double thrust,int co
                 f.quad(q(a,r),q(b,r),q(b,r+.28*age),q(a,r+.28*age),mix({224,119,58},{255,253,212},age));
             }
         }else if(kind>=6){
-            rival(f,int(kind)-6,xx,z,age);
+            racer(f,int(kind)-5,xx,z,age,0,o[4],std::clamp((o[4]-54.)/30.,0.,1.),time);
         }else if(kind==0){
             for(int j=0;j<3;j++)for(int side:{-1,1}){
                 const double zz=z+j*1.9-2;

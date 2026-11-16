@@ -60,7 +60,7 @@ struct Puff {
     int tile;
 };
 
-template <class Emit> void damagePuffs(int kind, double time, double age, Emit emit) {
+template <class Emit> void damagePuffs(int kind, double time, double age, double speed, Emit emit) {
     auto puff = [&](double x, double y, double z, double w, double h, double angle, double alpha, int tile) {
         emit(Puff{{x, y, z}, w, h, angle, std::clamp(alpha, 0., 1.), tile});
     };
@@ -80,17 +80,19 @@ template <class Emit> void damagePuffs(int kind, double time, double age, Emit e
         }
     } else if (kind == FireTrail || kind == Smoke) {
         double side = age < 0 ? -1 : 1;
+        // Age remains continuous under acceleration. Airflow advects older puffs farther aft.
+        const double flow = std::clamp(speed / 84., 0., 1.25);
         for (int i = 0; i < 14; i++) {
             double u = std::fmod(time * 1.02 + std::abs(age) + i / 14., 1.);
-            double x = side * (.83 + .48 * u + .20 * u * std::sin(5 * u + std::abs(age))), y = 2. + 1.45 * u,
-                   z = -1.03 - 4.1 * u;
-            double r = .13 + .62 * u;
+            double x = side * (.83 + .48 * u + .20 * u * std::sin(5 * u + std::abs(age))), y = 1.97 + (2.15 - 1.40 * flow) * u,
+                   z = -1.3 - (.85 + 7.4 * flow) * u;
+            double r = .14 + (.76 - .27 * flow) * u;
             puff(x, y, z, r, r * (1 + .22 * u), 1.7 * i + .7 * u, .64 * (1 - u * u) * std::min(1., 8 * u), 4);
         }
         if (kind == FireTrail)
             for (int i = 0; i < 9; i++) {
                 double u = std::fmod(time * 2.6 + i / 9., 1.), r = .12 + .28 * std::sin(3.14 * u);
-                puff(side * (.73 + .11 * std::sin(6 * u)), 2.04 + .55 * u, -1.08 - 1.8 * u, r, .18 + .46 * u,
+                puff(side * (.73 + .11 * std::sin(6 * u)), 2.0 + (1.08 - .68 * flow) * u, -1.27 - (.57 + 3.45 * flow) * u, r, .18 + (.60 - .22 * flow) * u,
                      u - .5, .95 * (1 - u * u), 5);
             }
     } else if (kind == Sparks) {

@@ -44,6 +44,40 @@ void main(){
   tint+=strip*vec3(.12,.26,.27)*nearDetail;
   gl_FragColor=vec4(tint,mix(.69,.90,fres)*range);return;
  }
+ if(mat>39.5){
+  vec3 base=mat<40.5?vec3(.96,.48,.19):mat<41.5?vec3(.16,.83,.69):mat<42.5?vec3(.97,.32,.56):
+    mat<43.5?vec3(.98,.70,.20):mat<44.5?vec3(.43,.54,.96):mat<45.5?vec3(.73,.43,.92):
+    mat<46.5?vec3(.48,.79,.35):mat<47.5?vec3(.71,.77,.79):mat<48.5?vec3(.12,.31,.40):
+    mat<49.5?vec3(.16,.20,.24):mat<50.5?vec3(.39,.91,1.):vec3(.99,.88,.63);
+  vec2 uv=color.rg;
+  vec4 skin=texture2D(hull,uv*vec2(2.,2.));
+  float l=color.b;
+  float highlight=pow(max(0.,1.-abs(l-.79)*6.),3.);
+  vec2 bump=skin.rg*2.-1.;
+  float light=clamp(l+.20*bump.y-.14*bump.x,0.,1.);
+  float polish=1.-skin.a;
+  vec3 shaded=base*(.36+.77*light+.53*(skin.b-.53)) + highlight*vec3(.22,.20,.17)*(.58+.85*polish);
+  if(mat<47.5){
+   // Circumferential joints and the access stencil stay fixed to the local hull.
+   float joint=1.-smoothstep(.013,.050,abs(fract(uv.y*5.+.18)-.5));
+   shaded*=1.-.34*joint;
+   float band=1.-smoothstep(.036,.048,abs(uv.x-.25));
+   float warning=step(.52,fract(uv.y*22.+uv.x*9.))*band*smoothstep(.12,.16,uv.y)*(1.-smoothstep(.28,.32,uv.y));
+   shaded=mix(shaded,vec3(.97,.69,.27)*(.65+.4*l),warning*.82);
+  }
+  if(mat<46.5){
+   float stripe=smoothstep(.21,.24,uv.y)*(1.-smoothstep(.26,.29,uv.y));
+   shaded=mix(shaded,vec3(.90,.86,.72)*(.45+.55*l),stripe*.88);
+  }else if(mat>47.5 && mat<48.5){
+   float horizon=smoothstep(.65,.78,l);
+   shaded=mix(vec3(.025,.095,.15),vec3(.28,.54,.61),horizon)+
+          vec3(.85,.68,.48)*pow(max(0.,1.-abs(l-.76)*15.),3.);
+   shaded*=1.-.55*(1.-smoothstep(.008,.025,abs(uv.y-.36)));
+  }else if(mat>49.5 && mat<50.5)shaded=base*(.86+.14*l);
+  if(pass>.5)shaded=mix(vec3(.045,.082,.125),shaded,.47);
+  float opacity=pass>.5 ? .065+.355*smoothstep(6.,22.,depth) : 1.;
+  gl_FragColor=vec4(mix(shaded,vec3(.40,.30,.43),.65*smoothstep(36.,155.,depth)),opacity*range);return;
+ }
  if(mat>31.5){
   vec4 sprite=mat<32.5?texture2D(smoke,color.rg):mat<33.5?texture2D(flame,color.rg):texture2D(ember,color.rg);
   gl_FragColor=vec4(sprite.rgb,sprite.a*color.b*range);return;

@@ -1,16 +1,13 @@
 // The film score loops independently of the engine, weapons and race cues.
 export class Sound{
- constructor(){this.muted=false;this.running=false;this.musicOffset=0;}
+ constructor(bank){this.bank=bank;this.clips=[];this.muted=false;this.running=false;this.musicOffset=0;}
  unlock(){
   try{
    if(!this.ctx){
     const Context=window.AudioContext||window.webkitAudioContext;this.ctx=new Context();
     const c=this.ctx;this.volume=c.createGain();this.volume.gain.value=this.muted?0:.48;
     const limiter=c.createDynamicsCompressor();this.volume.connect(limiter);limiter.connect(c.destination);
-    this.motor=c.createOscillator();this.motor.type='sawtooth';this.motor.frequency.value=50;
-    this.filter=c.createBiquadFilter();this.filter.frequency.value=180;
-    this.motorGain=c.createGain();this.motorGain.gain.value=0;
-    this.motor.connect(this.filter).connect(this.motorGain).connect(this.volume);this.motor.start();
+    this.motor=this.loop(10);this.wind=this.loop(11);
    }
    if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
   }catch{return;}
@@ -43,29 +40,33 @@ export class Sound{
    if(this.musicOffset>=end)this.musicOffset=16+(this.musicOffset-end)%(end-16);
    this.music.stop();this.music=null;
   }
-  this.motorGain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);
+  for(const layer of [this.motor,this.wind])layer.gain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);
  }
- tone(freq,end,duration,gain,type,when){
-  if(!this.ctx||this.muted)return;
-  const c=this.ctx,t=when??c.currentTime,o=c.createOscillator(),env=c.createGain();
-  o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(end,t+duration);
-  env.gain.setValueAtTime(.0001,t);env.gain.exponentialRampToValueAtTime(gain,t+.007);
-  env.gain.exponentialRampToValueAtTime(.0001,t+duration);
-  o.connect(env).connect(this.volume);o.onended=()=>{o.disconnect();env.disconnect();};
-  o.start(t);o.stop(t+duration+.01);
+ clip(id){
+  if(this.clips[id])return this.clips[id];
+  const ptr=this.bank.soundClip(id),n=this.bank.soundLength(id);
+  const b=this.ctx.createBuffer(1,n,this.bank.soundRate());
+  b.copyToChannel(new Float32Array(this.bank.memory.buffer,ptr,n),0);
+  this.clips[id]=b;return b;
  }
- tick(thrust){
+ loop(id){
+  const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
+  src.buffer=this.clip(id);src.loop=true;gain.gain.value=0;
+  src.connect(gain).connect(this.volume);src.start();return {src,gain};
+ }
+ tick(speed,thrust){
   if(!this.running||!this.ctx||this.ctx.state!=='running')return;
-  const now=this.ctx.currentTime;
-  this.motor.frequency.setTargetAtTime(48+52*thrust,now,.07);this.filter.frequency.setTargetAtTime(140+400*thrust,now,.09);
-  this.motorGain.gain.setTargetAtTime(.049+.028*thrust,now,.09);
-
+  const flow=Math.min(1.25,speed/82),now=this.ctx.currentTime;
+  this.motor.src.playbackRate.setTargetAtTime(.63+.83*flow+.17*thrust,now,.08);
+  this.wind.src.playbackRate.setTargetAtTime(.68+.55*flow,now,.11);
+  this.motor.gain.gain.setTargetAtTime(.12+.13*thrust,now,.09);
+  this.wind.gain.gain.setTargetAtTime(.016+.19*flow*flow,now,.11);
  }
  cue(event){
-  const cues={launch:[240,1060,.44,.24,'triangle'],fire:[680,150,.115,.24,'triangle'],rocket:[135,650,.36,.19,'sawtooth'],
-   break:[210,39,.28,.32,'sawtooth'],hit:[120,34,.36,.40,'square'],
-   pad:[640,1180,.17,.22,'sine'],miss:[180,128,.12,.14,'triangle'],
-   lap:[440,880,.36,.19,'triangle'],wreck:[110,26,.42,.2,'sawtooth'],repair:[160,46,.32,.20,'sawtooth'],rail:[160,95,.09,.11,'triangle']};
-  if(cues[event])this.tone(...cues[event]);
+  const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);
+  if(id<0||!this.ctx||this.muted||!this.running)return;
+  const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
+  src.buffer=this.clip(id);gain.gain.value=id===0?.42:id===5?.39:.72;
+  src.connect(gain).connect(this.volume);src.onended=()=>{src.disconnect();gain.disconnect();};src.start();
  }
 }

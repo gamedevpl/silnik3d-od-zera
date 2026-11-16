@@ -1,6 +1,7 @@
 // Browser ABI. State is copied after a simulation step so JS never owns race rules.
 #include "track_mesh.hpp"
 #include "materials.hpp"
+#include "sound_bank.hpp"
 #include "canvas_scene.hpp"
 #include <optional>
 #include <algorithm>
@@ -15,6 +16,9 @@ std::vector<float> canvasCommands;
 } // namespace
 extern "C" {
 // The upload views remain valid until releaseTrack() or the next buildTrack().
+const float *soundClip(int id) { return neon::audio::clip(id).data(); }
+int soundLength(int id) { return int(neon::audio::clip(id).size()); }
+int soundRate() { return neon::audio::rate; }
 const uint8_t *surfaceMap(int id) { return neon::materialTile(id).data(); }
 int buildTrack(int simple) {
     track.emplace(simple);

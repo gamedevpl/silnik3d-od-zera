@@ -1,6 +1,7 @@
 // Native checks for arrangements that are deliberately not writable via the browser ABI.
 #include "../race.hpp"
 #include <cassert>
+#include "../damage_fx.hpp"
 int main() {
     for (double offset : {0., neon::lapLength}) {
         assert(neon::viaductHeight(offset + 480) == 0);
@@ -72,11 +73,37 @@ int main() {
                 assert(side * fork.x >= neon::islandHalf(fork.distance) + 1.29);
             }
             assert((neon::bridgeHeight(fork.x, fork.distance) > 4) == (side < 0));
-            assert(side < 0 ? fork.energy < 47 : fork.energy > 70);
+            assert(side < 0 ? fork.energy < 55 : fork.energy > 78);
             while (neon::lapPosition(fork.distance) < neon::forkEnd + .1)
                 fork.advance(1. / 90, {});
             assert(fork.forkSide == 0 && neon::bridgeHeight(fork.x, fork.distance) == 0);
         }
+    neon::Race sprint;
+    sprint.x=-12;
+    sprint.nextSector=8;
+    sprint.sectors.clear();
+    for(auto &pilot:sprint.rivals)pilot.z+=450;
+    for(int i=0;i<270;i++)sprint.advance(1./90,{0,true,false});
+    assert(sprint.speed>74 && sprint.energy>74 && sprint.energy<76);
+    auto braking=sprint;
+    for(int i=0;i<45;i++){
+        sprint.advance(1./90,{});
+        braking.advance(1./90,{0,false,true});
+    }
+    assert(sprint.speed>65 && braking.speed<50 && sprint.energy>80);
+    // The same damaged engine at the same instant lifts its plume at low speed and trails it at high speed.
+    for(int fx:{neon::Smoke,neon::FireTrail}){
+        auto limits=[&](double speed){
+            std::array<double,2> extent{};
+            neon::damagePuffs(fx,.51,1,speed,[&](neon::Puff p){
+                if(p.tile!=(fx==neon::Smoke?4:5))return;
+                extent[0]=std::max(extent[0],-p.center.z);extent[1]=std::max(extent[1],p.center.y);
+            });
+            return extent;
+        };
+        auto slow=limits(25),fast=limits(85);
+        assert(fast[0]>slow[0]*1.4 && fast[1]<slow[1]);
+    }
     double before = race.distance;
     race.advance(1. / 60, {});
     assert(race.distance > before);

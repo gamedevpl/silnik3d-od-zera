@@ -10,6 +10,7 @@ trap 'rm -rf "$scratch"' EXIT
   -Wl,--export=raceVisible -Wl,--export=raceObjects -Wl,--export=raceCueCount \
   -Wl,--export=raceCue -Wl,--export=raceClearCues -Wl,--export=buildTrack \
   -Wl,--export=trackSections -Wl,--export=trackVertices -Wl,--export=releaseTrack \
+  -Wl,--export=soundClip -Wl,--export=soundLength -Wl,--export=soundRate \
   -Wl,--export=particleStart -Wl,--export=raceActors -Wl,--export=vertices -Wl,--export=canvasFrame -Wl,--export=canvasData -Wl,--export=surfaceMap \
   web_race.cpp demo.cpp -o "$scratch/flight.wasm"
 cp "$scratch/flight.wasm" ../docs/demko/

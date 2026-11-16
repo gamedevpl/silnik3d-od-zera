@@ -52,10 +52,10 @@ struct Shot {
 struct Burst {
     double x, z, age = 0;
 };
-using Object = std::array<float, 4>;
+using Object = std::array<float, 5>;
 
 struct Race {
-    double distance = 0, elapsed = 0, x = 0, vx = 0, lean = 0, speed = 36, thrust = 0, energy = 100;
+    double distance = 0, elapsed = 0, x = 0, vx = 0, lean = 0, speed = 44, thrust = 0, energy = 100;
     double cooldown = 0, rocketCooldown = 0, immunity = 0, padBoost = 0, wallLock = 0, lapStart = 0,
            lastLap = 0;
     int laps = 0, shield = 3, rockets = 2, rank = 7, refills = 0, nextSector = 3;
@@ -73,7 +73,7 @@ struct Race {
         constexpr double lanes[] = {0, 6, -12, 12, -3, 3};
         constexpr double grid[] = {9, 9, 19, 19, 53, 77};
         for (int i = 0; i < 6; i++)
-            rivals[i] = {lanes[i], grid[i], 37. + i * .8};
+            rivals[i] = {lanes[i], grid[i], 46. + i * .8};
     }
     int targetAhead() const {
         int id = -1;
@@ -116,7 +116,7 @@ struct Race {
             return;
         damagedSide = side;
         immunity = 1.2;
-        speed *= 1. - .24 * strength;
+        speed *= 1. - .14 * strength;
         if (--shield == 0) {
             recovery = recoveryTime;
             launchTime = padBoost = wakeCharge = 0;
@@ -129,11 +129,11 @@ struct Race {
     }
     void scrapeRail(int inward, double dt) {
         const double normal = std::max(0., -inward * vx);
-        speed *= std::exp(-(.33 + .026 * normal) * dt);
+        speed *= std::exp(-(.095 + .014 * normal) * dt);
         scrape = .24;
         scrapeSide = -inward;
         if (wallLock <= 0 && normal > 2) {
-            speed *= 1. - std::min(.16, normal * .006);
+            speed *= 1. - std::min(.10, normal * .004);
             vx = inward * normal * .26;
             if (normal > 17)
                 impact(.32, -inward);
@@ -180,7 +180,7 @@ struct Race {
             p.hitGlow = std::max(0., p.hitGlow - dt);
             p.stun = std::max(0., p.stun - dt);
             double surge = pow(std::max(0., sin(phase * 4 + i * 1.9)), 6);
-            double target = 46 + i * 1.1 + 8 * surge + (p.boost > 0 ? 12 : 0) - 8 * fabs(bend) +
+            double target = 57 + i * 1.3 + 10 * surge + (p.boost > 0 ? 12 : 0) - 8 * fabs(bend) +
                             bound((distance - p.z) * .19, -14, 16);
             target += 1.4 * bridgeHeight(p.x, p.z);
             p.boost = std::max(0., p.boost - dt);
@@ -296,21 +296,23 @@ struct Race {
             wakeCharge = std::max(0., wakeCharge - dt * .20);
         bool boost = in.boost && !in.brake && energy > 0 && !spent;
         if (boost && launchTime == 0) {
-            energy = std::max(0., energy - 22 * dt);
+            energy = std::max(0., energy - 8.3 * dt);
             if (energy == 0)
                 spent = true;
         } else {
-            energy = std::min(100., energy + (drafting ? 24 : 10) * dt);
-            if (!in.boost || energy > 30)
+            energy = std::min(100., energy + (drafting ? 30 : 14) * dt);
+            if (!in.boost || energy >= 20)
                 spent = false;
         }
         thrust += ((boost || padBoost > 0 || launchTime > 0) - thrust) * (1 - exp(-6 * dt));
-        speed -= 28*viaductGrade(distance)*dt;
-        speed += ((in.brake ? 29.
-                            : 39 + (forkSide < 0 ? 1.4 * bridgeHeight(x, distance) : 0.) + 24 * thrust +
-                                  (drafting ? 6 : 0) + (launchTime > 0 ? 20 : 0)) -
-                  speed) *
-                 (1 - exp(-2.4 * dt));
+        speed -= 18 * viaductGrade(distance) * dt;
+        // Keep momentum when the pilot releases boost. The airbrake still bites immediately.
+        const double targetSpeed = in.brake ? 30. : 52. + 29. * thrust +
+            (forkSide < 0 ? 1.4 * bridgeHeight(x, distance) : 0.) +
+            (drafting ? 6. : 0.) + (launchTime > 0 ? 17. : 0.);
+        const double response = in.brake ? 2.8 : (targetSpeed >= speed ? 2.7 : .53);
+
+        speed += (targetSpeed - speed) * (1 - std::exp(-response * dt));
         double before = distance, travel = speed * dt / bound(1 - bend * x / 24, .87, 1.13);
         if (forkSide > 0)
             energy = std::min(100., energy + 18 * dt);
@@ -383,13 +385,13 @@ struct Race {
     std::vector<Object> visible() const {
         std::vector<Object> out;
         double offset = laps * lapLength;
-        auto add = [&](double xx, double z, int k, double age = 0) {
-            out.push_back({float(xx), float(z - offset), float(k), float(age)});
+        auto add = [&](double xx, double z, int k, double age = 0, double airspeed = 0) {
+            out.push_back({float(xx), float(z - offset), float(k), float(age), float(airspeed)});
         };
         if (recovery > 0)
             add(x, distance, PlayerFragments, 1 - recovery / recoveryTime);
         else if (shield < 3)
-            add(x, distance, shield == 1 ? FireTrail : Smoke, damagedSide);
+            add(x, distance, shield == 1 ? FireTrail : Smoke, damagedSide, speed);
         if (scrape > 0)
             add(x + scrapeSide * 1.35, distance, Sparks, scrapeSide * scrape / .24);
         for (int i = 0; i < 6; i++) {
@@ -400,9 +402,9 @@ struct Race {
             if (p.recovery > 0)
                 add(p.x, distance + dz, Fragments, 1 - p.recovery / recoveryTime);
             else {
-                add(p.x, distance + dz, 6 + i, p.lean);
+                add(p.x, distance + dz, 6 + i, p.lean, p.speed);
                 if (p.hull < 3 && dz < 85)
-                    add(p.x, distance + dz, p.hull == 1 ? FireTrail : Smoke, i * .13);
+                    add(p.x, distance + dz, p.hull == 1 ? FireTrail : Smoke, i % 2 ? -1. : 1., p.speed);
             }
         }
         const int locked = rockets > 0 ? targetAhead() : -1;

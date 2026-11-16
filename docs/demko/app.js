@@ -1,11 +1,11 @@
-import {renderer} from './renderer.js?v=optics1';
-import {loadRace} from './race.js?v=optics1';
-import {Sound} from './audio.js?v=optics1';
+import {renderer} from './renderer.js?v=turbine1';
+import {loadRace} from './race.js?v=turbine1';
+import {Sound} from './audio.js?v=turbine1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
 const englishTitle=document.title;
-const keys=new Set(),pointers=new Map(),buttonKeys=new Set(),sound=new Sound();
+const keys=new Set(),pointers=new Map(),buttonKeys=new Set();
 const words={
  fork:['← Most · Kanał →','← Bridge · Canal →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
@@ -26,9 +26,10 @@ const simulation=await loadRace().catch(error=>{
  return null;
 });
 const {reset,advance,shoot,LAP}=simulation??{};
+const sound=new Sound(simulation?.geometry);
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
-let best=Number(read('neon.lap.v6'))||0;const tr=k=>words[k][+en];
+let best=Number(read('neon.lap.v7'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
@@ -108,7 +109,7 @@ $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
  sound.cue(k);
- if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v6',String(best));}
+ if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v7',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
 function fire(rocket){
@@ -180,7 +181,7 @@ function tick(now){
   }
   const input={steer,boost:held('boost'),brake:held('brake')};
   advance(dt,input,held('fire'),cue);
-  sound.tick(race.thrust);draw(race);
+  sound.tick(race.speed,race.thrust);draw(race);
   if(now>=nextHud){updateHUD();nextHud=now+75;}
   if(!windowStart)windowStart=now;
   frameCount++;
