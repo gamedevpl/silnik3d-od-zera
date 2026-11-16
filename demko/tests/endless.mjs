@@ -9,10 +9,12 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[2067.188920943,1,5],[3977.055279064,3,7],[6130.510165690,5,3],[8353.421707133,7,3]];
+  const checkpoints=[[2458.471298650,2,1],[4536.327753403,3,3],[6797.980701459,5,2],[8881.872192667,7,4]];
   for(let i=0;i<11160;i++){
+   const lanes=s.rivals.map(p=>p.x);
    if(i%821===0)sim.shoot(true,cue);
    sim.advance(1/90,{steer:Math.floor(i/57)%3-1,boost:i%890<570,brake:i%341<19},i%4===0,cue);
+   assert(s.rivals.every((p,j)=>Math.abs(p.x-lanes[j])<.6), "rival jumped sideways in one tick");
    if((i+1)%2790===0){
     const [distance,lap,rank]=checkpoints[(i+1)/2790-1];
     assert(Math.abs(s.distance-distance)<.0001);
@@ -24,9 +26,9 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-16.500868313)<.0001);
-  assert.equal(s.rockets,0);assert.equal(s.shield,0);
-  assert.deepEqual(counts,{fire:519,rocket:6,break:66,hit:25,pad:9,rail:44,repair:8,lap:7,launch:3,wreck:9,blast:2,ricochet:350});
+  assert(Math.abs(s.lastLap-17.356251934)<.0001);
+  assert.equal(s.rockets,1);assert.equal(s.shield,2);
+  assert.deepEqual(counts,{fire:525,rocket:5,break:28,hit:21,pad:9,rail:20,repair:7,lap:7,wreck:7,blast:2,ricochet:398,lock:26,overdrive:7});
   assert.equal(sim.reset().distance,0);
  });
 

@@ -33,6 +33,41 @@ int main() {
         assert(neon::viaductGrade(offset + 940) < -.15);
         assert(neon::viaductHeight(offset + 1060) == 0);
     }
+    // The warning commits to a lane. A real shot must hit or miss on either side of the lap seam.
+    for(double gap:{-33.,35.})for(bool dodge:{false,true})for(double offset:{0.,neon::lapLength}){
+        neon::Race r;r.speed=72;r.distance=offset+11;r.gunRest=0;r.sectors.clear();
+        for(auto &p:r.rivals)p.recovery=5;
+        auto &p=r.rivals[0];p.recovery=0;p.z=r.distance+gap;p.x=0;p.speed=72;
+        r.rivalGuns(1./90);
+        assert(r.attacker==0 && r.lockTime>0);
+        if(dodge)r.x=5;
+        for(int i=0;i<75;i++){
+            r.distance+=r.speed/90;p.z+=p.speed/90;
+            r.rivalGuns(1./90);
+        }
+        assert(r.shots.size()==1 && r.shots[0].owner==0);
+        for(int i=0;i<150 && !r.shots.empty();i++){
+            r.distance+=r.speed/90;p.z+=p.speed/90;r.stepShots(1./90);
+        }
+        assert(r.shield==(dodge?3:2));
+    }
+    // A crossing pays out exactly once. A depleted cell receives the normal repair.
+    for(double energy:{20.,60.})for(bool boost:{false,true}){
+        neon::Race r;r.distance=150;r.x=10;r.speed=75;r.shield=2;r.energy=energy;
+        for(auto &p:r.rivals)p.z=r.distance-45;
+        for(int i=0;i<4;i++)r.advance(1./90,{0,boost,false});
+        const bool buy=boost && energy>=35;
+        assert(r.shield==(buy?2:3) && (r.overdrive>2)==buy);
+        assert(std::abs(r.energy-(energy+(buy?-35:24)))<1);
+        auto cue=buy?neon::Cue::Overdrive:neon::Cue::Pad;
+        assert(std::count(r.cues.begin(),r.cues.end(),cue)==1);
+        if(buy){
+            for(int i=0;i<120;i++)r.advance(1./90,{});
+            assert(r.speed>125);
+            for(const auto &p:r.rivals)assert(r.distance-p.z>90);
+            r.impact();assert(r.overdrive==0);
+        }
+    }
     // Cross the lap seam, then steer the ship away from both launched weapons.
     for(bool rocket:{false,true}){
         neon::Race r;

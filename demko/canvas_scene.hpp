@@ -199,6 +199,12 @@ class CanvasScene {
                            auto q = [&](CoursePoint p) { return project(x + p.x, deck + p.y, z + p.z); };
                            polygon(rgb, {q(a), q(b), q(c)});
                        });
+        } else if (kind == -2) {
+            for(int side:{-1,1}){
+                double edge=x+side*(1.55+age);
+                polygon(0xff4569,{project(edge,deck+.22,z-1.8),project(edge+side*.24,deck+.22,z-1.8),
+                                  project(edge+side*.24,deck+.22,z+1.8),project(edge,deck+.22,z+1.8)});
+            }
         } else if (kind == 12) {
             for (int j = 0; j < 5; j++)
                 for (int side : {-1, 1}) {
@@ -234,7 +240,7 @@ class CanvasScene {
             for (int j = 0; j < 3; j++)
                 for (int s : {-1, 1}) {
                     double zz = z - 2 + j * 1.9;
-                    polygon(0x50f6b7,
+                    polygon(age>0?0xd577ff:0x50f6b7,
                             {project(x, deck + .14, zz + 1.8), project(x + s * 2.9, deck + .14, zz),
                              project(x + s * 2.9, deck + .14, zz - .65), project(x, deck + .14, zz + 1.1)});
                 }
@@ -242,15 +248,15 @@ class CanvasScene {
             emit({Rect,0x50546c,cx-2.6*r,cy-.2*r,5.2*r,.85*r});
             for(int j=-2;j<=2;j++)emit({Rect,0xffb241,cx+(j-.24)*r,cy,.42*r,.48*r});
             emit({Rect,0xff7760,cx+(age>=0?2.17:-2.53)*r,cy-.56*r,.36*r,.45*r});
-        } else if(kind==2 || kind==3){
-            const double shaft=kind==3?2.:2.7;
+        } else if(kind==-1 || kind==2 || kind==3){
+            const double shaft=kind==3?2.:kind==-1?1.6/std::sqrt(1.+speed*speed+rise*rise):2.7;
             auto nose=project(x,age,z);
             auto tail=project(x+road(z)-road(z-shaft)-shaft*speed,age-rise*shaft,z-shaft);
-            const double w=std::max(1.,r*(kind==3?.22:.11));
+            const double w=std::max(1.,r*(kind==2?.11:.22));
             if(kind==3){
                 polygon(0x9acdcf,{{nose[0],nose[1]-.4*w},{tail[0]+2.3*w,tail[1]+w},{tail[0]-2.3*w,tail[1]+w}});
                 emit({Ellipse,0xffad54,0,tail[0],tail[1],w,.85*w,0});
-            }else polygon(0xffdc86,{{nose[0]-w,nose[1]},{nose[0]+w,nose[1]},{tail[0]+w,tail[1]},{tail[0]-w,tail[1]}});
+            }else polygon(kind==-1?0xff476c:0xffdc86,{{nose[0]-w,nose[1]},{nose[0]+w,nose[1]},{tail[0]+w,tail[1]},{tail[0]-w,tail[1]}});
         } else if (kind == 1) {
             polygon(0xff664e, {{cx, cy - r}, {cx + r, cy}, {cx, cy + r}, {cx - r, cy}});
         } else {

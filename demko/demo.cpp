@@ -259,6 +259,13 @@ int actors(const neon::Race &race,double time,int count){
             neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
                 f.tri({xx+a.x,a.y+lift,z+a.z},{xx+b.x,b.y+lift,z+b.z},{xx+c.x,c.y+lift,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
             });
+        }else if(kind==-2){
+            const double half=1.55+age;
+            for(int side:{-1,1}){
+                double edge=xx+side*half;
+                f.quad({edge,.22,z-1.8},{edge+side*.24,.22,z-1.8},
+                       {edge+side*.24,.22,z+1.8},{edge,.22,z+1.8},{255,69,105});
+            }
         }else if(kind==12){ // A pair of lanes in the active slipstream.
             for(int j=0;j<5;j++)for(int side:{-1,1}){
                 double zz=z-4-j*2.6,ox=xx+side*(1.25+j*.13);
@@ -298,7 +305,7 @@ int actors(const neon::Race &race,double time,int count){
             for(int j=0;j<3;j++)for(int side:{-1,1}){
                 const double zz=z+j*1.9-2;
                 f.quad({xx,.14,zz+1.8},{xx+side*2.9,.14,zz},{xx+side*2.9,.14,zz-.65},{xx,.14,zz+1.1},
-                       j==2?C{180,255,222}:C{42,236,174});
+                       age>0?(j==2?C{255,218,255}:C{191,77,255}):(j==2?C{180,255,222}:C{42,236,174}));
             }
         }else if(kind==1){
             V top{xx,y+1.15,z},bottom{xx,y-.89,z};
@@ -314,8 +321,8 @@ int actors(const neon::Race &race,double time,int count){
             for(int j=-2;j<=2;j++)f.box(xx+j-.24,1.38,z-.52,.42,.46,.09,amber,amber);
             const double nose=xx+(age>=0?2.35:-2.35);
             f.box(nose-.18,1.96,z-.42,.36,.44,.65,{255,108,72},amber);
-        }else if(kind==2 || kind==3){
-            double width=.11,tail=2.7;
+        }else if(kind==-1 || kind==2 || kind==3){
+            double width=kind==-1?.23:.11,tail=kind==-1?1.6/std::sqrt(1.+o[4]*o[4]+o[5]*o[5]):2.7;
             double dx=o[4]-neon::slope(z),dy=o[5];
             V head{xx,age,z},end{xx-tail*dx,age-tail*dy,z-tail};
             if(kind==3){
@@ -328,7 +335,7 @@ int actors(const neon::Race &race,double time,int count){
                 f.tri(part(1.66,0,.13),part(1.66,0,-.13),part(3.1,0,0),{255,243,173});
                 place(xx,z,false);continue;
             }
-            f.quad(head+V{-width,0,0},head+V{width,0,0},end+V{width,0,0},end+V{-width,0,0},{255,213,108});
+            f.quad(head+V{-width,0,0},head+V{width,0,0},end+V{width,0,0},end+V{-width,0,0},kind==-1?C{255,55,101}:C{255,213,108});
             f.quad(head+V{0,width,0},head-V{0,width,0},end-V{0,width,0},end+V{0,width,0},{252,247,187});
             place(xx,z,false);continue;
         }

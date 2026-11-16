@@ -26,12 +26,12 @@ struct Input {
     int steer = 0;
     bool boost = false, brake = false;
 };
-enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck, Blast, Ricochet };
+enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck, Blast, Ricochet, Lock, Overdrive };
 enum ContactEffect { Sparks = 15, Fragments = 18, PlayerFragments, RocketImpact, ColdGas, HotGas, IonGas };
 constexpr double recoveryTime = 1.15;
 struct Sector {
     double x, z, mineX;
-    bool mine, used = false, sweeping = false;
+    bool mine, used = false, sweeping = false, violet = false;
     double obstacleX(double time) const {
         return sweeping ? 12.*std::sin(time*.53+z*.019) : mineX;
     }
@@ -45,17 +45,18 @@ inline Sector sector(int i) {
         x = routeSign(x) * std::max(std::abs(x), islandHalf(z) + 3.5);
     double mine = x + (x > 0 ? -7 : 7);
     bool sweep=i%4==2;
-    return {x,z,mine,sweep || (i%3!=0 && (islandHalf(z-17)==0 || std::abs(mine)>islandHalf(z-17)+2)),false,sweep};
+    return {x,z,mine,sweep || (i%3!=0 && (islandHalf(z-17)==0 || std::abs(mine)>islandHalf(z-17)+2)),false,sweep,i%3==1};
 }
 struct Pilot {
     double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0, kick = 0, recovery = 0;
     int hull = 3;
-    double lateral=0,rollRate=0,hitOffset=0;
+    double lateral=0,rollRate=0,hitOffset=0,steering=0;
 };
 struct Shot {
     double x,y,z,vx,vy,vz; // World coordinates, including road curvature and elevation at launch.
     bool rocket, spent=false;
     double age=0, launchLane=0;
+    int owner=-1;
 };
 struct Burst {
     double x, z, age = 0, lift = 0;
@@ -72,7 +73,9 @@ struct Race {
     bool drafting = false, spent = false;
     double wakeCharge = 0, launchTime = 0, chargedLane = 0, steerMemory = 0;
     double scrape = 0, scrapeSide = 1, recovery = 0, contactLock = 0;
-    double pace=52, contactStrength=.5;
+    double contactStrength=.5, overdrive=0;
+    double lockTime=0, gunRest=2.5, markedLane=0;
+    int attacker=-1;
     int damagedSide = 1;
     int wakePilot = -1, forkSide = 0;
     std::array<Pilot, 6> rivals{};
@@ -127,11 +130,12 @@ struct Race {
             return;
         contactStrength=bound(strength,.15,1.);
         damagedSide = side;
+        overdrive = 0;
         immunity = 1.2;
         if(absorb)speed *= 1. - .14 * strength;
         if (--shield == 0) {
             recovery = recoveryTime;
-            launchTime = padBoost = wakeCharge = 0;
+            launchTime = padBoost = wakeCharge = overdrive = 0;
             energy = std::max(25., energy * .5);
             speed = 20;
             immunity = 2;
@@ -182,9 +186,7 @@ struct Race {
             }
             if (i == 0 && p.z < 66)
                 line *= bound((p.z - 34) / 32, 0, 1);
-            double island = islandHalf(p.z);
-            if (island > 0)
-                line = routeSign(p.x) * std::max(island + 3., routeSign(p.x) * line);
+
             // Pick a passing line before committing boost behind another ship.
             if(ahead<0 && ahead>-30 && std::abs(p.x-x)<3.8)
                 line=bound(x+(x>12?-5:x < -12?5:(p.x>=x?5:-5)),-16,16);
@@ -194,12 +196,19 @@ struct Race {
                 double obstacle=s.obstacleX(elapsed+dz/std::max(30.,p.speed));
                 if(std::abs(line-obstacle)<5.)line=bound(obstacle+(p.x<obstacle?-6.:6.),-16.,16.);
             }
-            double dx = bound((line - p.x) * 1.5, -10, 10);
+            // All passing and avoidance decisions must respect the committed fork.
+            const int side=routeSign(p.x);
+            const double divider=islandHalf(p.z);
+            const double upcoming=islandHalf(p.z+std::max(0.,p.speed)*.32);
+            if(divider>0 || upcoming>0)
+                line=side*std::max(std::max(divider,upcoming)+2.2,side*line);
+            const double desired=bound((line-p.x)*1.65,-11.,11.);
+            p.steering+=(desired-p.steering)*(1-std::exp(-5*dt));
             p.kick *= std::exp(-4 * dt);
             const double prevX=p.x;
-            p.x = bound(p.x + (dx + p.kick) * dt, -16.4, 16.4);
-            if (island > 0)
-                p.x = routeSign(line) * std::max(island + 1.35, std::abs(p.x));
+            p.x = bound(p.x + (p.steering + p.kick) * dt, -16.4, 16.4);
+            if (divider > 0)
+                p.x = side * std::max(divider + 1.35*ramp(divider), side*p.x);
             p.lateral=(p.x-prevX)/dt;
             p.lean+=(-p.lateral*.035-p.lean)*(1-std::exp(-9*dt))+p.rollRate*dt;
             p.rollRate*=std::exp(-6*dt);
@@ -207,8 +216,8 @@ struct Race {
             p.stun = std::max(0., p.stun - dt);
             double surge = pow(std::max(0., sin(phase * 4 + i * 1.9)), 6);
             const double deficit=distance-p.z;
-            const double cruise=.62*pace+.38*65.+(i-2.5)*1.65;
-            const double pursuit=bound(deficit*.18,-18.,21.);
+            const double cruise=66.+(i-2.5)*1.65;
+            const double pursuit=bound(deficit*.08,-8.,4.);
             const double tow=(ahead<0 && ahead>-27 && std::abs(p.x-x)<4.) ? 5. : 0.;
             double target=cruise+pursuit+tow+11*surge+(p.boost>0?12:0)-8*std::abs(bend);
             target += 1.4 * bridgeHeight(p.x, p.z);
@@ -257,7 +266,7 @@ struct Race {
             double nx=dx/(width*width),nz=dz/(length*length);
             if(std::hypot(nx,nz)<1e-6){nx=a.vx-b.vx;nz=a.vz-b.vz;if(std::hypot(nx,nz)<1e-6)nx=1;}
             double norm=std::hypot(nx,nz);nx/=norm;nz/=norm;
-            double shift=.5*std::min(.9,overlap/std::hypot(nx/width,nz/length));
+            double shift=.5*std::min(18.*dt,overlap/std::hypot(nx/width,nz/length));
             a.x-=nx*shift;b.x+=nx*shift;a.z-=nz*shift;b.z+=nz*shift;
             const double rvx=a.vx-b.vx,rvz=a.vz-b.vz,closing=rvx*nx+rvz*nz;
             if(closing<=0)continue;
@@ -279,7 +288,7 @@ struct Race {
         }
         auto lane=[](double current,double resolved,double z,double limit){
             const double edge=islandHalf(z);
-            if(edge>0)resolved=routeSign(current)*std::max(edge+1.3,routeSign(current)*resolved);
+            if(edge>0)resolved=routeSign(current)*std::max(edge+1.3*(limit<18?ramp(edge):1.),routeSign(current)*resolved);
             return bound(resolved,-limit,limit);
         };
         const auto &a=bodies[0];
@@ -289,6 +298,45 @@ struct Race {
             p.x=lane(p.x,b.x,b.z,16.4);p.z=b.z;p.kick+=b.vx-p.lateral;
             p.lateral=b.vx;p.speed=b.vz;p.rollRate=b.spin;
         }
+    }
+    // One visible lock at a time. The marked lane is fixed during the warning.
+    void rivalGuns(double dt) {
+        auto canAim=[&](const Pilot &p){
+            double dz=gap(p.z,distance);
+            return recovery<=0 && p.recovery<=0 && p.stun<=0 && std::abs(dz)>8 &&
+                   std::abs(dz)<68 && std::abs(deckAt(p.x,p.z)-deckAt(x,distance))<12 &&
+                   !(islandHalf(p.z)>0 && islandHalf(distance)>0 && routeSign(x)!=routeSign(p.x));
+        };
+        if(attacker<0){
+            gunRest-=dt;
+            if(gunRest>0)return;
+            double best=100.;
+            for(int i=0;i<int(rivals.size());++i){
+                const auto &p=rivals[i];
+                double score=std::abs(gap(p.z,distance))+2*std::abs(p.x-x);
+                const double dz=gap(p.z,distance), projected=dz+(p.speed-speed)*.82;
+                if(dz*projected<=0 || std::abs(projected)<9)continue;
+                if(canAim(p) && score<best){best=score;attacker=i;}
+            }
+            if(attacker>=0){lockTime=.82;markedLane=x;cues.push_back(Cue::Lock);}
+            return;
+        }
+        const auto &p=rivals[attacker];
+        lockTime-=dt;
+        const bool aimed=canAim(p);
+        if(aimed && lockTime>0)return;
+        if(aimed){
+            // A chasing ship fires its cannon. A ship ahead releases a slower aft pulse.
+            double gapZ=gap(p.z,distance);
+            double z=distance+gapZ+(gapZ<0?2.5:-2.5);
+            double vz=gapZ<0?speed+115.:std::max(4.,speed-64.);
+            double flight=(distance-z)/(vz-speed);
+            double target=distance+speed*flight;
+            double startX=road(z)+p.x,startY=deckAt(p.x,z)+1.85;
+            shots.push_back({startX,startY,z,(road(target)+markedLane-startX)/flight,
+                (deckAt(markedLane,target)+1.85-startY)/flight,vz,false,false,0,0,attacker});
+        }
+        attacker=-1;lockTime=0;gunRest=aimed?2.7:.8;
     }
     void stepShots(double dt) {
         for (auto &shot : shots) {
@@ -301,22 +349,35 @@ struct Race {
             auto height=[&](double t){return shot.rocket?deckAt(laneAt(t),shot.z+dz*t)+1.85:shot.y+t*dt*shot.vy;};
             double first=2.;
             Pilot *pilot=nullptr;Sector *mine=nullptr;
+            bool struckPlayer=false;
             for(auto &p:rivals){
-                if(p.recovery>0)continue;
+                if(p.recovery>0 || (&p-rivals.data())==shot.owner)continue;
                 // Both ship and projectile move in this tick; compare at the crossing.
                 const double start=p.z-p.speed*dt;
-                const double t=gap(start,shot.z)/std::max(.01,dz-p.speed*dt);
+                const double relative=dz-p.speed*dt;
+                if(std::abs(relative)<1e-8)continue;
+                const double t=gap(start,shot.z)/relative;
                 if(t<0 || t>1 || t>=first)continue;
                 const double z=shot.z+t*dz;
                 if(std::abs(p.x-laneAt(t))<(shot.rocket?1.52:1.25) &&
                    std::abs(height(t)-deckAt(p.x,z)-1.85)<.85){first=t;pilot=&p;}
+            }
+            if(shot.owner>=0 && recovery<=0){
+                const double relative=dz-speed*dt;
+                if(std::abs(relative)>1e-8){
+                    const double t=gap(distance-speed*dt,shot.z)/relative;
+                    if(t>=0 && t<=1 && t<first && std::abs(laneAt(t)-x)<1.55 &&
+                       std::abs(height(t)-deckAt(x,shot.z+t*dz)-1.85)<1.1){
+                        first=t;pilot=nullptr;struckPlayer=true;
+                    }
+                }
             }
             for(auto &s:sectors){
                 const double z=s.z-17,t=(z-shot.z)/dz;
                 if(!s.mine || t<0 || t>1 || t>=first)continue;
                 const double lane=s.obstacleX(elapsed-dt+t*dt);
                 if(std::abs(laneAt(t)-lane)<s.radius() && std::abs(height(t)-deckAt(lane,z)-1.85)<1.15){
-                    first=t;mine=&s;pilot=nullptr;
+                    first=t;mine=&s;pilot=nullptr;struckPlayer=false;
                 }
             }
             auto blocked=[&](double t){
@@ -369,6 +430,9 @@ struct Race {
                         0,.49+.035*(j%5),.53,2.4,true});
                 }
             }
+            if(struckPlayer && !wall){
+                impact(.38,routeSign(lane-x));shot.spent=true;bursts.push_back(flash);
+            }
             if(wall){shot.spent=true;bursts.push_back(flash);cues.push_back(shot.rocket?Cue::Blast:Cue::Ricochet);}
             if (pilot || mine) {
                 if (pilot) {
@@ -410,7 +474,7 @@ struct Race {
                 cues.push_back(Cue::Repair);
             }
         }
-        if(recovery<=0)pace+=(speed-pace)*(1-std::exp(-dt/4.));
+        overdrive=std::max(0.,overdrive-dt);
         movePilots(dt);
         double bend = slope(distance + 16) - slope(distance - 8);
         double target = in.steer * (in.brake ? 29 : 22) - bend * speed * (in.brake ? .28 : .75);
@@ -444,12 +508,12 @@ struct Race {
             if (!in.boost || energy >= 20)
                 spent = false;
         }
-        thrust += ((boost || padBoost > 0 || launchTime > 0) - thrust) * (1 - exp(-6 * dt));
+        thrust += ((boost || padBoost > 0 || launchTime > 0 || overdrive > 0) - thrust) * (1 - exp(-6 * dt));
         speed -= 18 * viaductGrade(distance) * dt;
         // Keep momentum when the pilot releases boost. The airbrake still bites immediately.
         const double targetSpeed = in.brake ? 30. : 52. + 29. * thrust +
             (forkSide < 0 ? 1.4 * bridgeHeight(x, distance) : 0.) +
-            (drafting ? 6. : 0.) + (launchTime > 0 ? 17. : 0.);
+            (drafting ? 6. : 0.) + (launchTime > 0 ? 31. : 0.) + (overdrive > 0 ? 54. : 0.);
         const double response = in.brake ? 2.8 : (targetSpeed >= speed ? 2.7 : .53);
 
         speed += (targetSpeed - speed) * (1 - std::exp(-response * dt));
@@ -482,6 +546,12 @@ struct Race {
             if (!s.used && before < s.z && distance >= s.z) {
                 s.used = true;
                 if (recovery == 0 && fabs(s.x - x) < 2.9) {
+                    if(s.violet && in.boost && !in.brake && energy>=35){
+                        energy-=35;
+                        overdrive=2.35;
+                        cues.push_back(Cue::Overdrive);
+                        continue;
+                    }
                     energy = std::min(100., energy + 24);
                     padBoost = 1.05;
                     if (++refills % 2 == 0)
@@ -492,6 +562,7 @@ struct Race {
             }
         }
         hullContacts(dt);
+        rivalGuns(dt);
         blastGas.drift(dt);stepShots(dt);
         auto emit=[&](int id,double lane,double z,double sideways,double forward,double bank,
                       int damage,int side,double power){
@@ -553,14 +624,15 @@ struct Race {
             if (i == wakePilot)
                 add(p.x, distance + dz, 12, wakeCharge);
         }
+        if(lockTime>0)add(markedLane,distance+11,-2,lockTime/.82);
         for (auto &s : sectors) {
             if (!s.used && s.z < distance + 153)
-                add(s.x, s.z, 0);
+                add(s.x, s.z, 0, s.violet?1.:0.);
             if (s.mine && s.z - 17 < distance + 145)
                 add(s.obstacleX(elapsed),s.z-17,s.sweeping?4:1, s.sweeping?std::cos(elapsed*.53+s.z*.019):0);
         }
         for (auto &s : shots)
-            add(s.x-road(s.z),s.z,s.rocket?3:2,s.y,s.vx/s.vz,s.vy/s.vz);
+            add(s.x-road(s.z),s.z,s.owner>=0?-1:s.rocket?3:2,s.y,s.vx/s.vz,s.vy/s.vz);
         for (auto &b : bursts)
             add(b.x,b.z,b.rocket?int(RocketImpact):5,b.age,0,b.lift);
         auto addGas=[&](const Wake &wake){for(const auto &g:wake.gas){

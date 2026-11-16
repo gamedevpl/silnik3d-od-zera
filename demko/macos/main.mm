@@ -77,7 +77,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         self.drawableSize = pixels;
     hud.frame = NSMakeRect(12, s.height - 54, std::min(485., s.width - 24), 42);
     hint.frame = NSMakeRect((s.width - std::min(550., s.width - 24)) / 2, s.height * .34,
-                            std::min(550., s.width - 24), 49);
+                            std::min(550., s.width - 24), 72);
     play.frame = NSMakeRect((s.width - 160) / 2, NSMaxY(hint.frame) + 10, 160, 38);
 }
 - (BOOL)acceptsFirstResponder {
@@ -87,9 +87,9 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
     self.window.title = localized(@"Neon Canal", @"Neonowy kanał");
     hint.stringValue =
         localized(@"← →  steer     ↑  boost     ↓  airbrake\nSpace  cannon     R  rocket     M  sound  "
-                  @"   P  pause",
+                  @"   P  pause\nViolet pad: boost + 35 energy for overdrive, coast for repairs.",
                   @"← →  skręt     ↑  dopalacz     ↓  hamulec\nSpacja  działko     R  rakieta     "
-                  @"M  dźwięk     P  pauza");
+                  @"M  dźwięk     P  pauza\nFioletowe pole: dopalacz + 35 energii na wyrzut, bez dopalacza naprawa.");
     play.title = started ? localized(@"Resume   ↵", @"Wznów   ↵") : @"Start   ↵";
     [self updateHUD];
 }
@@ -105,6 +105,8 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
                                    @"  %d / 7     OKR %d     OSŁONA %d / 3     RAKIETY %d\n  Dopalacz "
                                    @"%.0f%%     Rekord %@%@%@%@"),
                          race.rank, race.laps + 1, race.shield, race.rockets, race.energy, time, branch,
+                         race.lockTime>0 ? localized(@"     Incoming · change lane", @"     Namierzony · zmień pas") :
+                         race.overdrive>0 ? localized(@"     Overdrive", @"     Wyrzut") :
                          race.launchTime>0 ? localized(@"     Slingshot", @"     Wyrzut") :
                          race.wakeCharge>=1 ? localized(@"     Steer + boost", @"     Skręć + dopalacz") :
                          race.drafting ? localized(@"     Slipstream", @"     W smudze") : @"",

@@ -81,7 +81,7 @@ export class Sound{
   tone.gain.setTargetAtTime(-5*thrust,now,.18);
  }
  cue(event,strength=.5){
-  const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet'].indexOf(event);
+  const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet','lock','overdrive'].indexOf(event);
   if(id<0||!this.ctx||this.muted||!this.running)return;
   const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
   src.buffer=this.clip(id);

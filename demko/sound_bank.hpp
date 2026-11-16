@@ -3,10 +3,10 @@
 #include <cstdint>
 
 namespace neon::audio {
-constexpr int rate=24000, count=12;
+constexpr int rate=24000, count=14;
 inline std::vector<float> synthesize(int id){
     // Real seconds, including a short tail for the shipyard's metal and concrete.
-    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95,.72,.23};
+    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95,.72,.23,.32,.81};
     std::vector<float> pcm(size_t(rate*duration[id]));
     uint32_t rng=uint32_t(971+id);
     double low=0,dark=0,phase=0;
@@ -48,7 +48,11 @@ inline std::vector<float> synthesize(int id){
             case Cue::Rail:
                 v=.64*(low-dark)*std::exp(-20*t)+.11*ring(791,33)+.065*ring(1223,40)
                   +.19*(n-low)*std::exp(-75*t);break;
-            case Cue::Launch:
+            case Cue::Lock:
+                v=.27*ring(730,32);
+                if(t>.14)v+=.31*std::sin(tau*960*(t-.14))*std::exp(-28*(t-.14));
+                break;
+            case Cue::Overdrive: case Cue::Launch:
                 v=1.8*(low-dark)*std::sin(3.14159*u)*std::exp(-1.6*u)+
                   .40*sweep(91+550*u*u)*std::exp(-2.1*u)+.15*ring(79,5);break;
             case Cue::Pad: case Cue::Lap: case Cue::Repair:{
