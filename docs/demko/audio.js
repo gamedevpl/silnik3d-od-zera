@@ -81,11 +81,11 @@ export class Sound{
   tone.gain.setTargetAtTime(-5*thrust,now,.18);
  }
  cue(event,strength=.5){
-  const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);
+  const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet'].indexOf(event);
   if(id<0||!this.ctx||this.muted||!this.running)return;
   const src=this.ctx.createBufferSource(),gain=this.ctx.createGain();
   src.buffer=this.clip(id);
-  gain.gain.value=id===0?.42:id===5?.22+.32*strength:id===3?.36+.55*strength:.72;
+  gain.gain.value=id===0?.42:id===11?.27:id===5?.22+.32*strength:id===3?.36+.55*strength:.72;
   src.connect(gain).connect(this.volume);src.onended=()=>{src.disconnect();gain.disconnect();};src.start();
  }
 }

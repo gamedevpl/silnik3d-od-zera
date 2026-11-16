@@ -30,10 +30,9 @@ struct TrackMesh {
 
 inline int buildActors(const Race &race, double time) {
     auto visible = race.visible();
-    int count = int(std::min<size_t>(64, visible.size()));
+    int count = int(std::min<size_t>(raceObjectCapacity, visible.size()));
     for (int i = 0; i < count; ++i)
         std::copy(visible[i].begin(), visible[i].end(), objectBuffer() + visible[i].size() * i);
-    return actors(std::fmod(time, 240.), race.distance - race.laps * lapLength, race.x, race.lean,
-                  race.thrust, race.speed, race.noseSteer(), count, (3 - race.shield) * race.damagedSide);
+    return actors(race,std::fmod(time,240.),count);
 }
 } // namespace neon

@@ -5,7 +5,31 @@
 namespace neon {
 // Effects are local to the contact point. Each shard has a fixed trajectory.
 template <class Triangle> void damageMesh(int kind, double time, double age, Triangle tri) {
-    if (kind == Sparks) {
+    if(kind==5 || kind==RocketImpact){
+        const bool rocket=kind==RocketImpact;
+        double u=std::clamp(age/(rocket?.78:.32),0.,1.);
+        // The pressure front expands in three dimensions. Cannon splinters stay narrow.
+        if(rocket && u<.68){
+            double r=.35+6.6*(1-std::exp(-4*u)),w=.17*(1-u/.68);
+            for(int i=0;i<32;i++){
+                double a=tau*i/32,b=tau*(i+1)/32;
+                auto ring=[&](double angle,double rad){
+                    return CoursePoint{rad*std::cos(angle),1.7+.48*rad*std::sin(angle),.85*rad*std::sin(angle)};};
+                if(i%5==2 && u>.30)continue;
+                tri(ring(a,r),ring(b,r),ring(a,r-w),0xffc478);
+                tri(ring(b,r),ring(b,r-w),ring(a,r-w),0xffe4a1);
+            }
+        }
+        for(int i=0;i<(rocket?21:10);i++){
+            double a=i*2.399963,dy=.20+std::sin(i*1.73),dx=std::cos(a),dz=std::sin(a);
+            double r=(rocket?8.:3.3)*u*(.58+.1*(i%5)),w=(rocket?.12:.115)*(1-u);
+            CoursePoint tip{r*dx,1.7+r*dy-u*u*1.6,r*dz};
+            double tail=r*(rocket?.73:.38);
+            tri(tip,{tail*dx-w,1.7+tail*dy-u*u*1.6,tail*dz},
+                    {tail*dx+w,1.7+tail*dy+w-u*u*1.6,tail*dz},
+                    u<.24?0xfff4bf:i%3?0xffae57:0x98ddec);
+        }
+    } else if (kind == Sparks) {
         const double side = age < 0 ? -1 : 1, intensity = std::clamp(std::abs(age), 0., 1.);
         for (int i = 0; i < 9; i++) {
             double u = std::fmod(time * 2.8 + i * .3819, 1.), x = -side * u * (.3 + .13 * (i % 4));
@@ -60,13 +84,18 @@ struct Puff {
     int tile;
 };
 
-template <class Emit> void damagePuffs(int kind, double time, double age, double speed, Emit emit) {
+template <class Emit> void damagePuffs(int kind, double time, double age, Emit emit) {
     auto puff = [&](double x, double y, double z, double w, double h, double angle, double alpha, int tile) {
         emit(Puff{{x, y, z}, w, h, angle, std::clamp(alpha, 0., 1.), tile});
     };
-    if (kind == Fragments || kind == PlayerFragments || kind == 5) {
-        double u = std::clamp(kind == 5 ? age / .45 : age, 0., 1.);
-        double radius = .28 + 2.3 * u;
+    if (kind == Fragments || kind == PlayerFragments || kind == 5 || kind==RocketImpact) {
+        if(kind==RocketImpact){puff(0,1.7,0,1.2+age*10,1.2+age*10,0,std::max(0.,1-age/.12),6);return;}
+        if(kind==5){
+            puff(0,1.7,0,.65+age,.48+age,0,std::max(0.,1-age/.16),6);
+            return;
+        }
+        double u=std::clamp(age,0.,1.);
+        double radius=.28+2.3*u;
         for (int i = 0; i < 12; i++) {
             double a = i * 2.39996, r = radius * (.45 + .16 * (i % 4)), size = .25 + .66 * u;
             puff(std::cos(a) * r, 1.7 + std::sin(a) * r * .6 + u * .9, std::sin(a * 1.6) * r, size,
@@ -77,30 +106,6 @@ template <class Emit> void damagePuffs(int kind, double time, double age, double
             double a = i * 2.39996, r = (1.8 + .4 * (i % 4)) * u;
             puff(r * std::cos(a), 1.7 + r * std::sin(a) - u * u, r * std::cos(a * 1.7), .06, .13 + .12 * u, a,
                  1 - u, 6);
-        }
-    } else if (kind == FireTrail || kind == Smoke) {
-        const double side=age<0?-1:1,flow=std::clamp(speed/84.,0.,1.25);
-        // Successive eddies roll out sideways as the slipstream strips the plume apart.
-        for(int i=0;i<23;i++){
-            const double seed=i*2.39996+side,u=std::fmod(time*.94+i/23.,1.);
-            const double swirl=u*(.28+.52*u),z=-1.32-(2.2+8.2*flow)*u;
-            const double x=side*(.86+.35*u)+swirl*std::sin(seed+u*5);
-            const double y=1.93+(3.5-2.30*flow)*u+swirl*std::cos(seed+u*5);
-            const double size=.18+(.88+.26*std::sin(seed))*u;
-            puff(x,y,z,size,size*(1+.24*u),seed+side*u*1.8,
-                 .88*(1-u*u)*std::min(1.,12*u),4);
-        }
-        if(kind==FireTrail){
-            for(int i=0;i<16;i++){
-                const double seed=i*2.39996,u=std::fmod(time*1.95+i/16.,1.);
-                const double wobble=u*std::sin(seed+7*u);
-                const double x=side*(.84+.19*wobble),y=1.94+(1.70-.98*flow)*u+.17*wobble;
-                const double z=-1.30-(1.12+4.55*flow)*u;
-                const double size=.18+.31*std::sin(3.14159*u);
-                puff(x,y,z,size*(1-.35*u),size*(1.3+.62*u),.34*wobble,.96*(1-u*u),5);
-                if(i%3==0)puff(x+wobble*.55,y+.7*u,z-1.6*u,.045,.12+.08*u,seed,.85*(1-u),6);
-            }
-            puff(side*.84,1.93,-1.43,.24,.31,0,.95,6);
         }
     } else if (kind == Sparks) {
         double side = age < 0 ? -1 : 1;

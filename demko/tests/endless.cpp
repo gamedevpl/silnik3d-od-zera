@@ -41,6 +41,8 @@ int main() {
         duel.rocketCooldown=duel.cooldown=0;duel.shoot(rocket);
         for(int i=0;i<24;i++)duel.stepShots(1./90);
         assert(target.hull==(rocket?1:2));
+        assert(duel.bursts.size()==1 && duel.bursts.front().rocket==rocket);
+        assert(std::find(duel.cues.begin(),duel.cues.end(),rocket?neon::Cue::Blast:neon::Cue::Break)!=duel.cues.end());
     }
     // Fire through a facade, graze its side, and clear its roof at the next lap.
     for(double offset:{0.,neon::lapLength}){
@@ -114,12 +116,12 @@ int main() {
         race.advance(1. / 60, {});
     assert(p.stun > 0);
     p.x = race.x;
-    p.z = race.distance;
+    p.z = race.distance-1.2;
     p.speed = race.speed + 18;
     race.shield = 1;
     race.immunity = 0;
     race.advance(1. / 90, {});
-    assert(race.shield == 0 && race.recovery > 0 && race.vx * p.kick < 0);
+    assert(race.shield == 0 && race.recovery > 0);
     const auto hasEffect = [&](int kind) {
         auto effects = race.visible();
         return std::any_of(effects.begin(), effects.end(), [&](auto o) { return int(o[2]) == kind; });
@@ -140,10 +142,11 @@ int main() {
     race = neon::Race{};
     race.vx = 22;
     race.scrapeRail(-1, 1. / 90);
-    assert(race.shield == 2 && race.speed < glance && hasEffect(neon::Smoke) && race.damagedSide == 1);
+    assert(race.shield == 2 && race.speed < glance && race.damagedSide == 1);
     race.immunity = 0;
     race.impact();
-    assert(hasEffect(neon::FireTrail));
+    for(int i=0;i<4;++i)race.advance(1./90,{});
+    assert(hasEffect(neon::HotGas));
     // Cross the fork twice, deliberately steering into the island on each side.
     for (int lap : {0, 3})
         for (int side : {-1, 1}) {
@@ -176,19 +179,31 @@ int main() {
         braking.advance(1./90,{0,false,true});
     }
     assert(sprint.speed>65 && braking.speed<50 && sprint.energy>80);
-    // The same damaged engine at the same instant lifts its plume at low speed and trails it at high speed.
-    for(int fx:{neon::Smoke,neon::FireTrail}){
-        auto limits=[&](double speed){
-            std::array<double,2> extent{};
-            neon::damagePuffs(fx,.51,1,speed,[&](neon::Puff p){
-                if(p.tile!=(fx==neon::Smoke?4:5))return;
-                extent[0]=std::max(extent[0],-p.center.z);extent[1]=std::max(extent[1],p.center.y);
-            });
-            return extent;
-        };
-        auto slow=limits(25),fast=limits(85);
-        assert(fast[0]>slow[0]*1.4 && fast[1]<slow[1]);
+    // A sideswipe exchanges lateral momentum and roll. A rear impact transfers forward speed.
+    for(bool side:{false,true}){
+        neon::Race r;r.immunity=5;r.x=0;r.distance=neon::lapLength-.5;r.speed=70;r.vx=side?12:0;
+        for(auto &p:r.rivals)p.recovery=1;
+        auto &other=r.rivals[0];other.recovery=0;other.x=side?2.:0.;other.z=r.distance+(side?0.:2.9);
+        other.speed=side?70:48;other.lateral=0;
+        r.hullContacts(1./90);
+        assert(std::abs(r.speed+other.speed-(side?140:118))<1e-8);
+        assert(std::abs(r.vx+other.lateral-(side?12:0))<1e-8);
+        if(side)assert(other.lateral>r.vx && r.rollRate*other.rollRate<0 && r.speed==70);
+        else assert(r.speed<60 && other.speed>60 && std::abs(r.vx)<1e-8);
+        const double v=other.speed,kick=other.lateral;r.hullContacts(1./90);
+        assert(other.speed==v && other.lateral==kick);
     }
+    neon::Race packHit;packHit.recovery=1;
+    auto &left=packHit.rivals[0],&right=packHit.rivals[1];
+    left.x=0;right.x=2.2;left.z=right.z=200;left.lateral=10;right.lateral=-4;
+    packHit.hullContacts(1./90);assert(left.lateral<right.lateral && left.rollRate*right.rollRate<0);
+    // A reversal cannot reposition parcels that left the damaged engine before the turn.
+    neon::Wake wake;
+    wake.engine(.023,4,2,100,12,0,80,.2,2,1,1);
+    auto old=wake.gas.front();wake.engine(.03,-7,2,103,-20,0,31,-.4,2,1,0);
+    assert(wake.gas.front().x>old.x && wake.gas.back().x<0);
+    assert(wake.gas.front().vz<old.vz && wake.gas.front().vz>wake.gas.back().vz);
+    wake.drift(1);assert(wake.gas.empty());
     double before = race.distance;
     race.advance(1. / 60, {});
     assert(race.distance > before);

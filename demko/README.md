@@ -8,7 +8,7 @@ At the amber and teal arrows, pick a side before the island. Take the raised sus
 
 A full boost cell lasts about 12 seconds on its own. Release the boost to recharge. The ship carries speed into the next bend until you apply the airbrake.
 
-Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. The mint sight shows where the nose is pointing. Lead crossing ships with the cannon. Its bolts fly straight and burst against city façades. Rockets follow the launch lane around bends and over the bridge. Amber barriers sweep across the track. Watch the red light on their leading end and pass behind them or shoot them out. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. A glancing contact pushes both ships apart. A hard impact costs shield, and holding a wing against a rail scrubs speed and throws sparks. A damaged ship smokes at two shield points and trails flame at one. Losing the last point breaks the hull apart before an automatic restart. Rivals can also be disabled and rejoin the race.
+Tuck into the teal wake behind a rival and ease off the boost for about a second. When the wake is charged, steer to either side while boosting to launch a slingshot. Holding boost on the same line gives you normal thrust and keeps the charge in reserve. Green boost pads give you a burst of speed and restore one shield point. The mint sight shows where the nose is pointing. Lead crossing ships with the cannon. Its bolts fly straight and burst against city façades. Rockets follow the launch lane around bends and over the bridge. Amber barriers sweep across the track. Watch the red light on their leading end and pass behind them or shoot them out. A broken ring around a ship marks a direct hit. Scraping the rail costs speed. Hull contact transfers momentum along the contact normal. A sideswipe rolls both ships and rubs off lateral speed. A rear impact pushes the leading ship forward. Rivals also collide with each other. A hard impact costs shield, and holding a wing against a rail scrubs speed and throws sparks. A damaged engine releases smoke at two shield points and burns at one. The gas carries the velocity of the nozzle at release, slows in the air and rises. The cannon throws a short fan of sparks on contact. A rocket produces an expanding pressure ring and a fireball that cools into smoke. Losing the last point breaks the hull apart before an automatic restart. Rivals can also be disabled and rejoin the race.
 
 | Control | Action |
 | --- | --- |
@@ -46,7 +46,7 @@ python3 -m http.server --directory docs 8000
 
 The browser requires WebAssembly. WebGL draws the full scene on the GPU. When WebGL is unavailable, the same WebAssembly module projects the scene for Canvas 2D.
 
-To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to compare five laps against a native C++ replay and check the slingshot controls.
+To rebuild `docs/demko/flight.wasm`, point `WASI_SDK_PATH` at WASI SDK 34 and run `./demko/build.sh`. Run `node --test demko/tests/endless.mjs` to compare seven laps against a native C++ replay and check the slingshot controls.
 
 ## Native macOS version
 

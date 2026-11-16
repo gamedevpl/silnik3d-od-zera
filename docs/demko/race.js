@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=harbor2',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=contact1',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }
@@ -11,7 +11,7 @@ export async function loadRace(bytes) {
  const {instance}=await WebAssembly.instantiate(bytes,{wasi_snapshot_preview1:wasi});
  const core=instance.exports;
  core._initialize();
- const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'];
+ const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet'];
  const fields=['distance','elapsed','x','lean','thrust','energy','rank','shield','laps','lapStart','lastLap','rockets','drafting'];
  const race={rivals:[]};
  function sync(notify) {

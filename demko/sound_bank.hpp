@@ -3,10 +3,10 @@
 #include <cstdint>
 
 namespace neon::audio {
-constexpr int rate=24000, count=10;
+constexpr int rate=24000, count=12;
 inline std::vector<float> synthesize(int id){
     // Real seconds, including a short tail for the shipyard's metal and concrete.
-    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95};
+    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95,.72,.23};
     std::vector<float> pcm(size_t(rate*duration[id]));
     uint32_t rng=uint32_t(971+id);
     double low=0,dark=0,phase=0;
@@ -32,13 +32,18 @@ inline std::vector<float> synthesize(int id){
                 v=.20*ring(96,27)+.23*ring(356,16)+.14*ring(547,22)+.09*ring(873,30)+
                   .46*(low-dark)*std::exp(-48*t)+.11*sweep(218+165*std::exp(-18*t))*std::exp(-10*t);
                 break;}
-            case Cue::Break: case Cue::Wreck:{
-                bool wreck=id==int(Cue::Wreck);
-                double hz=wreck?51.:76.;
-                v=.57*sweep(hz*(1.5-.84*u))*std::exp(-(wreck?4.:10.)*t)+
-                  (wreck?3.1:2.0)*low*std::exp(-(wreck?4.:12.)*t)+
-                  .28*ring(hz*3.71,13)+.18*ring(hz*6.19,16)+.5*(n-low)*std::exp(-65*t);
-                if(wreck && t>.12)v+=1.5*(low-dark)*std::exp(-7*(t-.12));
+            case Cue::Blast:
+                v=.64*sweep(43+98*std::exp(-16*t))*std::exp(-6*t)+
+                    2.1*low*std::exp(-7*t)+.29*(n-low)*std::exp(-34*t);
+                if(t>.08)v+=1.2*(low-dark)*std::exp(-9*(t-.08));
+                break;
+            case Cue::Ricochet: case Cue::Break:
+                v=.25*ring(1240,27)+.18*ring(677,18)+.18*ring(184,20)+
+                    .46*(n-low)*std::exp(-70*t);break;
+            case Cue::Wreck:{
+                v=.57*sweep(51*(1.5-.84*u))*std::exp(-4*t)+3.1*low*std::exp(-4*t)+
+                  .28*ring(51*3.71,13)+.18*ring(51*6.19,16)+.5*(n-low)*std::exp(-65*t);
+                if(t>.12)v+=1.5*(low-dark)*std::exp(-7*(t-.12));
                 break;}
             case Cue::Rail:
                 v=.64*(low-dark)*std::exp(-20*t)+.11*ring(791,33)+.065*ring(1223,40)

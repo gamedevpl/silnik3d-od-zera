@@ -6,11 +6,12 @@
 #include "race.hpp"
 #include "racer.hpp"
 #include "damage_fx.hpp"
+#include "flame.hpp"
 
 static std::vector<Vertex> mesh;
 static int firstPuff;
 extern "C" int particleStart(){return firstPuff;}
-static float objects[64*6]; // Lane X, world Z, object kind, animation phase and emitter speed.
+static float objects[raceObjectCapacity*6]; // Lane X, world Z, object kind, animation phase and emitter speed.
 static_assert(sizeof(Vertex)==16);
 
 static Frame geometryFrame(double time){
@@ -182,6 +183,8 @@ int circuitSection(int section,int simple){
 const Vertex* vertices(){return mesh.data();}
 float* objectBuffer(){return objects;}
 
+} // extern "C"
+
 // An impeller on the lock wall breaks the bridge silhouette on approach.
 static void lockTurbine(Frame &f,double distance,double time){
     constexpr double z=7*24+13,x=-20.6,y=11.7;
@@ -198,7 +201,10 @@ static void lockTurbine(Frame &f,double distance,double time){
     }
     f.box(x-.55,y-.55,z-.12,1.1,1.1,.3,{93,236,214},{60,85,103});
 }
-int actors(double time,double distance,double x,double lean,double thrust,double speed,double noseSteer,int count,int wing){
+int actors(const neon::Race &race,double time,int count){
+    const double distance=race.distance-race.laps*neon::lapLength,x=race.x,lean=race.lean;
+    const double thrust=race.thrust,speed=race.speed,noseSteer=race.noseSteer();
+    const int wing=(3-race.shield)*race.damagedSide;
     mesh.clear();
     Frame f=geometryFrame(time);
     f.cz=distance-6.4;f.chaseLag=0;f.pilot=x;f.bank=lean;f.boost=thrust;f.anim=time;
@@ -223,21 +229,11 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         });
         place(0,pump,false);
     }
-    auto exhaustMist=[&](double lane,double z,double power,double bank){
-        if(power<.18)return;
-        for(int side:{-1,1})for(int j=0;j<6;j++){
-            const double u=std::fmod(time*2.0+j/6.+(side+1)*.18,1.);
-            const double at=z-2.3-u*(2.0+2.9*power),size=.12+.38*u;
-            puffs.push_back({{lane+neon::road(at)+side*(1.06+.15*u),
-                neon::Race::deckAt(lane,z)+1.9+side*std::sin(bank)+.27*u,at},
-                size,size*.82,j*2.4+u,.30*power*std::sin(pi*u),4});
-        }
-    };
+    std::vector<const float*> volumes;
     bool wreck=false;
-    for(int i=0;i<std::clamp(count,0,64);i++)wreck|=int(objects[i*6+2])==neon::PlayerFragments;
+    for(int i=0;i<std::clamp(count,0,raceObjectCapacity);i++)wreck|=int(objects[i*6+2])==neon::PlayerFragments;
     if(!wreck){
         size_t start=mesh.size();
-        exhaustMist(x,distance,thrust,lean);
         racer(f,0,x,distance,lean,wing,speed,thrust,time);
         for(size_t i=start;i<mesh.size();i++)mesh[i].x+=(mesh[i].z-distance)*noseSteer;
     }
@@ -247,19 +243,19 @@ int actors(double time,double distance,double x,double lean,double thrust,double
             f.quad(shadow(0,2.2),shadow(side*.62,.28),shadow(side*1.5,-1.1),shadow(0,-.82),{36,49,60});
     }
     place(x,distance,true);
-    for(int i=0;i<std::clamp(count,0,64);i++){
+    for(int i=0;i<std::clamp(count,0,raceObjectCapacity);i++){
         const float *o=objects+6*i;
         const float xx=o[0],z=o[1],kind=o[2],age=o[3];
         double y=1.85;
+        if(int(kind)==neon::HotGas || int(kind)==neon::ColdGas){volumes.push_back(o);continue;}
         if(int(kind)>=neon::Sparks || kind==5){
-            neon::damagePuffs(int(kind),time,age,o[4],[&](neon::Puff puff){
-                if(int(kind)==neon::Smoke || int(kind)==neon::FireTrail)
-                    puff.center.x-=o[5]*std::max(0.,-puff.center.z-1.3)/std::max(30.f,o[4]);
+            const double lift=(int(kind)==neon::RocketImpact || kind==5)?o[5]:0;
+            neon::damagePuffs(int(kind),time,age,[&](neon::Puff puff){
                 puff.center.z+=z;puff.center.x+=xx+neon::road(puff.center.z);
-                puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z)+(kind==5?o[5]:0);puffs.push_back(puff);
+                puff.center.y+=neon::bridgeHeight(xx,z)+neon::viaductHeight(z)+lift;puffs.push_back(puff);
             });
             neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
-                f.tri({xx+a.x,a.y,z+a.z},{xx+b.x,b.y,z+b.z},{xx+c.x,c.y,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
+                f.tri({xx+a.x,a.y+lift,z+a.z},{xx+b.x,b.y+lift,z+b.z},{xx+c.x,c.y+lift,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
             });
         }else if(kind==12){ // A pair of lanes in the active slipstream.
             for(int j=0;j<5;j++)for(int side:{-1,1}){
@@ -277,13 +273,24 @@ int actors(double time,double distance,double x,double lean,double thrust,double
             f.quad({xx-.083,age-.09,z},{xx+.083,age-.09,z},{xx+.083,age+.09,z},{xx-.083,age+.09,z},{255,238,173});
             f.surface=Frame::Plain;place(xx,z,false);continue;
         }else if(kind==14){
+            // A short discharge sticks to the actual side struck as the target crosses the camera.
+            if(age>.52){
+                double t=(1-age)/.48,cx=xx+o[4],cz=z-1.86;
+                for(int j=0;j<7;j++){
+                    double a=j*neon::tau/7,dx=std::cos(a),dy=std::sin(a);
+                    double spread=.35+1.9*t,w=.11*(1-t);
+                    V from{cx+.18*dx,1.9+.18*dy,cz},mid{cx+spread*.55*dx+w,1.9+spread*.5*dy,cz-.21};
+                    V tip{cx+spread*dx,1.9+spread*.74*dy,cz-.41};
+                    f.tri(from,mid,mid+V{-w,w,0},{234,255,253});
+                    f.tri(mid,tip,mid+V{-w,w,0},{96,243,239});
+                }
+            }
             for(int j=0;j<12;j++){
                 double a=j*pi/6,r=2.1+1.5*(1-age),b=a+.32;
                 auto q=[&](double t,double rr){return V{xx+rr*std::cos(t),1.85+.68*rr*std::sin(t),z};};
                 f.quad(q(a,r),q(b,r),q(b,r+.28*age),q(a,r+.28*age),mix({224,119,58},{255,253,212},age));
             }
         }else if(kind>=6){
-            exhaustMist(xx,z,std::clamp((o[4]-54.)/30.,0.,1.),age);
             racer(f,int(kind)-5,xx,z,age,0,o[4],std::clamp((o[4]-54.)/30.,0.,1.),time);
         }else if(kind==0){
             for(int j=0;j<3;j++)for(int side:{-1,1}){
@@ -326,6 +333,27 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         place(xx,z,true);
     }
     firstPuff=int(mesh.size());
+    std::stable_sort(volumes.begin(),volumes.end(),[](auto a,auto b){return a[1]>b[1];});
+    // Submit only the entry faces of each gas volume. The fragment shader integrates its interior.
+    const double cameraZ=distance-9.2,cameraX=x*.87+neon::road(cameraZ);
+    const double cameraY=4.15+neon::viaductHeight(cameraZ)+neon::bridgeHeight(x,distance);
+    for(const auto *v:volumes){
+        double z=v[1],cx=v[0]+neon::road(z),cy=v[5],r=v[4];
+        if(z-cameraZ<1.0+1.7*r)continue;
+        auto material=uint8_t((int(v[2])==neon::HotGas?144:80)+std::clamp(int(v[3]*63),0,63));
+        auto vertex=[&](int a,int b,int c){
+            return Vertex{float(cx+a*r),float(cy+b*r),float(z+c*r*1.7),
+                uint8_t(a>0?255:0),uint8_t(b>0?255:0),uint8_t(c>0?255:0),material};};
+        auto face=[&](Vertex a,Vertex b,Vertex c,Vertex d){mesh.insert(mesh.end(),{a,b,c,a,c,d});};
+        face(vertex(-1,-1,-1),vertex(1,-1,-1),vertex(1,1,-1),vertex(-1,1,-1));
+        if(std::abs(cameraX-cx)>r){
+            int s=cameraX>cx?1:-1;face(vertex(s,-1,-1),vertex(s,-1,1),vertex(s,1,1),vertex(s,1,-1));}
+        if(std::abs(cameraY-cy)>r){
+            int s=cameraY>cy?1:-1;face(vertex(-1,s,-1),vertex(1,s,-1),vertex(1,s,1),vertex(-1,s,1));}
+    }
+    neon::flameSkin(race,time,[&](Vertex a,Vertex b,Vertex c,Vertex d){
+        mesh.insert(mesh.end(),{a,b,c,a,c,d});
+    });
     std::stable_sort(puffs.begin(),puffs.end(),[](const auto &a,const auto &b){return a.center.z>b.center.z;});
     for(const auto &p:puffs){
         double c=std::cos(p.angle),s=std::sin(p.angle);
@@ -337,5 +365,4 @@ int actors(double time,double distance,double x,double lean,double thrust,double
         mesh.insert(mesh.end(),{corner(0,0),corner(1,0),corner(0,1),corner(0,1),corner(1,0),corner(1,1)});
     }
     return int(mesh.size());
-}
 }

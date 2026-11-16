@@ -4,6 +4,7 @@
 #include "bridge.hpp"
 #include "damage_fx.hpp"
 #include "racer.hpp"
+#include "flame.hpp"
 
 namespace neon {
 // Canvas command stream: a positive vertex count draws a polygon; other commands use Op.
@@ -168,16 +169,21 @@ class CanvasScene {
         auto [x, z, kind, age, speed, rise] = o;
         if (z <= camZ + 1)
             return;
-        double deck = bridgeHeight(x, z) + viaductHeight(z) + (kind==5?rise:0);
+        if(int(kind)==ColdGas || int(kind)==HotGas){
+            if(z-camZ<1+1.7*speed)return;
+            const auto center=project(x,rise,z);double r=focal*speed/(z-camZ);
+            bool burning=int(kind)==HotGas && age<.36;
+            emit({Sprite,burning?5.:4.,center[0],center[1],r,r*(burning?1.15:.94),age*1.4,
+                (1-ramp(age))*(burning?.89:.56)});
+            return;
+        }
+        double deck = bridgeHeight(x, z) + viaductHeight(z) + ((kind==5 || int(kind)==RocketImpact)?rise:0);
         auto [cx, cy] = project(x, 1.85 + deck, z);
         double r = focal / (z - camZ);
         if (int(kind) >= Sparks || kind == 5) {
-            damagePuffs(int(kind), turbineAngle / .85, age, speed, [&](const Puff &p) {
-                double zz = z + p.center.z;
-                if (zz <= camZ + .8)
-                    return;
-                double wake=(int(kind)==Smoke || int(kind)==FireTrail)?rise*std::max(0.,-p.center.z-1.3)/std::max(30.f,speed):0.;
-                auto center = project(x + p.center.x-wake, deck + p.center.y, zz);
+            damagePuffs(int(kind),turbineAngle/.85,age,[&](const Puff &p){
+                double zz=z+p.center.z;if(zz<=camZ+.8)return;
+                auto center=project(x+p.center.x,deck+p.center.y,zz);
                 double scale = focal / (zz - camZ);
                 emit({Sprite, double(p.tile), center[0], center[1], p.w * scale, p.h * scale, -p.angle,
                       p.opacity});
@@ -276,13 +282,31 @@ class CanvasScene {
         emit({Restore});
         structures(false);
         auto visible = race.visible();
+        if(race.recovery<=0)visible.push_back({float(race.x),float(race.distance-race.laps*lapLength),-1,0,0,0});
         std::stable_sort(visible.begin(), visible.end(), [](auto &a, auto &b) { return a[1] > b[1]; });
-        for (auto &o : visible)
-            actor(o);
-        if (race.recovery > 0)
-            return;
-        ship(0,race.x,race.distance-race.laps*lapLength,race.lean,
-             (3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
+        struct Face { Vertex a,b,c,d; };
+        std::vector<Face> fire;
+        flameSkin(race,race.elapsed,[&](Vertex a,Vertex b,Vertex c,Vertex d){
+            if(a.z>camZ+1 && c.z>camZ+1)fire.push_back({a,b,c,d});
+        });
+        std::stable_sort(fire.begin(),fire.end(),[](const Face &a,const Face &b){return a.a.z>b.a.z;});
+        size_t i=0;
+        auto burnTo=[&](double z){
+            for(;i<fire.size() && fire[i].a.z>z;++i){
+                auto &f=fire[i];double heat=double(f.a.r)/255;heat*=heat;
+                auto point=[&](Vertex v){return project(v.x-road(v.z),v.y,v.z);};
+                int rgb=0xfc0000+(int(48+195*heat)<<8)+int(8+165*heat);
+                emit({Opacity,.68*f.a.g/255});
+                polygon(rgb,{point(f.a),point(f.b),point(f.c),point(f.d)});
+            }
+            emit({Opacity,1});
+        };
+        for(auto &o:visible){
+            burnTo(o[1]);
+            if(o[2]==-1)ship(0,race.x,o[1],race.lean,(3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
+            else actor(o);
+        }
+        burnTo(camZ);
     }
 };
 } // namespace neon

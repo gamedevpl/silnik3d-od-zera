@@ -125,7 +125,7 @@ class Sound {
             return;
         auto voice = voices[nextVoice++ % 8];
         [voice stop];
-        voice.volume=c==neon::Cue::Fire?.42:c==neon::Cue::Rail?.22+.32*strength:c==neon::Cue::Hit?.36+.55*strength:.72;
+        voice.volume=c==neon::Cue::Fire?.42:c==neon::Cue::Ricochet?.27:c==neon::Cue::Rail?.22+.32*strength:c==neon::Cue::Hit?.36+.55*strength:.72;
         [voice scheduleBuffer:tones[int(c)] completionHandler:nil];
         [voice play];
     }

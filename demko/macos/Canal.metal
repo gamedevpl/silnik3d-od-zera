@@ -46,6 +46,40 @@ fragment float4 worldPixel(Varying in [[stage_in]],constant View &v [[buffer(1)]
     float range=1-smoothstep(v.visibility.x,v.visibility.y,in.distance);
     if(in.mat>23.5f && in.mat<24.5f){if(v.effects.y>.5f)discard_fragment();return float4(in.color,.88f);}
     if(v.effects.y>1.5)return float4(.04,.075,.13,.26*range*(1-smoothstep(152.f,192.f,in.sourceDepth)));
+ if(in.mat>51.5 && in.mat<52.5){
+  float3 emission=mix(float3(.98,.19,.025),float3(1.,.96,.68),in.color.r*in.color.r);
+  float flicker=sin(in.world.z*3.-v.effects.x*11.+2.*sin(in.world.y*6.+in.world.x*2.));
+  float veil=smoothstep(.08,.82,in.color.g+.34*flicker);
+  return float4(emission,.46*veil*in.color.g*range);
+ }
+ if(in.mat>79.5){
+  float hot=step(143.5,in.mat);
+  float age=clamp((floor(in.mat+.5)-80.-64.*hot)/63.,0.,1.);
+  float3 p=in.color*2.-1.;
+  float3 ray=in.world-float3(v.camera.x,4.15+v.effects.w,v.camera.y);
+  ray=normalize(ray*float3(1.,1.,1./1.7));
+  float along=dot(p,ray),disc=along*along-dot(p,p)+1.;
+  if(disc<=0.)discard_fragment();
+  float chord=2.*sqrt(disc),stride=chord/6.;
+  p+=ray*(-along-.5*chord+.5*stride);
+  float opacity=0.;float3 light=float3(0.);
+  float heat=hot*(1.-smoothstep(.15,.52,age));
+  for(int j=0;j<6;j++){
+   float3 q=p*4.+float3(age*2.,-3.*age,age);
+   float eddy=sin(q.x+1.5*sin(q.z))*cos(q.y+.8*sin(q.x+q.z));
+   float folds=.12*eddy+.055*sin(2.7*q.y+1.8*q.z+2.*eddy);
+   float mass=smoothstep(0.,.70,1.-dot(p,p)+folds-.23);
+   float cover=mass*stride*(.90+.16*eddy)*(1.-smoothstep(.38,1.,age));
+   float shade=clamp(.40+.22*p.y-.16*p.x+.23*eddy,0.,1.);
+   float3 soot=mix(float3(.075,.087,.115),float3(.63,.63,.65),shade);
+   float core=clamp(mass*.82+.16*eddy+.10,0.,1.);
+   float3 fire=mix(float3(.96,.18,.035),float3(1.,.94,.66),core*core);
+   light+=(1.-opacity)*cover*mix(soot,fire,heat*core);
+   opacity+=(1.-opacity)*cover;
+   p+=ray*stride;
+  }
+  return (float4(light/max(.001,opacity),opacity*range));
+ }
     if(in.mat>7.5 && in.mat<8.5){
         if(v.effects.y>.5)discard_fragment();
   float lane=(in.color.r-.5f)*37.1f;

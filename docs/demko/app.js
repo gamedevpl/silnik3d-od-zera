@@ -1,6 +1,6 @@
-import {renderer} from './renderer.js?v=harbor2';
-import {loadRace} from './race.js?v=harbor2';
-import {Sound} from './audio.js?v=drive-rate1';
+import {renderer} from './renderer.js?v=contact1';
+import {loadRace} from './race.js?v=contact1';
+import {Sound} from './audio.js?v=contact1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -109,6 +109,7 @@ $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};
 function cue(k){
  sound.cue(k,race.contactStrength);
+ if(k==='blast')k='break';
  if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v7',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }

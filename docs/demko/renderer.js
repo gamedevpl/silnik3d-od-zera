@@ -26,6 +26,40 @@ void main(){
  float range=1.-smoothstep(visibility.x,visibility.y,depth);
  if(mat>23.5 && mat<24.5){if(pass>.5)discard;gl_FragColor=vec4(color,.88);return;}
  if(pass>1.5){gl_FragColor=vec4(.04,.075,.13,shadowOpacity*range*(1.-smoothstep(152.,192.,sourceDepth)));return;}
+ if(mat>51.5 && mat<52.5){
+  vec3 emission=mix(vec3(.98,.19,.025),vec3(1.,.96,.68),color.r*color.r);
+  float flicker=sin(world.z*3.-clock*11.+2.*sin(world.y*6.+world.x*2.));
+  float veil=smoothstep(.08,.82,color.g+.34*flicker);
+  gl_FragColor=vec4(emission,.46*veil*color.g*range);return;
+ }
+ if(mat>79.5){
+  float hot=step(143.5,mat);
+  float age=clamp((floor(mat+.5)-80.-64.*hot)/63.,0.,1.);
+  vec3 p=color*2.-1.;
+  vec3 ray=world-vec3(cam.x,4.15+lift,cam.y);
+  ray=normalize(ray*vec3(1.,1.,1./1.7));
+  float along=dot(p,ray),disc=along*along-dot(p,p)+1.;
+  if(disc<=0.)discard;
+  float chord=2.*sqrt(disc),stride=chord/6.;
+  p+=ray*(-along-.5*chord+.5*stride);
+  float opacity=0.;vec3 light=vec3(0.);
+  float heat=hot*(1.-smoothstep(.15,.52,age));
+  for(int j=0;j<6;j++){
+   vec3 q=p*4.+vec3(age*2.,-3.*age,age);
+   float eddy=sin(q.x+1.5*sin(q.z))*cos(q.y+.8*sin(q.x+q.z));
+   float folds=.12*eddy+.055*sin(2.7*q.y+1.8*q.z+2.*eddy);
+   float mass=smoothstep(0.,.70,1.-dot(p,p)+folds-.23);
+   float cover=mass*stride*(.90+.16*eddy)*(1.-smoothstep(.38,1.,age));
+   float shade=clamp(.40+.22*p.y-.16*p.x+.23*eddy,0.,1.);
+   vec3 soot=mix(vec3(.075,.087,.115),vec3(.63,.63,.65),shade);
+   float core=clamp(mass*.82+.16*eddy+.10,0.,1.);
+   vec3 fire=mix(vec3(.96,.18,.035),vec3(1.,.94,.66),core*core);
+   light+=(1.-opacity)*cover*mix(soot,fire,heat*core);
+   opacity+=(1.-opacity)*cover;
+   p+=ray*stride;
+  }
+  gl_FragColor=(vec4(light/max(.001,opacity),opacity*range));return;
+ }
  if(mat>7.5 && mat<8.5){
   if(pass>.5)discard;
   float lane=(color.r-.5)*37.1;
