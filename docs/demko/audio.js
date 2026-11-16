@@ -40,10 +40,10 @@ export class Sound{
    this.music.stop();this.music=null;this.musicLevel=null;
   }
   if(this.driveVoice){
-   const {field,pulse,fade}=this.driveVoice,now=this.ctx.currentTime;
+   const {field,fade}=this.driveVoice,now=this.ctx.currentTime;
    fade.gain.cancelScheduledValues(now);
    fade.gain.setTargetAtTime(0,now,.006);
-   field.stop(now+.04);pulse.stop(now+.04);this.driveVoice=null;
+   field.stop(now+.04);this.driveVoice=null;
   }
  }
  clip(id){
@@ -63,28 +63,22 @@ export class Sound{
   const buffer=await this.driveLoad;
   if(!this.running||!buffer||this.driveVoice)return;
   const c=this.ctx,now=c.currentTime;
-  const field=c.createBufferSource(),pulse=c.createOscillator();
-  const depth=c.createGain(),level=c.createGain(),fade=c.createGain();
+  const field=c.createBufferSource(),fade=c.createGain(),tone=c.createBiquadFilter();
   field.buffer=buffer;field.loop=true;field.loopEnd=4;
-  // A rounded pulse with a broad quiet valley. The oscillator only controls gain.
-  const shape=c.createPeriodicWave(new Float32Array([0,.5625,0,-.0625]),new Float32Array(4),{disableNormalization:true});
-  pulse.setPeriodicWave(shape);pulse.frequency.value=1.3;
-  depth.gain.value=.29;level.gain.value=.63-.29/2;
-  pulse.connect(depth).connect(level.gain);
-  field.connect(level).connect(fade).connect(this.volume);
-  fade.gain.setValueAtTime(0,now);fade.gain.setTargetAtTime(1,now,.012);
-  field.onended=()=>{field.disconnect();pulse.disconnect();depth.disconnect();level.disconnect();fade.disconnect();};
-  this.driveVoice={field,pulse,depth,level,fade};
-  field.start(now);pulse.start(now);
+  tone.type='highshelf';tone.frequency.value=800;
+  field.connect(tone).connect(fade).connect(this.volume);
+  fade.gain.setValueAtTime(0,now);fade.gain.setTargetAtTime(.63,now,.012);
+  field.onended=()=>{field.disconnect();tone.disconnect();fade.disconnect();};
+  this.driveVoice={field,tone,fade};
+  field.start(now);
  }
  tick(thrust){
   if(!this.running||!this.driveVoice)return;
-  const {pulse,depth,level}=this.driveVoice,now=this.ctx.currentTime;
+  const {field,tone}=this.driveVoice,now=this.ctx.currentTime;
   this.musicLevel?.gain.setTargetAtTime(.78-.27*thrust,now,.10);
-  const span=.29+.29*thrust;
-  level.gain.setTargetAtTime(.63-span/2,now,.10);
-  depth.gain.setTargetAtTime(span,now,.10);
-  pulse.frequency.setTargetAtTime(1.3+4.2*thrust,now,.90);
+  // The flutter is in the recording. Advance the recording itself under thrust.
+  field.playbackRate.setTargetAtTime(1+1.1*thrust,now,.65);
+  tone.gain.setTargetAtTime(-5*thrust,now,.18);
  }
  cue(event,strength=.5){
   const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);

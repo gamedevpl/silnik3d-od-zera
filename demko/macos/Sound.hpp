@@ -7,6 +7,7 @@
 class Sound {
     AVAudioEngine *engine;
     AVAudioPlayerNode *music, *voices[8];
+    AVAudioUnitEQ *driveTone;
     std::shared_ptr<std::atomic<float>> thrustTarget=std::make_shared<std::atomic<float>>(0);
     AVAudioPCMBuffer *tones[neon::audio::count];
     int nextVoice = 0;
@@ -57,34 +58,38 @@ class Sound {
             std::copy(samples.begin(),samples.end(),b.floatChannelData[0]);
             tones[id]=b;
         }
-        // Run the pulse on the audio clock so its phase survives frame-rate changes.
         auto target=thrustTarget;
-        const double rate=cruise.format.sampleRate, smoothing=1-std::exp(-1/(.10*rate));
-        const double cadenceSmoothing=1-std::exp(-1/(.90*rate));
+        const double glide=1-std::exp(-1/(.65*cruise.format.sampleRate));
         const AVAudioFrameCount length=cruise.frameLength;
-        __block AVAudioFrameCount cursor=0;
-        __block double thrust=0, cadence=0, phase=0;
+        __block double cursor=0, speed=1;
         auto drive=[[AVAudioSourceNode alloc] initWithFormat:cruise.format
             renderBlock:^OSStatus(BOOL *, const AudioTimeStamp *, AVAudioFrameCount frames, AudioBufferList *out){
                 const double requested=target->load(std::memory_order_relaxed);
                 auto samples=cruise.floatChannelData;
                 for(AVAudioFrameCount i=0;i<frames;i++){
-                    thrust+=(requested-thrust)*smoothing;
-                    const double span=.29+.29*thrust;
-                    const double c=std::cos(phase);
-                    // Same rounded pulse as the web mixer's first and third harmonics.
-                    const float gain=.63+span*(.75*c-.25*c*c*c-.5);
-                    for(UInt32 c=0;c<out->mNumberBuffers;c++)
-                        static_cast<float *>(out->mBuffers[c].mData)[i]=gain*samples[c][cursor];
-                    cadence+=(requested-cadence)*cadenceSmoothing;
-                    phase+=neon::tau*(1.3+4.2*cadence)/rate;
-                    if(phase>=neon::tau)phase-=neon::tau;
-                    if(++cursor==length)cursor=0;
+                    const auto frame=static_cast<AVAudioFrameCount>(cursor);
+                    const auto next=frame+1==length ? 0 : frame+1;
+                    const float fraction=cursor-frame;
+                    for(UInt32 c=0;c<out->mNumberBuffers;c++){
+                        const float first=samples[c][frame];
+                        static_cast<float *>(out->mBuffers[c].mData)[i]=
+                            .63f*(first+fraction*(samples[c][next]-first));
+                    }
+                    speed+=(1+1.1*requested-speed)*glide;
+                    cursor+=speed;
+                    if(cursor>=length)cursor-=length;
                 }
                 return noErr;
             }];
         [engine attachNode:drive];
-        [engine connect:drive to:engine.mainMixerNode format:cruise.format];
+        driveTone=[[AVAudioUnitEQ alloc] initWithNumberOfBands:1];
+        auto shelf=driveTone.bands.firstObject;
+        shelf.filterType=AVAudioUnitEQFilterTypeHighShelf;
+        shelf.frequency=800;
+        shelf.bypass=NO;
+        [engine attachNode:driveTone];
+        [engine connect:drive to:driveTone format:cruise.format];
+        [engine connect:driveTone to:engine.mainMixerNode format:cruise.format];
         return true;
     }
 
@@ -112,6 +117,7 @@ class Sound {
     }
     void power(double thrust) {
         thrustTarget->store(float(thrust),std::memory_order_relaxed);
+        driveTone.bands.firstObject.gain=-5*thrust;
         music.volume=.78-.27*thrust;
     }
     void cue(neon::Cue c,double strength) {
