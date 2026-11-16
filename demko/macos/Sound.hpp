@@ -60,7 +60,7 @@ class Sound {
         // Run the pulse on the audio clock so its phase survives frame-rate changes.
         auto target=thrustTarget;
         const double rate=cruise.format.sampleRate, smoothing=1-std::exp(-1/(.10*rate));
-        const double cadenceSmoothing=1-std::exp(-1/(.42*rate));
+        const double cadenceSmoothing=1-std::exp(-1/(.90*rate));
         const AVAudioFrameCount length=cruise.frameLength;
         __block AVAudioFrameCount cursor=0;
         __block double thrust=0, cadence=0, phase=0;
@@ -70,12 +70,14 @@ class Sound {
                 auto samples=cruise.floatChannelData;
                 for(AVAudioFrameCount i=0;i<frames;i++){
                     thrust+=(requested-thrust)*smoothing;
-                    const double amount=.15*thrust;
-                    const float gain=.63-amount+amount*std::sin(phase);
+                    const double span=.29+.29*thrust;
+                    const double c=std::cos(phase);
+                    // Same rounded pulse as the web mixer's first and third harmonics.
+                    const float gain=.63+span*(.75*c-.25*c*c*c-.5);
                     for(UInt32 c=0;c<out->mNumberBuffers;c++)
                         static_cast<float *>(out->mBuffers[c].mData)[i]=gain*samples[c][cursor];
                     cadence+=(requested-cadence)*cadenceSmoothing;
-                    phase+=neon::tau*(1.25+2.75*cadence)/rate;
+                    phase+=neon::tau*(1.3+4.2*cadence)/rate;
                     if(phase>=neon::tau)phase-=neon::tau;
                     if(++cursor==length)cursor=0;
                 }
@@ -110,6 +112,7 @@ class Sound {
     }
     void power(double thrust) {
         thrustTarget->store(float(thrust),std::memory_order_relaxed);
+        music.volume=.78-.27*thrust;
     }
     void cue(neon::Cue c,double strength) {
         if (!engine.running || muted)

@@ -27,7 +27,7 @@ export class Sound{
   const level=this.ctx.createGain();level.gain.value=.78;
   source.connect(level).connect(this.volume);
   source.onended=()=>{source.disconnect();level.disconnect();};
-  this.music=source;this.musicSince=this.ctx.currentTime;source.start(0,this.musicOffset);
+  this.musicLevel=level;this.music=source;this.musicSince=this.ctx.currentTime;source.start(0,this.musicOffset);
  }
  play(){this.unlock();this.running=true;if(this.ctx){this.loadScore();this.startDrive();}}
  pause(){
@@ -37,7 +37,7 @@ export class Sound{
    this.musicOffset+=this.ctx.currentTime-this.musicSince;
    const end=this.music.loopEnd;
    if(this.musicOffset>=end)this.musicOffset=16+(this.musicOffset-end)%(end-16);
-   this.music.stop();this.music=null;
+   this.music.stop();this.music=null;this.musicLevel=null;
   }
   if(this.driveVoice){
    const {field,pulse,fade}=this.driveVoice,now=this.ctx.currentTime;
@@ -66,7 +66,10 @@ export class Sound{
   const field=c.createBufferSource(),pulse=c.createOscillator();
   const depth=c.createGain(),level=c.createGain(),fade=c.createGain();
   field.buffer=buffer;field.loop=true;field.loopEnd=4;
-  pulse.frequency.value=1.25;depth.gain.value=0;level.gain.value=.63;
+  // A rounded pulse with a broad quiet valley. The oscillator only controls gain.
+  const shape=c.createPeriodicWave(new Float32Array([0,.5625,0,-.0625]),new Float32Array(4),{disableNormalization:true});
+  pulse.setPeriodicWave(shape);pulse.frequency.value=1.3;
+  depth.gain.value=.29;level.gain.value=.63-.29/2;
   pulse.connect(depth).connect(level.gain);
   field.connect(level).connect(fade).connect(this.volume);
   fade.gain.setValueAtTime(0,now);fade.gain.setTargetAtTime(1,now,.012);
@@ -77,11 +80,11 @@ export class Sound{
  tick(thrust){
   if(!this.running||!this.driveVoice)return;
   const {pulse,depth,level}=this.driveVoice,now=this.ctx.currentTime;
-  const amount=.15*thrust;
-  // Modulate the level of the cruise sound, with its original peak and pitch.
-  level.gain.setTargetAtTime(.63-amount,now,.10);
-  depth.gain.setTargetAtTime(amount,now,.10);
-  pulse.frequency.setTargetAtTime(1.25+2.75*thrust,now,.42);
+  this.musicLevel?.gain.setTargetAtTime(.78-.27*thrust,now,.10);
+  const span=.29+.29*thrust;
+  level.gain.setTargetAtTime(.63-span/2,now,.10);
+  depth.gain.setTargetAtTime(span,now,.10);
+  pulse.frequency.setTargetAtTime(1.3+4.2*thrust,now,.90);
  }
  cue(event,strength=.5){
   const id=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck'].indexOf(event);
