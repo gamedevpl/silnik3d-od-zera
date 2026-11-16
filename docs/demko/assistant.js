@@ -1,7 +1,7 @@
 /* The gamedev.pl mascot on the Neon Canal demo: answers how to play, how the race is doing and
    where things live in the C++ and browser code. Same panel as the series page (../ask/ask.js),
    running on the browser's own model through genaicode/browser. Nothing leaves the page. */
-import { createPageAgent } from "../vendor/genaicode-browser.js";
+import { createPageAgent } from "https://cdn.jsdelivr.net/npm/genaicode@2.33.0/dist/browser.js";
 import { mountAsk, esc } from "../ask/ask.js";
 
 const pl = () => document.documentElement.lang === "pl";

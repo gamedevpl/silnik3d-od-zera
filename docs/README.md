@@ -7,9 +7,10 @@ Statyczna strona dla GitHub Pages (`main` / `/docs`): https://gamedevpl.github.i
 - `notes.js`: krótkie notatki do odcinków, klucz to `slug` odcinka; `[[m:ss]]` w treści staje się linkiem do momentu filmu. Odcinek bez notatki po prostu jej nie pokazuje.
 - Postęp czytelnika (obejrzane, zadanie PASS) zapisuje się tylko w `localStorage` przeglądarki.
 - `app.js`: język PL/EN, zakładki, wiersze odcinków. Odcinek z `video` jest traktowany jako opublikowany. Z `premiere: true` pokazuje kartę premiery do czasu `at`.
-- `assistant.js`: „Zapytaj o serię”. Działa na modelu wbudowanym w Chrome przez `vendor/genaicode-browser.js`, bez serwera. Ładuje się tylko tam, gdzie przeglądarka ma ten model.
+- `assistant.js`: „Zapytaj o serię”. Działa na modelu wbudowanym w Chrome przez `genaicode/browser` (paczka npm `genaicode`, ładowana z jsDelivr), bez serwera. Ładuje się tylko tam, gdzie przeglądarka ma ten model.
 - `subs.js`: angielskie napisy jako `[sekunda, tekst]`, z plików `.en.srt`. Po dodaniu odcinka dopisz jego napisy pod kluczem `e03` itd.
-- `vendor/genaicode-browser.js`: `npx esbuild <genaicode>/src/browser.ts --bundle --format=esm --minify --target=es2022`.
+- `ask/`: wspólny panel czatu (`ask.js`, `ask.css`) dla strony serii, demka i Lumen Lab.
+- Nic wygenerowanego nie leży w repo. Workflow `.github/workflows/pages.yml` przy publikacji buduje `play/epNN/` (`web/build.sh`) i `demko/source.json` (`web/ask-source.mjs`).
 
 Podgląd lokalnie: `python3 -m http.server -d docs 8000`.
 

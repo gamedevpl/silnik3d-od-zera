@@ -1,3 +1,8 @@
 /build*/
 /hello
 .DS_Store
+
+# Built by .github/workflows/pages.yml on deploy (web/build.sh, web/ask-source.mjs)
+/docs/play/ep*/
+/docs/demko/source.json
+/_site/
