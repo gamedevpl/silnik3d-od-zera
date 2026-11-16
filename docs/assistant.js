@@ -2,7 +2,7 @@
    the exercises and the subtitles. It runs on the browser's own model through genaicode/browser
    (https://github.com/gtanczyk/genaicode), so there is no server and nothing leaves the page.
    Loaded only where that model exists; everywhere else the page simply has no helper. */
-import { createPageAgent } from "https://cdn.jsdelivr.net/npm/genaicode@2.33.0/dist/browser.js";
+import { createPageAgent } from "./vendor/genaicode-browser.js";
 import { mountAsk, esc } from "./ask/ask.js";
 
 const { T, lang, code, isOut } = window.SILNIK;

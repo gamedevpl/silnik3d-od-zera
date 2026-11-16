@@ -2,7 +2,7 @@
    switches the running scene. Same panel as the rest of the site (../ask/ask.js), on the
    browser's own model through genaicode/browser. Nothing leaves the page.
    Loaded by index.html only where that model exists. */
-import { createPageAgent } from "https://cdn.jsdelivr.net/npm/genaicode@2.33.0/dist/browser.js";
+import { createPageAgent } from "../../vendor/genaicode-browser.js";
 import { mountAsk, esc } from "../../ask/ask.js";
 
 const L = window.LUMEN;

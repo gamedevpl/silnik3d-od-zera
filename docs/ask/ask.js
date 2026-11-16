@@ -1,5 +1,5 @@
 /* "Ask the mascot": the shared chat panel of the site. A page builds its own agent with
-   createPageAgent from genaicode/browser (npm, loaded from jsDelivr) and its own tools, then calls mountAsk.
+   createPageAgent (../vendor/genaicode-browser.js) and its own tools, then calls mountAsk.
    The panel stays hidden where the browser has no built-in model.
 
    texts() returns the current strings: askOpen, askTitle, askNew, askClose, askNote, askPlaceholder,
