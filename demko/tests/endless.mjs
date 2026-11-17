@@ -9,14 +9,14 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[2055.779518980,1,7],[3992.976324028,3,7],[6333.078759785,5,7],[8480.469029524,7,6]];
-  for(let i=0;i<11160;i++){
+  const checkpoints=[[4276.212201,1,6],[8456.882666,3,6],[12690.598963,5,7],[16891.205986,7,6]];
+  for(let i=0;i<22320;i++){
    const lanes=s.rivals.map(p=>p.x);
    if(i%821===0)sim.shoot(true,cue);
    sim.advance(1/90,{steer:Math.floor(i/57)%3-1,boost:i%890<570,brake:i%341<19},i%4===0,cue);
    assert(s.rivals.every((p,j)=>Math.abs(p.x-lanes[j])<.6), "rival jumped sideways in one tick");
-   if((i+1)%2790===0){
-    const [distance,lap,rank]=checkpoints[(i+1)/2790-1];
+   if((i+1)%5580===0){
+    const [distance,lap,rank]=checkpoints[(i+1)/5580-1];
     assert(Math.abs(s.distance-distance)<.0001);
     assert.equal(s.laps,lap);assert.equal(s.rank,rank);
     for(const [x,z,kind] of sim.visible().filter(o=>o[2]>=6&&o[2]<12)){
@@ -26,9 +26,9 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-16.340861829)<.0001);
-  assert.equal(s.rockets,0);assert.equal(s.shield,2);
-  assert.deepEqual(counts,{fire:521,rocket:5,break:46,hit:21,pad:7,rail:17,repair:8,lap:7,wreck:8,blast:2,ricochet:371,lock:36,overdrive:4,coreGain:7,coreLost:5,coreBank:1});
+  assert(Math.abs(s.lastLap-34.435832555)<.0001);
+  assert.equal(s.rockets,1);assert.equal(s.shield,3);
+  assert.deepEqual(counts,{fire:1040,rocket:11,break:113,hit:45,pad:20,rail:46,repair:16,lap:7,launch:2,wreck:16,blast:5,ricochet:602,lock:72,overdrive:4,coreGain:8,coreLost:7,coreBank:2});
   assert.equal(sim.reset().distance,0);
  });
 
@@ -101,7 +101,14 @@ test('a courier can steal and win a heat using normal controls',async()=>{
  for(let tick=0;tick<21600&&!won;tick++){
   const vx=(s.x-prevX)*90;prevX=s.x;
   const carrying=s.carrier===0;
-  const target=carrying?s.gateX:s.rivals[s.carrier-1].x;
+  let target=carrying?s.gateX:s.rivals[s.carrier-1].x;
+  const z=s.distance%sim.LAP;
+  if(carrying && s.gateAhead>200){
+   if(z>1370 && z<1548)target=-7;
+   if(z>1790 && z<1968)target=7;
+  }
+  if(s.route===2 && target>0)target=-10;
+  if(s.route===3 && target<0)target=10;
   const error=target-s.x-.15*vx;
   if(tick%60===0)sim.shoot(true,cue);
   sim.advance(1/90,{steer:Number(error>.35)-Number(error<-.35),

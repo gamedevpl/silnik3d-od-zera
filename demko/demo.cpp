@@ -2,7 +2,7 @@
 #include "raceway.hpp"
 #include "scene-cues.hpp"
 #include "circuit.hpp"
-#include "bridge.hpp"
+#include "coast.hpp"
 #include "race.hpp"
 #include "racer.hpp"
 #include "damage_fx.hpp"
@@ -129,12 +129,15 @@ int circuitSection(int section,int simple){
     int k=neon::circuitIndex(section);
     double z=k*24;f.cz=z;
     auto district=neon::district(k);
-    f.skyline();
+    if(district!=neon::District::Coast)f.skyline();
+    neon::coastScenery(k,z,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int color){
+        f.quad({a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},{d.x,d.y,d.z},{color>>16,(color>>8)&255,color&255});
+    });
     harborCity(f,k,z);
     if(simple==2)return int(mesh.size());
     size_t trackBegin=mesh.size();
     f.surface=Frame::CladFront;
-    f.rings(district==neon::District::Quay && k!=0 && k%2 && neon::viaductHeight(z)<3);if(neon::viaductHeight(z)<4)f.lightBays();
+    f.rings(district==neon::District::Quay && k!=0 && k%2 && neon::viaductHeight(z)<3);if(district!=neon::District::Coast && neon::viaductHeight(z)<4)f.lightBays();
     if(neon::viaductHeight(z)<6)landmark(f,k,z+15);
     f.surface=Frame::Plain;
     auto face=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){
@@ -150,22 +153,29 @@ int circuitSection(int section,int simple){
     for(int j=0;j<4;j++)neon::courseSpan(z+6*j,face,plate);
     C edge=district==neon::District::Locks?C{80,229,210}:district==neon::District::Shipyard?C{255,178,79}:C{111,159,241};
     for(int side:{-1,1}){
+
         double x=side*18.4;
-        f.quad({x-.13,.09,z},{x+.13,.09,z},{x+.13,.09,z+24},{x-.13,.09,z+24},edge);
-        if(k%2==0){
+        for(int j=0;j<4;j++){
+            const double a=z+6*j;
+            if(!neon::shippingGap(a+3))
+                f.quad({x-.13,.09,a},{x+.13,.09,a},{x+.13,.09,a+6},{x-.13,.09,a+6},edge);
+        }
+        if(k%2==0 && !neon::shippingGap(z+2)){
             for(int j=0;j<3;j++)
                 f.box(side*18.9-.09,.2,z+j*2,.18,.65,.62,edge,edge);
         }
     }
     for(int lane=-2;lane<=2;lane++)for(int j=0;j<2;j++){
         double x=lane*7.0,zz=z+j*12.;
+        if(neon::shippingGap(zz+2))continue;
         if(neon::islandHalf(zz+2)>0 && (x<0 || x<neon::islandHalf(zz+2)+.2))continue;
         f.quad({x-.10,.08,zz},{x+.10,.08,zz},{x+.10,.08,zz+4},{x-.10,.08,zz+4},
                lane==0?C{190,169,130}:C{104,163,179});
     }
-    if(z>=480 && z<1056){
+    if(neon::viaductHeight(z+12)>0){
         for(int i=0;i<4;i++){
             double a=z+6*i,b=a+6;
+            if(neon::shippingGap(a+3))continue;
             f.surface=Frame::SkyDeck;
             f.quad({-18.55,-.015,a},{18.55,-.015,a},{18.55,-.015,b},{-18.55,-.015,b},{46,71,86});
             f.surface=Frame::Plain;
@@ -177,7 +187,7 @@ int circuitSection(int section,int simple){
         }
     }
     for(size_t i=trackBegin;i<mesh.size();i++)mesh[i].y+=neon::viaductHeight(mesh[i].z);
-    if(neon::viaductHeight(z+12)>3 && k%2==0){
+    if(!neon::shippingGap(z+12) && neon::viaductHeight(z+12)>3 && k%2==0){
         for(int side:{-1,1})f.box(side*15-1,0,z+12,2,neon::viaductHeight(z+12)-.15,2.4,{56,66,88},{30,44,62});
     }
     return int(mesh.size());

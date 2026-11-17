@@ -167,6 +167,19 @@ int main() {
         for(const auto &p:chase.rivals)assert(chase.distance-p.z<neon::lapLength);
     }
     // Banking is independent of track position. A missed gate raises the stake for the next carrier.
+    for(double lip:{neon::firstLip,neon::secondLip}){
+        const double lane=neon::landingLane(lip),end=lip+neon::jumpSpan+neon::lapLength;
+        assert(neon::shippingGap(end-1) && !neon::shippingGap(end+1));
+        assert(neon::viaductHeight(lip+30)>neon::viaductHeight(lip)+4.9);
+        for(double error:{0.,5.}){
+            neon::Race jump;jump.distance=end-.1;jump.laps=1;jump.x=lane+error;
+            jump.energy=25;jump.speed=60;
+            for(auto &p:jump.rivals)p.z=jump.distance+100;
+            jump.advance(1./90,{});
+            assert((jump.padBoost>1)==(error==0));
+            assert((jump.energy>36)==(error==0));
+        }
+    }
     neon::Relay relay;
     neon::RelayFleet previousShips{},now{};
     for(int i=0;i<7;++i)previousShips[i]=now[i]={0.,double(10*i),true};
@@ -193,7 +206,7 @@ int main() {
         assert(duel.carrier==(lane<4.8?0:1));
     }
     neon::Race race;
-    for (int i = 0; i < 60 * 95; ++i)
+    for (int i = 0; i < 60 * 190; ++i)
         race.advance(1. / 60, {});
     assert(race.laps >= 3 && race.sectors.size() < 6);
     race.rivals.front().z = race.distance + 13;

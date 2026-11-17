@@ -14,8 +14,8 @@ struct Relay {
     std::array<int,7> scores{};
     double safeTime=0, victoryTime=0, payoutTime=0;
 
-    double gateZ() const {return gate==0?250.:826.;}
-    double gateX() const {return gate==0?-10.:10.;}
+    double gateZ() const {constexpr double positions[]{396.,1032.,1624.,2112.};return positions[gate];}
+    double gateX() const {constexpr double lanes[]{12.,-10.,10.,-9.};return lanes[gate];}
     double gateAhead(double z) const {return lapPosition(gateZ()-z);}
 
     void take(int from,int to) {
@@ -67,7 +67,7 @@ struct Relay {
         if(crossing>1.)return;
         const double lane=std::lerp(before[carrier].x,after[carrier].x,crossing);
         const double gateLane=gateX();
-        gate=1-gate;
+        gate=(gate+1)%4;
         if(std::abs(lane-gateLane)>3.3){
             if(cargo<3)++cargo;
             else{

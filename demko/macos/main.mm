@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCircuit6"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCoast1"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -96,7 +96,8 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
 - (void)updateHUD {
     NSString *time = best > 0 ? [NSString stringWithFormat:@"%.2f s", best] : @"—";
     const int route=neon::routeHint(race.x,race.distance);
-    NSString *branch=route==1?localized(@"    ← Bridge · Canal →",@"    ← Most · Kanał →"):
+    NSString *branch=route==1 && race.relay.carrier==0 && race.relay.gate==0?localized(@"    ← Raise stakes · Bank core →",@"    ← Podbij stawkę · Zdaj rdzeń →"):
+        route==1?localized(@"    ← Bridge · Canal →",@"    ← Most · Kanał →"):
         route==2?localized(@"    Bridge · tailwind",@"    Most · wiatr w plecy"):
         route==3?localized(@"    Canal · recharge",@"    Kanał · ładowanie"):@"";
     const auto &r=race.relay;
@@ -199,7 +200,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c,race.contactStrength);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCircuit6"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCoast1"];
             }
         }
         race.cues.clear();

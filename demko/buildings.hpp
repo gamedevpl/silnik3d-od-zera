@@ -24,6 +24,7 @@ inline Building harborBlock(int sector,int side,int row) {
 inline Building crown(Building b){return {b.x+.22*b.w,b.h,b.z+.6,.60*b.w,.22*b.h,2.8};}
 inline Building penthouse(Building b){return {b.x+.18*b.w,b.h,b.z+1,.66*b.w,2+b.h*.13,7.5};}
 template<class F> void citySolids(int sector,F visit) {
+    if(district(sector)==District::Coast)return;
     for(int j=0;j<3;j++)for(int side:{-1,1})for(int row=0;row<2;row++){
         int k=3*sector+j,id=((k%18+18)%18)*23+side*93+row*43;
         auto b=skylineBlock(k,side,row,canalWidthFactor);

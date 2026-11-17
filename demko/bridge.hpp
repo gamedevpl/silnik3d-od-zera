@@ -23,6 +23,21 @@ template <class Quad, class Deck> void courseSpan(double z, Quad quad, Deck plat
         double side = (chicane(z+18)-2*chicane(z)+chicane(z-18))>0 ? -1 : 1;
         signboard(side * 18, 2.7, -side * 1.7, 0xffc773);
     }
+    for(double lip:{firstLip,secondLip}){
+        if(p>=lip-42 && p<lip && int(p)%12==0){
+            for(double side:{-1.,1.}){
+                const double x=side*9;
+                quad({x, .11,z+4},{x+2,.11,z},{x+1.3,.11,z},{x,.11,z+2.5},0xffcb83);
+                quad({x,.11,z+4},{x,.11,z+2.5},{x-1.3,.11,z},{x-2,.11,z},0xffcb83);
+            }
+        }
+        if(p==lip+jumpSpan || p==lip+jumpSpan+12){
+            const double lane=landingLane(lip);
+            for(double x:{lane-3.3,lane+3.3}){
+                quad({x-.3,0,z},{x+.3,0,z},{x+.3,5,z},{x-.3,5,z},0x88ffe5);
+            }
+        }
+    }
     if (p < forkStart || p >= forkEnd)
         return;
     const double a = islandHalf(z), b = islandHalf(end), h = bridgeHeight(-10, z), j = bridgeHeight(-10, end);

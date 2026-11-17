@@ -1,5 +1,5 @@
 import {renderer} from './renderer.js?v=display2';
-import {loadRace} from './race.js?v=relay1';
+import {loadRace} from './race.js?v=coast1';
 import {Sound} from './audio.js?v=relay1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -7,7 +7,7 @@ const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textCont
 const englishTitle=document.title;
 const keys=new Set(),pointers=new Map(),buttonKeys=new Set();
 const words={
- fork:['← Most · Kanał →','← Bridge · Canal →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
+ fork:['← Most · Kanał →','← Bridge · Canal →'],forkBank:['← Podbij stawkę · Zdaj rdzeń →','← Raise stakes · Bank core →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
  maxCargo:['ostatnia szansa','last chance'],lostCargo:['traci rdzeń','lost core'],bestRival:['Najlepszy rywal','Best rival'],
  pitTip:['Fioletowe pole: puść dopalacz, by się naprawić, albo przytrzymaj go i wydaj 35 energii na wyrzut.','Violet pad: coast to repair, or hold Boost to spend 35 energy on overdrive.'],you:['Ty','You'],rival:['Rywal','Rival'],bank:['Bramka','Bank'],
@@ -33,7 +33,7 @@ const {reset,advance,shoot,LAP}=simulation??{};
 const sound=new Sound(simulation?.geometry);
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
-let best=Number(read('neon.lap.v7'))||0;const tr=k=>words[k][+en];
+let best=Number(read('neon.lap.coast1'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
@@ -46,7 +46,8 @@ function updateHUD(){
  $('#speed').textContent=Math.round(race.speed*3.6)+' km/h';
  $('#reserve').textContent=tr('boost')+' '+Math.round(race.energy)+'%';
  $('#wake').textContent=race.overdrive>0?tr('overdrive'):race.launchTime>0?tr('launch'):race.wakeCharge>=1?tr('ready'):race.drafting?tr('draft')+' '+Math.floor(race.wakeCharge*100)+'%':'';
- $('#route').textContent=race.route?tr(['','fork','bridge','channel'][race.route]):'';
+ const bankFork=race.route===1 && race.carrier===0 && race.gateAhead<220;
+ $('#route').textContent=bankFork?tr('forkBank'):race.route?tr(['','fork','bridge','channel'][race.route]):'';
  $('#drivehud').classList.toggle('charged',race.wakeCharge>=1||race.launchTime>0||race.overdrive>0);
  $('#flash').textContent=race.lockTime>0?tr('lock'):flash&&race.elapsed<flashUntil?(flash==='lap'?tr('lap')+' '+race.laps+' · '+time(race.lastLap):tr(flash)):'';
  const who=id=>id===0?tr('you'):tr('rival')+' '+id;
@@ -124,7 +125,7 @@ $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.m
 function cue(k){
  sound.cue(k,race.contactStrength);
  if(k==='blast')k='break';
- if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.v7',String(best));}
+ if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.coast1',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
 function fire(rocket){

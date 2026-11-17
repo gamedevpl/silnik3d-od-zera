@@ -1,7 +1,7 @@
 #pragma once
 #include "race.hpp"
 #include "circuit.hpp"
-#include "bridge.hpp"
+#include "coast.hpp"
 #include "damage_fx.hpp"
 #include "racer.hpp"
 #include "flame.hpp"
@@ -48,7 +48,11 @@ class CanvasScene {
                     polygon(mirror?0x535368:0x927b84,{front(b.x+.35,y),front(b.x+b.w-.45,y),
                         front(b.x+b.w-.45,y+.20),front(b.x+.35,y+.20)});
             });
-            if (d >= 174)
+            if(k%2==0)coastScenery(k/2,z,[&](CoursePoint a,CoursePoint b,CoursePoint c,CoursePoint e,int rgb){
+                auto q=[&](CoursePoint v){return project(v.x,sign*v.y,v.z);};
+                polygon(mirror?((rgb>>1)&0x7f7f7f):rgb,{q(a),q(b),q(c),q(e)});
+            });
+            if (d >= 174 || shippingGap(z+6))
                 continue;
             auto surface = [&](double x, double y, double zz) {
                 return project(x, y + sign * viaductHeight(zz), zz);
