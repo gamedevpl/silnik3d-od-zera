@@ -19,11 +19,11 @@ template <class Quad, class Deck> void courseSpan(double z, Quad quad, Deck plat
         signboard(-8, 3.8, -1.7, 0xffc773);
         signboard(8, 3.8, 1.7, 0x64f3e0);
     }
-    if (p >= 504 && p <= 1032 && int(p) % 24 == 0) {
+    if (p >= 504 && p <= 1032 && !shippingGap(p) && int(p) % 24 == 0) {
         double side = (chicane(z+18)-2*chicane(z)+chicane(z-18))>0 ? -1 : 1;
         signboard(side * 18, 2.7, -side * 1.7, 0xffc773);
     }
-    for(double lip:{firstLip,secondLip}){
+    for(double lip:launchLips){
         if(p>=lip-42 && p<lip && int(p)%12==0){
             for(double side:{-1.,1.}){
                 const double x=side*9;

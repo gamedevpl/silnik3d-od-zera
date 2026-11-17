@@ -137,7 +137,9 @@ int circuitSection(int section,int simple){
     if(simple==2)return int(mesh.size());
     size_t trackBegin=mesh.size();
     f.surface=Frame::CladFront;
-    f.rings(district==neon::District::Quay && k!=0 && k%2 && neon::viaductHeight(z)<3);if(district!=neon::District::Coast && neon::viaductHeight(z)<4)f.lightBays();
+    if(!neon::shippingGap(z+12))
+        f.rings(district==neon::District::Quay && k!=0 && k%2 && neon::viaductHeight(z)<3);
+    if(district!=neon::District::Coast && neon::viaductHeight(z)<4)f.lightBays();
     if(neon::viaductHeight(z)<6)landmark(f,k,z+15);
     f.surface=Frame::Plain;
     auto face=[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,neon::CoursePoint d,int rgb){

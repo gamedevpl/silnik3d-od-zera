@@ -1,5 +1,5 @@
 import {renderer} from './renderer.js?v=display2';
-import {loadRace} from './race.js?v=coast1';
+import {loadRace} from './race.js?v=skyline2';
 import {Sound} from './audio.js?v=relay1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -33,7 +33,7 @@ const {reset,advance,shoot,LAP}=simulation??{};
 const sound=new Sound(simulation?.geometry);
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
-let best=Number(read('neon.lap.coast1'))||0;const tr=k=>words[k][+en];
+let best=Number(read('neon.lap.skyline2'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
@@ -125,7 +125,7 @@ $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.m
 function cue(k){
  sound.cue(k,race.contactStrength);
  if(k==='blast')k='break';
- if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.coast1',String(best));}
+ if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.skyline2',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
 function fire(rocket){
@@ -167,7 +167,7 @@ play.addEventListener('wheel',e=>{
  const now=performance.now(),unit=e.deltaMode===1?16:e.deltaMode===2?play.clientWidth:1;
  targetX=lane((now<wheelUntil?targetX:race.x)+e.deltaX*unit*laneScale());wheelUntil=now+550;
 },{passive:false});
-const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'boost',KeyW:'boost',ArrowDown:'brake',KeyS:'brake',Space:'fire'};
+const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'boost',KeyW:'boost',ArrowDown:'brake',KeyS:'brake',KeyQ:'portBrake',KeyE:'starboardBrake',Space:'fire'};
 window.addEventListener('keydown',e=>{
  if(e.defaultPrevented||e.altKey||e.metaKey||e.ctrlKey)return;
  if(e.code==='KeyP'||e.code==='Escape'){if(!e.repeat){if(mode==='run')pause();else if(mode==='paused')start();}return;}
@@ -190,12 +190,13 @@ let previewTime=0,lastPreview=0;
 function tick(now){
  const dt=Math.min(.25,Math.max(0,(now-last)/1000));last=now;
  if(mode==='run'){
-  let steer=Number(held('right'))-Number(held('left'));
+  const port=held('portBrake'),starboard=held('starboardBrake');
+  let steer=Number(held('right')||starboard)-Number(held('left')||port);
   if(!steer&&(drag||now<wheelUntil)){
    const delta=targetX-race.x;
    if(Math.abs(delta)>.65)steer=Math.sign(delta);
   }
-  const input={steer,boost:held('boost'),brake:held('brake')};
+  const input={steer,boost:held('boost'),brake:held('brake')||port||starboard};
   advance(dt,input,held('fire'),cue);
   sound.tick(race.thrust);draw(race);
   if(now>=nextHud){updateHUD();nextHud=now+75;}

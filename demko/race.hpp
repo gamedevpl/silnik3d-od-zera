@@ -236,8 +236,8 @@ struct Race {
                 double apex=i%2 ? 11. : -12.;
                 line=std::lerp(line,apex,ramp((turn-735)/45)*ramp((945-turn)/40));
             }
-            for(double lip:{firstLip,secondLip}){
-                const double run=lip+60-turn;
+            for(double lip:launchLips){
+                const double run=lip+jumpSpan-turn;
                 if(run>0 && run<130 && (i%3!=0 || p.energy<50))
                     line=std::lerp(line,landingLane(lip),ramp((130-run)/42));
             }
@@ -248,10 +248,11 @@ struct Race {
             if(divider>0 || upcoming>0)
                 line=side*std::max(std::max(divider,upcoming)+2.2,side*line);
             const double desired=bound((line-p.x)*3.0,-21.,21.);
-            p.steering+=(desired-p.steering)*(1-std::exp(-5*dt));
+            const bool airborne=shippingGap(p.z);
+            p.steering+=((airborne?.48:1.)*desired-p.steering)*(1-std::exp(-(airborne?1.05:5.)*dt));
             p.kick *= std::exp(-4 * dt);
             const double prevX=p.x;
-            p.x = bound(p.x + (p.steering*(shippingGap(p.z)?.67:1.) + p.kick) * dt, -16.4, 16.4);
+            p.x = bound(p.x + (p.steering + p.kick) * dt, -16.4, 16.4);
             if (divider > 0)
                 p.x = side * std::max(divider + 1.35*ramp(divider), side*p.x);
             p.lateral=(p.x-prevX)/dt;
@@ -563,8 +564,12 @@ struct Race {
         brakeTime=in.brake?brakeTime+dt:0.;
         const bool pivot=in.brake && in.steer && brakeTime<=.18;
         double target = in.steer * (pivot ? 37 : in.brake ? 29 : 22) - bend * speed * (in.brake ? .28 : .75);
-        if(shippingGap(distance))target*=.67;
-        vx += (target - vx) * (1 - exp(-(in.brake ? 10. : in.steer ? 6.2 : 3.9) * dt));
+        const bool airborne=shippingGap(distance);
+        // The hull can pivot faster than its momentum changes. Keep the takeoff line across gaps.
+        const double grip=in.brake ? 10. : in.steer ? 5.4 : 2.7;
+        const double responseRate=airborne ? 1.05 : grip;
+        if(airborne)target*=.48;
+        vx += (target - vx) * (1 - exp(-responseRate * dt));
         x = bound(x + vx * dt, -18, 18);
         if (fabs(x) >= 18 && vx * x > 0)
             scrapeRail(-routeSign(x), dt);

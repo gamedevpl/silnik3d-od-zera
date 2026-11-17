@@ -6,6 +6,25 @@ namespace neon {
 // Low-poly headlands and shipping traffic, shared by all three renderers.
 template<class Quad> void coastScenery(int section, double z, Quad quad) {
     const int k=circuitIndex(section);
+    if(k==32){
+        // A diagonal lower circuit passes through the shipping cut beneath the takeoff.
+        auto point=[&](double across,double lane,double height){
+            return CoursePoint{across,height,z+8.+.38*across+lane};
+        };
+        auto strip=[&](double x,double end,double lane,double width,double h,int color){
+            quad(point(x,lane,h),point(end,lane,h),point(end,lane+width,h),point(x,lane+width,h),color);
+        };
+        for(int span=-8;span<8;++span){
+            double x=span*12.;
+            strip(x,x+12,-7,14,5,0x34465d);
+            for(double side:{-7.,7.}){
+                quad(point(x,side,4),point(x+12,side,4),point(x+12,side,5),point(x,side,5),0x253249);
+                strip(x,x+12,side>0?6.6:-7,.4,5.05,0x70eeda);
+            }
+            strip(x,x+5,-.10,.20,5.06,0xffcb83);
+            if(span%3==0)quad(point(x,-5,0),point(x+1.4,-5,0),point(x+1.4,-5,4.9),point(x,-5,4.9),0x425979);
+        }
+    }
     if(k<48)return;
     auto tier=[&](double x,double y,double dz,double rx,double rz,double top,double taper,int sides,int lit,int dark){
         auto point=[&](int i,double scale,double h){

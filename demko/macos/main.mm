@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapCoast1"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapSkyline2"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -86,9 +86,9 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
 - (void)updateLanguage {
     self.window.title = localized(@"Neon Canal", @"Neonowy kanał");
     hint.stringValue =
-        localized(@"← →  steer     ↑  boost     ↓  airbrake\nSpace  cannon     R  rocket     M  sound  "
+        localized(@"← →  steer     ↑  boost     Q/E  left/right brake\nSpace  cannon     R  rocket     M  sound  "
                   @"   P  pause\nHit or pass the gold core. Bank at the gold gate. First to 5 wins.",
-                  @"← →  skręt     ↑  dopalacz     ↓  hamulec\nSpacja  działko     R  rakieta     "
+                  @"← →  skręt     ↑  dopalacz     Q/E  lewy/prawy hamulec\nSpacja  działko     R  rakieta     "
                   @"M  dźwięk     P  pauza\nPrzejmij złoty rdzeń strzałem lub wyprzedzeniem. Bramka daje punkty. Cel: 5.");
     play.title = started ? localized(@"Resume   ↵", @"Wznów   ↵") : @"Start   ↵";
     [self updateHUD];
@@ -187,8 +187,8 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
     auto now = CACurrentMediaTime();
     if (running) {
         double left = std::clamp(now - lastDraw, 0., .2);
-        neon::Input input{int(keys[124] || keys[2]) - int(keys[123] || keys[0]), keys[126] || keys[13],
-                          keys[125] || keys[1]};
+        neon::Input input{int(keys[124] || keys[2] || keys[14]) - int(keys[123] || keys[0] || keys[12]), keys[126] || keys[13],
+                          keys[125] || keys[1] || keys[12] || keys[14]};
         while (left > 0) {
             double step = std::min(1. / 90, left);
             if (keys[49])
@@ -200,7 +200,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c,race.contactStrength);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapCoast1"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapSkyline2"];
             }
         }
         race.cues.clear();

@@ -10,6 +10,8 @@ Rivals line up for violet pads, spend energy on overdrive and choose whether to 
 
 At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin at the foot of the harbor viaduct. The first sweeping bend climbs above the warehouses. The skyline opens up at the crest before the track curves back down to the waterfront. Climbing costs speed and descending gives it back.
 
+At the city crest, the upper circuit breaks over a diagonal, teal-lit lower track. Set up wide, turn toward the mint landing lights before takeoff and let the ship carry that line across the gap. Q and E tighten left and right turns respectively. A short tap helps recover a late entry. Holding the brake costs exit speed.
+
 The waterfront opens onto basalt sea stacks, striped lighthouses and rock arches. Two elevated launch rails carry the pack over ferries. Look for the paired mint lights on the receiving deck. Cross between them for 12 energy and an exit boost. Steering has less authority in the air, so choose a line before the lip.
 
 The first gold gate sits inside the lower canal. Carriers can take the high bridge to raise the stake. Rivals set up before the fork and choose different entries when chasing the carrier around the harbor bend. Tap airbrake while steering to pivot, then release to carry speed. Hold it for sustained braking.
@@ -26,6 +28,7 @@ Tuck into the teal wake behind a rival and ease off the boost for about a second
 | --- | --- |
 | ← → or A / D | Steer |
 | ↑ or W | Boost |
+| Q / E | Left / right airbrake |
 | ↓ or S | Apply the airbrake for a tighter turn |
 | Space / R | Fire the cannon / launch a rocket |
 | P or Esc | Pause or resume |

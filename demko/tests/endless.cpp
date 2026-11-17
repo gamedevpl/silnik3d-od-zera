@@ -29,7 +29,7 @@ int main() {
     for (double offset : {0., neon::lapLength}) {
         assert(neon::viaductHeight(offset + 480) == 0);
         assert(neon::viaductGrade(offset + 575) > .15);
-        assert(neon::viaductHeight(offset + 690) == 27 && neon::viaductHeight(offset + 830) == 27);
+        assert(neon::viaductHeight(offset + 690) > 27 && neon::viaductHeight(offset + 830) > 27);
         assert(neon::viaductGrade(offset + 940) < -.15);
         assert(neon::viaductHeight(offset + 1060) == 0);
     }
@@ -167,10 +167,10 @@ int main() {
         for(const auto &p:chase.rivals)assert(chase.distance-p.z<neon::lapLength);
     }
     // Banking is independent of track position. A missed gate raises the stake for the next carrier.
-    for(double lip:{neon::firstLip,neon::secondLip}){
+    for(double lip:neon::launchLips){
         const double lane=neon::landingLane(lip),end=lip+neon::jumpSpan+neon::lapLength;
         assert(neon::shippingGap(end-1) && !neon::shippingGap(end+1));
-        assert(neon::viaductHeight(lip+30)>neon::viaductHeight(lip)+4.9);
+        assert(neon::viaductHeight(lip+30)>neon::viaductHeight(lip)+(lip==neon::cityLip?2.5:4.9));
         for(double error:{0.,5.}){
             neon::Race jump;jump.distance=end-.1;jump.laps=1;jump.x=lane+error;
             jump.energy=25;jump.speed=60;
@@ -179,6 +179,21 @@ int main() {
             assert((jump.padBoost>1)==(error==0));
             assert((jump.energy>36)==(error==0));
         }
+    }
+    // Two ships leave the same point with different lateral momentum. Late steering
+    // cannot erase their choice of takeoff line before they reach the lower circuit.
+    for(double offset:{0.,neon::lapLength}){
+        neon::Race left,right;
+        for(auto* r:{&left,&right}){
+            r->distance=offset+neon::cityLip;r->speed=80;
+            for(auto& pilot:r->rivals)pilot.z=r->distance+150;
+        }
+        left.vx=-11;right.vx=11;
+        for(int i=0;i<25;++i){
+            left.advance(1./90,{1,true,false});
+            right.advance(1./90,{-1,true,false});
+        }
+        assert(left.x < -1.8 && right.x > 1.8);
     }
     neon::Relay relay;
     neon::RelayFleet previousShips{},now{};

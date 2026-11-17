@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace neon {
@@ -20,14 +21,17 @@ inline double bridgeHeight(double x, double z) {
 }
 inline int routeSign(double x) { return x < 0 ? -1 : 1; }
 // The waterfront stays at datum; only the racing ribbon climbs above it.
-constexpr double firstLip=1488, secondLip=1908, jumpSpan=60;
+constexpr double cityLip=744, firstLip=1488, secondLip=1908, jumpSpan=60;
+constexpr std::array launchLips{cityLip,firstLip,secondLip};
 inline bool shippingGap(double z){
     const double p=lapPosition(z);
-    return (p>=firstLip && p<firstLip+jumpSpan) || (p>=secondLip && p<secondLip+jumpSpan);
+    for(double lip:launchLips)
+        if(p>=lip && p<lip+jumpSpan)return true;
+    return false;
 }
-inline double landingLane(double lip){return lip==firstLip?-7.:7.;}
+inline double landingLane(double lip){return lip==cityLip?-4.:lip==firstLip?-7.:7.;}
 inline bool cleanLanding(double before,double after,double x){
-    for(double lip:{firstLip,secondLip}){
+    for(double lip:launchLips){
         const double ahead=lapPosition(lip+jumpSpan-before);
         if(ahead>0 && ahead<=after-before && std::abs(x-landingLane(lip))<3.)return true;
     }
@@ -43,16 +47,16 @@ inline double crossingHeight(double p,double lip){
 }
 inline double viaductHeight(double z){
     double p=lapPosition(z);
-    return crossingHeight(p,firstLip)+crossingHeight(p,secondLip)+27*ramp((p-480)/204)*ramp((1056-p)/216);
+    return .52*crossingHeight(p,cityLip)+crossingHeight(p,firstLip)+crossingHeight(p,secondLip)+27*ramp((p-480)/204)*ramp((1056-p)/216);
 }
 inline double viaductGrade(double z){return (viaductHeight(z+1)-viaductHeight(z-1))*.5;}
 inline double cameraGrade(double z){return .82*viaductGrade(z+10);}
 inline double chicane(double z) {
     double p = lapPosition(z);
-    return 138*(ramp((p-1100)/245)-ramp((p-1390)/265))
-         - 175*(ramp((p-1600)/255)-ramp((p-1875)/285))
-         + 134 * (ramp((p - 480) / 228) - ramp((p - 748) / 184)) -
-           19 * (ramp((p - 862) / 100) - ramp((p - 992) / 110));
+    // A continuous heading change from the climb through the skyline crest to the descent.
+    double arc=std::sin(.5*tau*std::clamp((p-468.)/564.,0.,1.));
+    return 168*arc*arc*arc + 138*(ramp((p-1100)/245)-ramp((p-1390)/265))
+         - 175*(ramp((p-1600)/255)-ramp((p-1875)/285));
 }
 inline int routeHint(double x, double z) {
     double p = lapPosition(z);
