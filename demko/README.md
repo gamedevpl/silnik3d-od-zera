@@ -16,6 +16,8 @@ The waterfront opens onto basalt sea stacks, striped lighthouses and rock arches
 
 The first gold gate sits inside the lower canal. Carriers can take the high bridge to raise the stake. Rivals set up before the fork and choose different entries when chasing the carrier around the harbor bend. Tap airbrake while steering to pivot, then release to carry speed. Hold it for sustained braking.
 
+Both player and rival ships have limited sideways thrust. A tighter radius and higher speed demand more of it. The hull can point into a turn while momentum carries it wide. A smooth outside entry gives you room to cut toward the apex and unwind the steering on exit. Holding full lock under load scrubs speed. Boost as you straighten up to carry speed onto the next straight.
+
 A full boost cell lasts about 12 seconds on its own. Release the boost to recharge. The ship carries speed into the next bend until you apply the airbrake.
 
 Violet chevrons offer a choice. Coast across one to take the regular pad payout (24 energy, one shield point, and a rocket every second payout). Hold Boost with at least 35 energy at the crossing to spend 35 instead: overdrive runs for 2.35 seconds, even if you release Boost. Taking damage cuts overdrive short. The pack has a limited catch-up allowance. A clean overdrive exit can buy a lasting lead.

@@ -49,11 +49,48 @@ inline Sector sector(int i) {
     bool sweep=i%4==2 && !shippingGap(z-17);
     return {x,z,mine,sweep || (!shippingGap(z-17) && i%3!=0 && (islandHalf(z-17)==0 || std::abs(mine)>islandHalf(z-17)+2)),false,sweep,i%3==1};
 }
+// Lateral hover thrust is shared between following the bend and changing line.
+struct Cornering {
+    double yaw=0, slip=0, load=0, sideAcceleration=0, outwardSlide=0;
+    double step(double dt,double steer,bool brake,bool airborne,double curvature,double speed,double lateral){
+        // Smooth the warning across small steering corrections and landing transitions.
+        const double outward=curvature>0?-lateral:lateral;
+        const double slide=airborne?0.:ramp((std::abs(curvature)*speed*speed-24.)/30.)*ramp((outward-2.)/5.);
+        outwardSlide+=(slide-outwardSlide)*(1-std::exp(-9.*dt));
+        const double heading=steer*(brake?.43:.31);
+        yaw+=(heading-yaw)*(1-std::exp(-(brake?9.:6.)*dt));
+        const double desired=speed*std::tan(yaw);
+        slip=desired-lateral;
+        if(airborne){
+            load=sideAcceleration=0;
+            return lateral+(.48*desired-lateral)*(1-std::exp(-1.05*dt));
+        }
+        const double demand=speed*speed*curvature;
+        const double thrustLimit=brake?100.:78.;
+        const double thrust=bound(.25*demand+4.5*slip,-thrustLimit,thrustLimit);
+        load=std::abs(thrust)/thrustLimit;
+        sideAcceleration=thrust-demand;
+        return lateral+sideAcceleration*dt;
+    }
+    double railDrag(int inward) const {
+        return .65*std::max(0.,-inward*sideAcceleration);
+    }
+    double scrub() const {
+        // Sustained sideslip under load dissipates forward speed.
+        return .46*load*std::max(0.,std::abs(slip)-3.);
+    }
+};
+inline double trackCurvature(double z){
+    const double a=slope(z-6),b=slope(z+6),mid=(a+b)*.5;
+    return (b-a)/(12.*std::pow(1.+mid*mid,1.5));
+}
+inline double laneScale(double curvature,double lane){return bound(1.-curvature*lane,.76,1.24);}
 struct Pilot {
     double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0, kick = 0, recovery = 0;
     int hull = 3;
     double lateral=0,rollRate=0,hitOffset=0,steering=0;
     double energy=70, overdrive=0;
+    Cornering corner;
 };
 struct Shot {
     double x,y,z,vx,vy,vz; // World coordinates, including road curvature and elevation at launch.
@@ -88,6 +125,7 @@ struct Race {
     std::array<Wake,7> wakes;
     Wake blastGas;
     double brakeTime=0;
+    Cornering corner;
     double rollRate=0;
     std::vector<Cue> cues;
     Relay relay;
@@ -105,7 +143,7 @@ struct Race {
             rivals[i] = {lanes[i], grid[i], 46. + i * .8};
     }
     static double deckAt(double lane,double z) { return viaductHeight(z)+bridgeHeight(lane,z); }
-    double noseSteer() const {return .65*vx/std::max(30.,speed);}
+    double noseSteer() const {return std::tan(corner.yaw);}
     static double rocketLane(double lane,double z) {
         double island=islandHalf(z);
         return island>0 ? routeSign(lane)*std::max(std::abs(lane),island+1.2*ramp(island)) : lane;
@@ -157,7 +195,7 @@ struct Race {
     }
     void scrapeRail(int inward, double dt) {
         const double normal = std::max(0., -inward * vx);
-        speed *= std::exp(-(.095 + .014 * normal) * dt);
+        speed=std::max(0.,speed*std::exp(-(.095+.014*normal)*dt)-corner.railDrag(inward)*dt);
         scrape = .24;
         scrapeSide = -inward;
         if (wallLock <= 0 && normal > 2) {
@@ -249,10 +287,19 @@ struct Race {
                 line=side*std::max(std::max(divider,upcoming)+2.2,side*line);
             const double desired=bound((line-p.x)*3.0,-21.,21.);
             const bool airborne=shippingGap(p.z);
-            p.steering+=((airborne?.48:1.)*desired-p.steering)*(1-std::exp(-(airborne?1.05:5.)*dt));
+            const double curvature=trackCurvature(p.z);
+            const double pathScale=laneScale(curvature,p.x);
+            const double laneCurve=curvature/pathScale;
+            const double requested=bound(desired/(.31*std::max(35.,p.speed)),-1.,1.);
+            const bool airbrake=!airborne && p.speed*p.speed*std::abs(laneCurve)>75. && requested*laneCurve>0;
+            p.steering=p.corner.step(dt,requested,airbrake,airborne,laneCurve,p.speed,p.steering);
             p.kick *= std::exp(-4 * dt);
             const double prevX=p.x;
             p.x = bound(p.x + (p.steering + p.kick) * dt, -16.4, 16.4);
+            if(std::abs(p.x)>=16.4 && p.steering*p.x>0){
+                p.speed=std::max(0.,p.speed*std::exp(-(.095+.014*std::abs(p.steering))*dt)-p.corner.railDrag(-routeSign(p.x))*dt);
+                p.steering=0;
+            }
             if (divider > 0)
                 p.x = side * std::max(divider + 1.35*ramp(divider), side*p.x);
             p.lateral=(p.x-prevX)/dt;
@@ -287,6 +334,8 @@ struct Race {
             target += 1.4 * bridgeHeight(p.x, p.z);
             p.boost = std::max(0., p.boost - dt);
 
+            if(airbrake)target=std::min(target,std::sqrt(70./std::abs(laneCurve)));
+            p.speed=std::max(0.,p.speed-p.corner.scrub()*dt);
             target-=14*viaductGrade(p.z);
             p.speed += ((p.stun > 0 ? target * .53 : target) - p.speed) * (1 - exp(-2 * dt));
             if (p.recovery > 0) {
@@ -295,7 +344,7 @@ struct Race {
                 if (p.recovery == 0)
                     p.hull = 3;
             }
-            const double travel=p.speed*dt;
+            const double travel=p.speed*dt/pathScale;
             if(!shippingGap(pad.z) && approach>0 && approach<=travel && std::abs(p.x-pad.x)<2.9 && p.recovery<=0 && p.stun<=0){
                 if(pad.violet && p.energy>=35 && p.hull>1 && deficit>-(30.+i*3.)){
                     p.energy-=35;
@@ -563,17 +612,13 @@ struct Race {
         double bend = slope(distance + 16) - slope(distance - 8);
         brakeTime=in.brake?brakeTime+dt:0.;
         const bool pivot=in.brake && in.steer && brakeTime<=.18;
-        double target = in.steer * (pivot ? 37 : in.brake ? 29 : 22) - bend * speed * (in.brake ? .28 : .75);
-        const bool airborne=shippingGap(distance);
-        // The hull can pivot faster than its momentum changes. Keep the takeoff line across gaps.
-        const double grip=in.brake ? 10. : in.steer ? 5.4 : 2.7;
-        const double responseRate=airborne ? 1.05 : grip;
-        if(airborne)target*=.48;
-        vx += (target - vx) * (1 - exp(-responseRate * dt));
+        const double curvature=trackCurvature(distance);
+        const double pathScale=laneScale(curvature,x);
+        vx=corner.step(dt,in.steer,in.brake,shippingGap(distance),curvature/pathScale,speed,vx);
         x = bound(x + vx * dt, -18, 18);
         if (fabs(x) >= 18 && vx * x > 0)
             scrapeRail(-routeSign(x), dt);
-        lean += (-vx * .027 - bend * .44 - lean) * (1 - exp(-8 * dt))+rollRate*dt;
+        lean += (-corner.yaw * 1.05 - vx*.012 - bend * .44 - lean) * (1 - exp(-8 * dt))+rollRate*dt;
         launchTime = std::max(0., launchTime - dt);
         steerMemory = in.steer ? 0.5 : std::max(0., steerMemory - dt);
         if (wakeCharge >= 1 && in.boost && steerMemory > 0 && std::abs(x - chargedLane) > 1.25 &&
@@ -600,15 +645,15 @@ struct Race {
                 spent = false;
         }
         thrust += ((boost || padBoost > 0 || launchTime > 0 || overdrive > 0) - thrust) * (1 - exp(-6 * dt));
-        speed -= 18 * viaductGrade(distance) * dt;
+        speed = std::max(0.,speed-(18*viaductGrade(distance)+corner.scrub())*dt);
         // Keep momentum when the pilot releases boost. The airbrake still bites immediately.
         const double targetSpeed = pivot ? speed*.94 : in.brake ? 30. : 52. + 29. * thrust +
             (forkSide < 0 ? 1.4 * bridgeHeight(x, distance) : 0.) +
             (drafting ? 6. : 0.) + (launchTime > 0 ? 31. : 0.) + (overdrive > 0 ? 54. : 0.);
-        const double response = in.brake ? 2.8 : (targetSpeed >= speed ? 2.7 : .53);
+        const double response = in.brake ? 2.8 : (targetSpeed >= speed ? 2.7-1.6*corner.load : .53);
 
         speed += (targetSpeed - speed) * (1 - std::exp(-response * dt));
-        double before = distance, travel = speed * dt / bound(1 - bend * x / 24, .87, 1.13);
+        double before = distance, travel = speed * dt / pathScale;
         if (forkSide > 0)
             energy = std::min(100., energy + 18 * dt);
         distance += travel;
@@ -674,7 +719,7 @@ struct Race {
         auto emit=[&](int id,double lane,double z,double sideways,double forward,double bank,
                       int damage,int side,double power){
             const double nozzle=z-1.9, grade=(deckAt(lane,z+.5)-deckAt(lane,z-.5));
-            wakes[id].engine(dt,road(nozzle)+lane-1.9*.65*sideways/std::max(30.,forward),
+            wakes[id].engine(dt,road(nozzle)+lane-1.9*(id==0?noseSteer():.65*sideways/std::max(30.,forward)),
                 deckAt(lane,nozzle)+1.94,nozzle,sideways+slope(nozzle)*forward,
                 grade*forward,forward,bank,damage,side,power);
         };

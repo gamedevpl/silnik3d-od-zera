@@ -9,7 +9,7 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[4253.107643,1,7],[8550.267918,3,7],[12652.576190,5,7],[16847.105729,7,6]];
+  const checkpoints=[[4090.793832,1,7],[8096.382199,3,6],[12536.309280,5,5],[16437.765768,7,7]];
   for(let i=0;i<22320;i++){
    const lanes=s.rivals.map(p=>p.x);
    if(i%821===0)sim.shoot(true,cue);
@@ -26,9 +26,9 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-35.129214611)<.0001);
+  assert(Math.abs(s.lastLap-36.570048854)<.0001);
   assert.equal(s.rockets,1);assert.equal(s.shield,3);
-  assert.deepEqual(counts,{fire:1031,rocket:10,break:97,hit:51,pad:20,rail:50,repair:18,lap:7,launch:2,wreck:18,blast:1,ricochet:642,lock:66,overdrive:5,coreGain:6,coreLost:4,coreBank:3});
+  assert.deepEqual(counts,{fire:1043,rocket:10,break:94,hit:42,pad:20,rail:49,repair:15,lap:7,launch:1,wreck:15,blast:1,ricochet:663,lock:73,overdrive:9,coreGain:7,coreLost:6,coreBank:2});
   assert.equal(sim.reset().distance,0);
  });
 

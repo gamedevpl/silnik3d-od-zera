@@ -42,7 +42,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
         [alert runModal];
         return nil;
     }
-    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapSkyline2"];
+    best = [NSUserDefaults.standardUserDefaults doubleForKey:@"bestLapGrip3"];
     hud = [self label:16];
     hint = [self label:16];
     hint.alignment = NSTextAlignmentCenter;
@@ -116,6 +116,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
                          race.overdrive>0 ? localized(@"     Overdrive", @"     Wyrzut") :
                          race.launchTime>0 ? localized(@"     Slingshot", @"     Wyrzut") :
                          race.wakeCharge>=1 ? localized(@"     Steer + boost", @"     Skręć + dopalacz") :
+                         race.corner.outwardSlide>.45 ? localized(@"     Sliding wide", @"     Wynosi na zewnątrz") :
                          race.drafting ? localized(@"     Slipstream", @"     W smudze") : @"",
                          started && !audioOK
                              ? localized(@"     No audio output", @"     Brak wyjścia audio")
@@ -200,7 +201,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
             sound.cue(c,race.contactStrength);
             if (c == neon::Cue::Lap && (best <= 0 || race.lastLap < best)) {
                 best = race.lastLap;
-                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapSkyline2"];
+                [NSUserDefaults.standardUserDefaults setDouble:best forKey:@"bestLapGrip3"];
             }
         }
         race.cues.clear();

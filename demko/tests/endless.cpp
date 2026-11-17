@@ -2,6 +2,7 @@
 #include "../race.hpp"
 #include "../race_lights.hpp"
 #include <cassert>
+#include <tuple>
 #include "../damage_fx.hpp"
 int main() {
     {
@@ -142,6 +143,37 @@ int main() {
         for(auto &p:course.rivals)p.z=course.distance+100;
         course.advance(1./90,{});
         assert(course.shield==(avoid?3:2));
+    }
+    // Same approach to the downhill right-hander; only pilot inputs differ.
+    enum class Entry { Early, LateBrake, NoTurn };
+    auto cornerExit=[](Entry entry){
+        neon::Race turn;
+        turn.distance=911;turn.x=-14;turn.speed=100;turn.energy=90;turn.thrust=1;
+        turn.sectors.clear();turn.nextSector=100;
+        for(auto& rival:turn.rivals){rival.z=1711;rival.recovery=40;}
+        bool touchedRail=false;
+        double finish=0;
+        while(turn.distance<1019){
+            const double u=(turn.distance-911)/108.;
+            neon::Input input{0,true,false};
+            if(entry==Entry::Early){
+                const double line=-14+24*neon::ramp(u/.67)-9*neon::ramp((u-.67)/.33);
+                const double error=line-turn.x-.25*turn.vx;
+                input.steer=int(error>.65)-int(error<-.65);
+            }else if(entry==Entry::LateBrake && u>.58){
+                input.steer=1;input.brake=u<.85;
+            }
+            const double before=turn.distance;
+            turn.advance(1./90,input);
+            touchedRail |= turn.scrape>0;
+            if(turn.distance>=1019)finish=turn.elapsed-(turn.distance-1019)/(turn.distance-before)/90;
+        }
+        return std::tuple{finish,turn.speed,touchedRail};
+    };
+    const auto [cleanTime,cleanSpeed,cleanRail]=cornerExit(Entry::Early);
+    for(auto entry:{Entry::NoTurn,Entry::LateBrake}){
+        const auto [time,speed,rail]=cornerExit(entry);
+        assert(!cleanRail && rail && time>cleanTime+.05 && speed<cleanSpeed-7.);
     }
     // Holding boost down a central lane should draw challenges throughout multiple laps.
     neon::Race pack;

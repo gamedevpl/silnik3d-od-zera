@@ -1,5 +1,5 @@
 import {renderer} from './renderer.js?v=display2';
-import {loadRace} from './race.js?v=skyline2';
+import {loadRace} from './race.js?v=grip3';
 import {Sound} from './audio.js?v=relay1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
@@ -33,7 +33,7 @@ const {reset,advance,shoot,LAP}=simulation??{};
 const sound=new Sound(simulation?.geometry);
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
-let best=Number(read('neon.lap.skyline2'))||0;const tr=k=>words[k][+en];
+let best=Number(read('neon.lap.grip3'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
 function updateHUD(){
@@ -44,7 +44,7 @@ function updateHUD(){
  const rocketLabel=tr('rocket')+' · '+race.rockets;
  if($('#rocket').textContent!==rocketLabel)$('#rocket').textContent=rocketLabel;
  $('#speed').textContent=Math.round(race.speed*3.6)+' km/h';
- $('#reserve').textContent=tr('boost')+' '+Math.round(race.energy)+'%';
+ $('#reserve').textContent=tr('boost')+' '+Math.round(race.energy)+'%'+(race.outwardSlide>.45?(en?' · Sliding wide':' · Wynosi na zewnątrz'):'');
  $('#wake').textContent=race.overdrive>0?tr('overdrive'):race.launchTime>0?tr('launch'):race.wakeCharge>=1?tr('ready'):race.drafting?tr('draft')+' '+Math.floor(race.wakeCharge*100)+'%':'';
  const bankFork=race.route===1 && race.carrier===0 && race.gateAhead<220;
  $('#route').textContent=bankFork?tr('forkBank'):race.route?tr(['','fork','bridge','channel'][race.route]):'';
@@ -125,7 +125,7 @@ $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.m
 function cue(k){
  sound.cue(k,race.contactStrength);
  if(k==='blast')k='break';
- if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.skyline2',String(best));}
+ if(k==='lap'&&(!best||race.lastLap<best)){best=race.lastLap;save('neon.lap.grip3',String(best));}
  if(['pad','hit','break','rail','repair','wreck','lap','rocket'].includes(k)){flash=k==='rocket'?'fired':k;flashUntil=race.elapsed+(k==='lap'?2:.8);}
 }
 function fire(rocket){

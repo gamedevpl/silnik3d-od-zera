@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=skyline2',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=grip3',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }
@@ -13,7 +13,7 @@ export async function loadRace(bytes) {
  core._initialize();
  const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet','lock','overdrive','coreGain','coreLost','coreBank'];
  const fields=['distance','elapsed','x','lean','thrust','energy','rank','shield','laps','lapStart','lastLap','rockets','drafting'];
- const relayFields=['carrier','cargo','gateX','gateAhead','score','rivalScore','winner','banker','payout','goal','carrierGap'];
+ const relayFields=['carrier','cargo','gateX','gateAhead','score','rivalScore','winner','banker','payout','goal','carrierGap','outwardSlide'];
  const race={rivals:[]};
  function sync(notify) {
   const address=core.raceState(), data=new Float64Array(core.memory.buffer,address);
