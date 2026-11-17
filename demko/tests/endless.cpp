@@ -145,16 +145,53 @@ int main() {
     }
     // Holding boost down a central lane should draw challenges throughout multiple laps.
     neon::Race pack;
-    int lostLead=0,close=0,previous=7;
+    int close=0;
     for(int tick=0;tick<90*100;++tick){
         pack.advance(1./90,{int(pack.x<-.5)-int(pack.x>.5),true,false});
         if(tick>900){
-            lostLead+=previous==1 && pack.rank>1;
             for(auto &p:pack.rivals)if(std::abs(p.z-pack.distance)<45){++close;break;}
         }
-        previous=pack.rank;
     }
-    assert(lostLead>=2 && close>90*70);
+    assert(close>90*70);
+    // A pilot farming pads still has to race the pack more than a dozen laps later.
+    neon::Race chase;
+    for(int tick=0;chase.laps<14;tick++){
+        auto pad=neon::sector(std::max(0,int(std::ceil((chase.distance-56)/96))));
+        double aim=pad.x;
+        if(chase.forkSide && neon::islandHalf(pad.z)>0 && chase.forkSide*aim<0)aim=chase.forkSide*10.;
+        double error=aim-chase.x-chase.vx*.15;
+        chase.shoot(false);
+        if(tick%60==0)chase.shoot(true);
+        chase.advance(1./90,{int(error>.38)-int(error<-.38),true,false});
+        chase.cues.clear();
+        for(const auto &p:chase.rivals)assert(chase.distance-p.z<neon::lapLength);
+    }
+    // Banking is independent of track position. A missed gate raises the stake for the next carrier.
+    neon::Relay relay;
+    neon::RelayFleet previousShips{},now{};
+    for(int i=0;i<7;++i)previousShips[i]=now[i]={0.,double(10*i),true};
+    auto cross=[&](int id,double lane){
+        previousShips=now;previousShips[id]={lane,relay.gateZ()-1,true};now[id]={lane,relay.gateZ()+1,true};
+        relay.advance(1./90,previousShips,now);
+    };
+    cross(1,0);assert(relay.cargo==2 && relay.gate==1);
+    relay.take(1,0);
+    assert(relay.carrier==0 && relay.cargo==2);
+    cross(0,relay.gateX());assert(relay.scores[0]==2 && relay.cargo==1 && relay.carrier!=0);
+    int owner=relay.carrier;
+    cross(owner,0);cross(owner,0);cross(owner,0);
+    assert(relay.lastPayout==0 && relay.scores[owner]==0 && relay.carrier!=owner);
+    relay.safeTime=0;relay.take(relay.carrier,0);
+    cross(0,0);cross(0,0);cross(0,relay.gateX());
+    assert(relay.winner==0 && relay.victoryTime>0 && relay.scores[0]==0);
+    // An alongside pass works at the seam, a pass in a distant lane cannot steal the cargo.
+    for(double lane:{3.5,9.}){
+        neon::Relay duel;
+        previousShips[0]={lane,neon::lapLength-.4,true};now[0]={lane,neon::lapLength+.8,true};
+        previousShips[1]={0.,0.,true};now[1]={0.,.55,true};
+        duel.advance(1./90,previousShips,now);
+        assert(duel.carrier==(lane<4.8?0:1));
+    }
     neon::Race race;
     for (int i = 0; i < 60 * 95; ++i)
         race.advance(1. / 60, {});

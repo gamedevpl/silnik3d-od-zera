@@ -199,6 +199,11 @@ class CanvasScene {
                            auto q = [&](CoursePoint p) { return project(x + p.x, deck + p.y, z + p.z); };
                            polygon(rgb, {q(a), q(b), q(c)});
                        });
+        } else if(kind==coreObject || kind==gateObject){
+            relayArt(int(kind),int(age),turbineAngle/.85,[&](CoursePoint a,CoursePoint b,CoursePoint c,int rgb){
+                auto point=[&](CoursePoint q){return project(x+q.x,deck+q.y,z+q.z);};
+                polygon(rgb,{point(a),point(b),point(c)});
+            });
         } else if (kind == -2) {
             for(int side:{-1,1}){
                 double edge=x+side*(1.55+age);
@@ -305,7 +310,7 @@ class CanvasScene {
                   lamp[3]>0?alpha:-alpha});
         }
         auto visible = race.visible();
-        if(race.recovery<=0)visible.push_back({float(race.x),float(race.distance-race.laps*lapLength),-1,0,0,0});
+        if(race.recovery<=0)visible.push_back({float(race.x),float(race.distance-race.laps*lapLength),canvasPlayer,0,0,0});
         std::stable_sort(visible.begin(), visible.end(), [](auto &a, auto &b) { return a[1] > b[1]; });
         struct Face { Vertex a,b,c,d; };
         std::vector<Face> fire;
@@ -343,7 +348,7 @@ class CanvasScene {
         };
         for(auto &o:visible){
             burnTo(o[1]);refractTo(o[1]);
-            if(o[2]==-1)ship(0,race.x,o[1],race.lean,(3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
+            if(o[2]==canvasPlayer)ship(0,race.x,o[1],race.lean,(3-race.shield)*race.damagedSide,race.speed,race.noseSteer());
             else actor(o);
         }
         burnTo(camZ);refractTo(camZ);

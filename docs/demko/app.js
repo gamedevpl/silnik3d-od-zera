@@ -1,6 +1,6 @@
 import {renderer} from './renderer.js?v=display2';
-import {loadRace} from './race.js?v=duel1';
-import {Sound} from './audio.js?v=duel1';
+import {loadRace} from './race.js?v=relay1';
+import {Sound} from './audio.js?v=relay1';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -9,7 +9,10 @@ const keys=new Set(),pointers=new Map(),buttonKeys=new Set();
 const words={
  fork:['← Most · Kanał →','← Bridge · Canal →'],bridge:['Most · wiatr w plecy','Bridge · tailwind'],channel:['Kanał · ładowanie','Canal · recharge'],
  course:['Tor','Race course'],left:['Skręć w lewo','Steer left'],right:['Skręć w prawo','Steer right'],
- brief:['Fioletowe strzałki: puść dopalacz, by odnowić osłonę, lub przytrzymaj go, by wydać 35 energii na wyrzut. Gdy rywal cię namierza, zmień pas.','Violet chevrons: coast to repair, or hold Boost to spend 35 energy on overdrive. Change lanes when a rival locks on.'],
+ maxCargo:['ostatnia szansa','last chance'],lostCargo:['traci rdzeń','lost core'],bestRival:['Najlepszy rywal','Best rival'],
+ pitTip:['Fioletowe pole: puść dopalacz, by się naprawić, albo przytrzymaj go i wydaj 35 energii na wyrzut.','Violet pad: coast to repair, or hold Boost to spend 35 energy on overdrive.'],you:['Ty','You'],rival:['Rywal','Rival'],bank:['Bramka','Bank'],
+ take:['Przejmij rdzeń','Take core'],won:['wygrywa rundę','wins the heat'],yourWin:['Wygrywasz rundę','You win the heat'],
+ brief:['Zdobądź 5 punktów. Traf statek ze złotym rdzeniem lub wyprzedź go tuż obok. Przeleć przez złotą bramkę po punkty. Omiń ją, by podbić stawkę.','First to 5 points. Hit the ship carrying the gold core or pass close alongside it. Fly through the gold gate to score. Skip it to raise the stakes.'],
  boost:['Dopalacz','Boost'],launch:['Wyrzut ze smugi','Slingshot'],ready:['Zapas smugi · skręć + dopalacz','Wake stored · steer + boost'],
  lock:['Namierzony · zmień pas','Incoming · change lane'],overdrive:['Wyrzut · −35 energii','Overdrive · −35 energy'],
  empty:['Brak rakiet · zbierz zielone pola','Out of rockets · collect boost pads'],fired:['Rakieta odpalona','Rocket away'],
@@ -46,6 +49,15 @@ function updateHUD(){
  $('#route').textContent=race.route?tr(['','fork','bridge','channel'][race.route]):'';
  $('#drivehud').classList.toggle('charged',race.wakeCharge>=1||race.launchTime>0||race.overdrive>0);
  $('#flash').textContent=race.lockTime>0?tr('lock'):flash&&race.elapsed<flashUntil?(flash==='lap'?tr('lap')+' '+race.laps+' · '+time(race.lastLap):tr(flash)):'';
+ const who=id=>id===0?tr('you'):tr('rival')+' '+id;
+ const direction=race.carrierGap>=0?'↑':'↓';
+ const objective=race.carrier===0
+  ? tr('bank')+' '+race.cargo+' pt · '+(race.gateX<0?'←':'→')+' '+Math.round(race.gateAhead)+' m'+(race.cargo===3?' · '+tr('maxCargo'):'')
+  : tr('take')+' ◆'+race.cargo+' · '+who(race.carrier)+' '+direction+' '+Math.round(Math.abs(race.carrierGap))+' m';
+ $('#objective').textContent=objective;
+ const score=tr('you')+' '+race.score+'/'+race.goal+' · '+tr('bestRival')+' '+race.rivalScore+'/'+race.goal;
+ $('#score').textContent=race.winner>=0?(race.winner===0?tr('yourWin'):who(race.winner)+' '+tr('won')):
+  ((race.banker>=0?(race.payout?who(race.banker)+' +'+race.payout:race.banker===0?(en?'You lost the core':'Tracisz rdzeń'):who(race.banker)+' '+tr('lostCargo'))+' · ':'')+score);
  updateRadar();
 }
 const radar=$('#radar');
@@ -58,6 +70,7 @@ function updateRadar(){
   dot.hidden=gap< -23||gap>62;
   if(!dot.hidden){dot.style.left=(50+x*2.3)+'%';dot.style.top=(70-gap*.95)+'%';}
  };
+ dots.forEach((dot,i)=>dot.classList.toggle("courier",i===race.carrier));
  plot(dots[0],race.x,0);
  race.rivals.forEach((p,i)=>{const dz=p.z-race.distance;plot(dots[i+1],p.x,dz-LAP*Math.round(dz/LAP));});
 }
@@ -85,7 +98,7 @@ function panel(){
  let heading='Neon Grand Prix',info=tr('brief'),label=tr(coarse?'tapStart':'start');
  if(best)info+=' '+tr('record')+' '+time(best)+'.';
  if(mode==='loading')label=tr('loading');
- if(mode==='paused'){heading=tr('paused');label=tr(coarse?'tapResume':'resumeKey');}
+ if(mode==='paused'){heading=tr('paused');info+=' '+tr('pitTip');label=tr(coarse?'tapResume':'resumeKey');}
  $('#title').textContent=heading;$('#info').textContent=info;$('#start').setAttribute('aria-label',label);$('#start').title=label;$('#start').disabled=mode==='loading';
  updateHUD();
 }

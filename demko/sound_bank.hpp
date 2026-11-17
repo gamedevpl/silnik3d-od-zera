@@ -3,10 +3,10 @@
 #include <cstdint>
 
 namespace neon::audio {
-constexpr int rate=24000, count=14;
+constexpr int rate=24000, count=17;
 inline std::vector<float> synthesize(int id){
     // Real seconds, including a short tail for the shipyard's metal and concrete.
-    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95,.72,.23,.32,.81};
+    constexpr double duration[]={.22,.66,.52,.38,.42,.18,.62,.70,.81,.95,.72,.23,.32,.81,.25,.28,.6};
     std::vector<float> pcm(size_t(rate*duration[id]));
     uint32_t rng=uint32_t(971+id);
     double low=0,dark=0,phase=0;
@@ -48,6 +48,13 @@ inline std::vector<float> synthesize(int id){
             case Cue::Rail:
                 v=.64*(low-dark)*std::exp(-20*t)+.11*ring(791,33)+.065*ring(1223,40)
                   +.19*(n-low)*std::exp(-75*t);break;
+            case Cue::CoreGain: case Cue::CoreLost: case Cue::CoreBank:{
+                const bool lost=id==int(Cue::CoreLost), bank=id==int(Cue::CoreBank);
+                const int note=std::min(bank?2:1,int(t/.105));
+                const double pitch=(lost?630.:416.)*std::pow(lost?.75:1.33,note);
+                const double age=t-note*.105;
+                v=.33*std::sin(tau*pitch*age)*std::exp(-13*age)*std::min(1.,age/.007);
+                break;}
             case Cue::Lock:
                 v=.27*ring(730,32);
                 if(t>.14)v+=.31*std::sin(tau*960*(t-.14))*std::exp(-28*(t-.14));

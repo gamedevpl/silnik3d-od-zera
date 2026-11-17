@@ -1,4 +1,4 @@
-// Replay inputs against checkpoints produced by an independent native C++ replay of the current race rules.
+// Replay inputs against checkpoints produced by an independent native C++ replay (-ffp-contract=off) of the current race rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -9,7 +9,7 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
   assert(WebAssembly.validate(binary));
   const sim=await loadRace(binary),s=sim.reset(),counts={};
   const cue=k=>counts[k]=(counts[k]||0)+1;
-  const checkpoints=[[2458.471298650,2,1],[4536.327753403,3,3],[6797.980701459,5,2],[8881.872192667,7,4]];
+  const checkpoints=[[2055.779518980,1,7],[3992.976324028,3,7],[6333.078759785,5,7],[8480.469029524,7,6]];
   for(let i=0;i<11160;i++){
    const lanes=s.rivals.map(p=>p.x);
    if(i%821===0)sim.shoot(true,cue);
@@ -26,9 +26,9 @@ test('the WebAssembly build matches a seven-lap native race replay',async()=>{
     }
    }
   }
-  assert(Math.abs(s.lastLap-17.356251934)<.0001);
-  assert.equal(s.rockets,1);assert.equal(s.shield,2);
-  assert.deepEqual(counts,{fire:525,rocket:5,break:28,hit:21,pad:9,rail:20,repair:7,lap:7,wreck:7,blast:2,ricochet:398,lock:26,overdrive:7});
+  assert(Math.abs(s.lastLap-16.340861829)<.0001);
+  assert.equal(s.rockets,0);assert.equal(s.shield,2);
+  assert.deepEqual(counts,{fire:521,rocket:5,break:46,hit:21,pad:7,rail:17,repair:8,lap:7,wreck:8,blast:2,ricochet:371,lock:36,overdrive:4,coreGain:7,coreLost:5,coreBank:1});
   assert.equal(sim.reset().distance,0);
  });
 
@@ -92,4 +92,23 @@ test('boost produces luminous ion gas and a separate bounded refraction pass',as
  assert(materials(puffs+6,heat).some(m=>m>=208));
  assert(materials(heat,n).every(m=>m===55 || m===56));
  assert.equal((n-heat)%6,0);
+});
+
+test('a courier can steal and win a heat using normal controls',async()=>{
+ const sim=await loadRace(binary),s=sim.reset();
+ let prevX=s.x,won=false,captured=false,banked=false;
+ const cue=id=>{captured ||=id==='coreGain';banked ||=id==='coreBank';};
+ for(let tick=0;tick<21600&&!won;tick++){
+  const vx=(s.x-prevX)*90;prevX=s.x;
+  const carrying=s.carrier===0;
+  const target=carrying?s.gateX:s.rivals[s.carrier-1].x;
+  const error=target-s.x-.15*vx;
+  if(tick%60===0)sim.shoot(true,cue);
+  sim.advance(1/90,{steer:Number(error>.35)-Number(error<-.35),
+   boost:carrying||s.carrierGap>0,brake:!carrying&&s.carrierGap< -4},true,cue);
+  won=s.winner===0;
+ }
+ assert(captured&&banked&&won);
+ assert.equal(s.score,0);
+ assert(s.laps>0);
 });

@@ -259,6 +259,11 @@ int actors(const neon::Race &race,double time,int count){
             neon::damageMesh(int(kind),time,age,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
                 f.tri({xx+a.x,a.y+lift,z+a.z},{xx+b.x,b.y+lift,z+b.z},{xx+c.x,c.y+lift,z+c.z},{rgb>>16,(rgb>>8)&255,rgb&255});
             });
+        }else if(kind==neon::coreObject || kind==neon::gateObject){
+            neon::relayArt(int(kind),int(age),time,[&](neon::CoursePoint a,neon::CoursePoint b,neon::CoursePoint c,int rgb){
+                auto v=[&](neon::CoursePoint q){return V{xx+q.x,q.y,z+q.z};};
+                f.tri(v(a),v(b),v(c),{rgb>>16,(rgb>>8)&255,rgb&255});
+            });
         }else if(kind==-2){
             const double half=1.55+age;
             for(int side:{-1,1}){

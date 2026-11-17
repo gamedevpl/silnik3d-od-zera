@@ -75,7 +75,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
     CGSize pixels = CGSizeMake(round(s.width * scale), round(s.height * scale));
     if (!CGSizeEqualToSize(self.drawableSize, pixels))
         self.drawableSize = pixels;
-    hud.frame = NSMakeRect(12, s.height - 54, std::min(485., s.width - 24), 42);
+    hud.frame = NSMakeRect(12, s.height - 82, std::min(720., s.width - 24), 70);
     hint.frame = NSMakeRect((s.width - std::min(550., s.width - 24)) / 2, s.height * .34,
                             std::min(550., s.width - 24), 72);
     play.frame = NSMakeRect((s.width - 160) / 2, NSMaxY(hint.frame) + 10, 160, 38);
@@ -87,9 +87,9 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
     self.window.title = localized(@"Neon Canal", @"Neonowy kanał");
     hint.stringValue =
         localized(@"← →  steer     ↑  boost     ↓  airbrake\nSpace  cannon     R  rocket     M  sound  "
-                  @"   P  pause\nViolet pad: boost + 35 energy for overdrive, coast for repairs.",
+                  @"   P  pause\nHit or pass the gold core. Bank at the gold gate. First to 5 wins.",
                   @"← →  skręt     ↑  dopalacz     ↓  hamulec\nSpacja  działko     R  rakieta     "
-                  @"M  dźwięk     P  pauza\nFioletowe pole: dopalacz + 35 energii na wyrzut, bez dopalacza naprawa.");
+                  @"M  dźwięk     P  pauza\nPrzejmij złoty rdzeń strzałem lub wyprzedzeniem. Bramka daje punkty. Cel: 5.");
     play.title = started ? localized(@"Resume   ↵", @"Wznów   ↵") : @"Start   ↵";
     [self updateHUD];
 }
@@ -99,6 +99,12 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
     NSString *branch=route==1?localized(@"    ← Bridge · Canal →",@"    ← Most · Kanał →"):
         route==2?localized(@"    Bridge · tailwind",@"    Most · wiatr w plecy"):
         route==3?localized(@"    Canal · recharge",@"    Kanał · ładowanie"):@"";
+    const auto &r=race.relay;
+    NSString *objective=r.carrier==0?[NSString stringWithFormat:localized(@"Bank %d pt · %@ %.0f m",@"Bramka %d pkt · %@ %.0f m"),r.cargo,r.gateX()<0?@"←":@"→",r.gateAhead(race.distance)]:
+        [NSString stringWithFormat:localized(@"Take ◆%d · rival %d · %+.0f m",@"Przejmij ◆%d · rywal %d · %+.0f m"),r.cargo,r.carrier,neon::gap(race.rivals[r.carrier-1].z,race.distance)];
+    if(r.carrier==0 && r.cargo==3)objective=[objective stringByAppendingString:localized(@" · last chance",@" · ostatnia szansa")];
+    if(r.victoryTime>0)objective=r.winner==0?localized(@"You win the heat",@"Wygrywasz rundę"):
+        [NSString stringWithFormat:localized(@"Rival %d wins the heat",@"Rywal %d wygrywa rundę"),r.winner];
     hud.stringValue = [NSString
         stringWithFormat:localized(@"  %d / 7     LAP %d     SHIELD %d / 3     ROCKETS %d\n  Boost "
                                    @"%.0f%%     Best lap %@%@%@%@",
@@ -114,6 +120,7 @@ static NSString *localized(NSString *english, NSString *pl) { return polish() ? 
                              ? localized(@"     No audio output", @"     Brak wyjścia audio")
                          : sound.muted ? localized(@"     Muted", @"     Wyciszono")
                                        : @""];
+    hud.stringValue=[hud.stringValue stringByAppendingFormat:localized(@"\n  %@ · You %d/5 · Rival %d/5",@"\n  %@ · Ty %d/5 · Rywal %d/5"),objective,r.scores[0],*std::max_element(r.scores.begin()+1,r.scores.end())];
 }
 - (void)toggleRace {
     if (running) {

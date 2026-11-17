@@ -2,7 +2,7 @@
 export async function loadRace(bytes) {
  if(typeof WebAssembly==='undefined')throw Error('WebAssembly disabled');
  if(bytes===undefined){
-  const response=await fetch(new URL('./flight.wasm?v=duel1',import.meta.url));
+  const response=await fetch(new URL('./flight.wasm?v=relay1',import.meta.url));
   if(!response.ok)throw Error('flight.wasm HTTP '+response.status);
   bytes=await response.arrayBuffer();
  }
@@ -11,8 +11,9 @@ export async function loadRace(bytes) {
  const {instance}=await WebAssembly.instantiate(bytes,{wasi_snapshot_preview1:wasi});
  const core=instance.exports;
  core._initialize();
- const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet','lock','overdrive'];
+ const events=['fire','rocket','break','hit','pad','rail','repair','lap','launch','wreck','blast','ricochet','lock','overdrive','coreGain','coreLost','coreBank'];
  const fields=['distance','elapsed','x','lean','thrust','energy','rank','shield','laps','lapStart','lastLap','rockets','drafting'];
+ const relayFields=['carrier','cargo','gateX','gateAhead','score','rivalScore','winner','banker','payout','goal','carrierGap'];
  const race={rivals:[]};
  function sync(notify) {
   const address=core.raceState(), data=new Float64Array(core.memory.buffer,address);
@@ -24,6 +25,7 @@ export async function loadRace(bytes) {
   }
   const extras=fields.length+1+2*count;
   race.wakeCharge=data[extras];race.launchTime=data[extras+1];race.speed=data[extras+2];race.contactStrength=data[extras+3];race.deck=data[extras+4];race.route=data[extras+5];race.lockTime=data[extras+6];race.overdrive=data[extras+7];
+  relayFields.forEach((key,i)=>race[key]=data[extras+8+i]);
   const n=core.raceCueCount();
   for(let i=0;i<n;i++)notify(events[core.raceCue(i)]);
   core.raceClearCues();

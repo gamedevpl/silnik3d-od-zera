@@ -6,6 +6,8 @@
 #include "junction.hpp"
 #include "buildings.hpp"
 #include "wake.hpp"
+#include "relay.hpp"
+#include "relay_art.hpp"
 
 namespace neon {
 inline double bound(double x, double a, double b) { return std::clamp(x, a, b); }
@@ -26,7 +28,7 @@ struct Input {
     int steer = 0;
     bool boost = false, brake = false;
 };
-enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck, Blast, Ricochet, Lock, Overdrive };
+enum class Cue { Fire, Rocket, Break, Hit, Pad, Rail, Repair, Lap, Launch, Wreck, Blast, Ricochet, Lock, Overdrive, CoreGain, CoreLost, CoreBank };
 enum ContactEffect { Sparks = 15, Fragments = 18, PlayerFragments, RocketImpact, ColdGas, HotGas, IonGas };
 constexpr double recoveryTime = 1.15;
 struct Sector {
@@ -51,6 +53,7 @@ struct Pilot {
     double x, z, speed, lean = 0, stun = 0, boost = 0, hitGlow = 0, kick = 0, recovery = 0;
     int hull = 3;
     double lateral=0,rollRate=0,hitOffset=0,steering=0;
+    double energy=70, overdrive=0;
 };
 struct Shot {
     double x,y,z,vx,vy,vz; // World coordinates, including road curvature and elevation at launch.
@@ -86,6 +89,14 @@ struct Race {
     Wake blastGas;
     double rollRate=0;
     std::vector<Cue> cues;
+    Relay relay;
+    RelayFleet fleet() const {
+        RelayFleet ships;
+        ships[0]={x,distance,recovery<=0};
+        for(int i=0;i<int(rivals.size());i++)
+            ships[i+1]={rivals[i].x,rivals[i].z,rivals[i].recovery<=0};
+        return ships;
+    }
     Race() {
         constexpr double lanes[] = {0, 6, -12, 12, -3, 3};
         constexpr double grid[] = {9, 9, 19, 19, 53, 77};
@@ -164,6 +175,7 @@ struct Race {
         drafting = false;
         wakePilot = -1;
         double nearestWake = 28;
+        const auto holder=fleet()[relay.carrier];
         for (int i = 0; i < 6; i++) {
             auto &p = rivals[i];
             double ahead = gap(p.z, distance), phase = tau * p.z / lapLength;
@@ -173,8 +185,10 @@ struct Race {
             double approach = pad.z - p.z;
             double line =
                 bound(8 * sin(phase * 2 + i * 1.6) + 5 * sin(phase * 5 + i) + bend * 19, -15, 15);
-            if (approach < 40 && (index + i) % 3)
-                line += (pad.x - line) * (1 - approach / 40);
+            // Commit while there is still time to cross lanes at racing speed.
+            const double setup=std::clamp(.9*p.speed+1.8*std::abs(pad.x-p.x),50.,96.);
+            if (approach < setup && (pad.violet || (index+i)%4!=0))
+                line += (pad.x-line)*ramp((setup-approach)/(.54*setup));
             if (ahead < 2 && ahead > -17 && fabs(p.x - x) < 3.5)
                 line = bound(x + (p.x >= x ? 5 : -5), -16, 16);
             for (auto &other : rivals) {
@@ -196,13 +210,25 @@ struct Race {
                 double obstacle=s.obstacleX(elapsed+dz/std::max(30.,p.speed));
                 if(std::abs(line-obstacle)<5.)line=bound(obstacle+(p.x<obstacle?-6.:6.),-16.,16.);
             }
+            // Approach the courier's flank for a pass. A carrier chooses its own gate line.
+            if(relay.carrier!=i+1){
+                const double lead=gap(holder.z,p.z);
+                if(lead>0 && lead<38)
+                    line=bound(holder.x+(holder.x>0?-3.5:3.5),-16.,16.);
+            }else{
+                const double remaining=relay.gateAhead(p.z);
+                const bool bank=relay.cargo>=2 || p.hull<=2 || i%2==0 ||
+                                relay.scores[i+1]+relay.cargo>=Relay::goal;
+                if(remaining<105 && bank)
+                    line=std::lerp(line,relay.gateX(),ramp((105-remaining)/50));
+            }
             // All passing and avoidance decisions must respect the committed fork.
             const int side=routeSign(p.x);
             const double divider=islandHalf(p.z);
             const double upcoming=islandHalf(p.z+std::max(0.,p.speed)*.32);
             if(divider>0 || upcoming>0)
                 line=side*std::max(std::max(divider,upcoming)+2.2,side*line);
-            const double desired=bound((line-p.x)*1.65,-11.,11.);
+            const double desired=bound((line-p.x)*3.0,-21.,21.);
             p.steering+=(desired-p.steering)*(1-std::exp(-5*dt));
             p.kick *= std::exp(-4 * dt);
             const double prevX=p.x;
@@ -216,14 +242,29 @@ struct Race {
             p.stun = std::max(0., p.stun - dt);
             double surge = pow(std::max(0., sin(phase * 4 + i * 1.9)), 6);
             const double deficit=distance-p.z;
-            const double cruise=66.+(i-2.5)*1.65;
-            const double pursuit=bound(deficit*.08,-8.,4.);
+            const double cruise=67.+(i-2.5)*1.45;
+            // Save the sustained chase for a broken pack. A nearby leader keeps the exit.
+            const double lapPace=lastLap>0?lapLength/lastLap:82.;
+            const double chase=16.+bound((lapPace-76.)*.98,0.,42.);
+            const double pursuit=bound(deficit*.09,-23.,4.)+ramp((deficit-70.)/260.)*chase;
             const double tow=(ahead<0 && ahead>-27 && std::abs(p.x-x)<4.) ? 5. : 0.;
+            p.overdrive=std::max(0.,p.overdrive-dt);
             double target=cruise+pursuit+tow+11*surge+(p.boost>0?12:0)-8*std::abs(bend);
+            const bool press = deficit>-(12.+i*3.) && p.energy>40. && p.stun<=0 && p.recovery<=0 &&
+                               p.overdrive==0 && (lapPace>84 || deficit>80);
+            if(press){
+                target+=12.+.95*i;
+                p.energy=std::max(0.,p.energy-8.3*dt);
+            }
+            else if(p.overdrive==0)p.energy=std::min(100.,p.energy+14.*dt);
+            // Let the carrier catch the flank before trying to steal the core.
+            const double carrierBehind=gap(p.z,holder.z);
+            if(relay.carrier!=i+1 && carrierBehind>7 && carrierBehind<110 && i%2==0)
+                target-=12.*ramp((carrierBehind-7.)/12.);
+            if(p.overdrive>0)target=std::max(target,135.);
             target += 1.4 * bridgeHeight(p.x, p.z);
             p.boost = std::max(0., p.boost - dt);
-            if (approach >= 0 && approach < p.speed * dt && fabs(p.x - pad.x) < 3)
-                p.boost = 1.2;
+
             target-=14*viaductGrade(p.z);
             p.speed += ((p.stun > 0 ? target * .53 : target) - p.speed) * (1 - exp(-2 * dt));
             if (p.recovery > 0) {
@@ -233,6 +274,16 @@ struct Race {
                     p.hull = 3;
             }
             const double travel=p.speed*dt;
+            if(approach>0 && approach<=travel && std::abs(p.x-pad.x)<2.9 && p.recovery<=0 && p.stun<=0){
+                if(pad.violet && p.energy>=35 && p.hull>1 && deficit>-(30.+i*3.)){
+                    p.energy-=35;
+                    p.overdrive=2.35;
+                }else{
+                    p.energy=std::min(100.,p.energy+24.);
+                    p.hull=std::min(3,p.hull+1);
+                    p.boost=1.2;
+                }
+            }
             for(const auto &s:sectors){
                 const double dz=s.z-17-p.z;
                 if(!s.sweeping || !s.mine || dz<=0 || dz>travel)continue;
@@ -431,13 +482,17 @@ struct Race {
                 }
             }
             if(struckPlayer && !wall){
+                if(immunity<=0 && rivals[shot.owner].recovery<=0)relay.take(0,shot.owner+1);
                 impact(.38,routeSign(lane-x));shot.spent=true;bursts.push_back(flash);
             }
             if(wall){shot.spent=true;bursts.push_back(flash);cues.push_back(shot.rocket?Cue::Blast:Cue::Ricochet);}
             if (pilot || mine) {
                 if (pilot) {
+                    if(shot.owner<0 ? recovery<=0 : rivals[shot.owner].recovery<=0)
+                        relay.take(int(pilot-rivals.data())+1,shot.owner+1);
                     pilot->stun = shot.rocket ? 2.4 : 1;
                     pilot->hitGlow = .75;
+                    pilot->overdrive=0;
                     const double side=bound(pilot->x-lane,-1.,1.);
                     pilot->hitOffset=-side;
                     pilot->rollRate+=side*(shot.rocket?4.:1.1);
@@ -461,6 +516,8 @@ struct Race {
         std::erase_if(bursts, [](auto &b) { return b.age >= (b.rocket?.78:.32); });
     }
     void advance(double dt, Input in) {
+        const auto previousFleet=fleet();
+        const int previousCarrier=relay.carrier;
         elapsed += dt;
         for (double *t : {&cooldown, &rocketCooldown, &immunity, &wallLock, &padBoost})
             *t = std::max(0., *t - dt);
@@ -562,8 +619,13 @@ struct Race {
             }
         }
         hullContacts(dt);
+        relay.advance(dt,previousFleet,fleet());
         rivalGuns(dt);
         blastGas.drift(dt);stepShots(dt);
+        if(relay.payoutTime==2 && relay.lastPayout>0 && (relay.lastBank==0 || relay.victoryTime==3))
+            cues.push_back(Cue::CoreBank);
+        else if(previousCarrier!=relay.carrier && (!previousCarrier || !relay.carrier))
+            cues.push_back(relay.carrier==0?Cue::CoreGain:Cue::CoreLost);
         auto emit=[&](int id,double lane,double z,double sideways,double forward,double bank,
                       int damage,int side,double power){
             const double nozzle=z-1.9, grade=(deckAt(lane,z+.5)-deckAt(lane,z-.5));
@@ -624,6 +686,12 @@ struct Race {
             if (i == wakePilot)
                 add(p.x, distance + dz, 12, wakeCharge);
         }
+        const auto holder=fleet()[relay.carrier];
+        const double carrierGap=gap(holder.z,distance);
+        if(holder.flying && carrierGap>=-8 && carrierGap<159)
+            add(holder.x,distance+carrierGap,coreObject,relay.cargo);
+        const double gateGap=relay.gateAhead(distance);
+        if(gateGap<164)add(relay.gateX(),distance+gateGap,gateObject);
         if(lockTime>0)add(markedLane,distance+11,-2,lockTime/.82);
         for (auto &s : sectors) {
             if (!s.used && s.z < distance + 153)

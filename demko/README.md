@@ -4,6 +4,10 @@
 
 Seven ships race around a 1,152-unit circuit for as many laps as you like. Your position depends on total distance traveled. The game saves your fastest full lap on this device.
 
+Each heat is a core relay. The gold diamond marks the carrier. Hit that ship or overtake within 4.8 metres alongside on the same deck to steal its cargo. Carry it through the gold gate for one point. Bypass the gate and the next one is worth another point, up to three. Miss the gate with three points aboard and the cargo is lost. Whoever steals the core inherits its value. After delivery the nearest other flying ship gets a fresh core. The first pilot to bank five points wins the heat. The next heat starts on the same circuit, with lap times and race positions intact.
+
+Rivals line up for violet pads, spend energy on overdrive and choose whether to bank or carry. The HUD shows the courier and the leading rival score alongside yours.
+
 At the amber and teal arrows, pick a side before the island. Take the raised suspension bridge on the left for a tailwind, or stay low in the right-hand canal to recharge boost. Both routes rejoin at the foot of the harbor viaduct. The first sweeping bend climbs above the warehouses. The skyline opens up at the crest before the track curves back down to the waterfront. Climbing costs speed and descending gives it back.
 
 A full boost cell lasts about 12 seconds on its own. Release the boost to recharge. The ship carries speed into the next bend until you apply the airbrake.

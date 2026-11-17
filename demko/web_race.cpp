@@ -10,7 +10,7 @@
 namespace {
 neon::Race race;
 constexpr size_t stateFields = 14;
-std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)> + 8> snapshot;
+std::array<double, stateFields + 2 * std::tuple_size_v<decltype(race.rivals)> + 19> snapshot;
 std::vector<neon::Object> objects;
 std::optional<neon::TrackMesh> track;
 std::vector<float> canvasCommands;
@@ -85,6 +85,18 @@ const double *raceState() {
     snapshot[i++] = neon::routeHint(race.x,race.distance);
     snapshot[i++] = race.lockTime;
     snapshot[i++] = race.overdrive;
+    const auto &r=race.relay;
+    snapshot[i++]=r.carrier;
+    snapshot[i++]=r.cargo;
+    snapshot[i++]=r.gateX();
+    snapshot[i++]=r.gateAhead(race.distance);
+    snapshot[i++]=r.scores[0];
+    snapshot[i++]=*std::max_element(r.scores.begin()+1,r.scores.end());
+    snapshot[i++]=r.victoryTime>0?r.winner:-1;
+    snapshot[i++]=r.payoutTime>0?r.lastBank:-1;
+    snapshot[i++]=r.lastPayout;
+    snapshot[i++]=neon::Relay::goal;
+    snapshot[i++]=r.carrier?neon::gap(race.rivals[r.carrier-1].z,race.distance):0;
     return snapshot.data();
 }
 int raceVisible() {
