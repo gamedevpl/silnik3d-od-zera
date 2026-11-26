@@ -17,6 +17,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--turquoise);outline-
 
 header{position:relative;z-index:40;display:flex;align-items:center;gap:14px;padding:max(10px,env(safe-area-inset-top)) var(--right) 16px var(--left);background:linear-gradient(#0d0c17f0,#0d0c1770 70%,transparent)}
 .brand{position:relative;display:flex;align-items:center;gap:11px;margin-right:auto}
+.menu-btn{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;min-width:34px;height:34px;min-height:34px;padding:0;background:#221e33e8;color:var(--cream)}
+.menu-btn svg{width:15px;height:15px;display:block;image-rendering:pixelated}
 h1{margin:0;white-space:nowrap;font:700 clamp(20px,2.8vw,34px)/1 var(--pix);letter-spacing:-1.6px;color:#fff3dc;text-shadow:3px 3px 0 var(--ink)}
 h1 em{font-style:normal;color:var(--amber)}
 nav{display:flex;align-items:center;gap:12px}nav .source{font-weight:700;font-size:15px}
