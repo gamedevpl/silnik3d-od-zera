@@ -31,8 +31,9 @@ a{color:var(--turquoise);text-decoration:none}
 a:hover{text-decoration:underline}
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px;width:100%}
 
-header.top{position:sticky;top:0;z-index:10;background:rgba(22,28,34,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--panel-border)}
+header.top{position:sticky;top:0;z-index:100;background:rgba(22,28,34,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--panel-border)}
 header.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+header.top .brand{position:relative;display:flex;align-items:center;gap:12px;flex:none}
 .logo{display:flex;align-items:center;font-size:1.5em;font-weight:700;color:#fff;letter-spacing:-.5px}
 .logo:hover{text-decoration:none}
 .logo img{width:35px;height:30px;margin-right:10px}
@@ -76,7 +77,12 @@ footer .right a{color:var(--muted)}
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="logo" href="https://www.gamedev.pl"><img src="../mascot.svg" alt="">gamedev<span class="tq">.pl</span></a>
+    <div class="brand">
+      <button id="menuBtn" class="menu-btn gdpl-menu-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="siteMenu" aria-label="Menu">
+        <svg viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="12" height="2" fill="currentColor"/><rect x="1" y="6" width="12" height="2" fill="currentColor"/><rect x="1" y="10" width="12" height="2" fill="currentColor"/></svg>
+      </button>
+      <a class="logo" href="https://www.gamedev.pl"><img src="../mascot.svg" alt="">gamedev<span class="tq">.pl</span></a>
+    </div>
     <a class="crumb" href="../" data-t="crumb"></a>
     <div class="lang" role="group" aria-label="Language">
       <button type="button" data-lang="pl">PL</button>
@@ -186,6 +192,16 @@ s.onload = () => Engine({ canvas, locateFile: f => ep + "/" + f, onTitle: t => b
   .catch(e => { loading.hidden = true; bar.textContent = String(e); });
 s.onerror = () => { loading.querySelector("span").textContent = L.missing.replace("{ep}", ep); };
 document.body.appendChild(s);
+</script>
+<script type="module">
+import { initSiteMenu } from "../site-menu.js";
+const epParam = (new URLSearchParams(location.search).get("ep") || "ep00").replace(/[^a-z0-9]/g, "");
+initSiteMenu({
+  currentSite: null,
+  getLang: () => document.documentElement.lang || "pl",
+  getGithubUrl: () => `https://github.com/gamedevpl/silnik3d-od-zera/tree/${epParam}`,
+  githubSub: "silnik3d-od-zera",
+});
 </script>
 </body>
 </html>

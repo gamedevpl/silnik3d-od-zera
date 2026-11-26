@@ -15,9 +15,9 @@ button{font:700 15px var(--sans);color:var(--cream);background:var(--panel);bord
 button:hover{background:#3d3655}button:active{transform:translate(2px,2px);box-shadow:0 0 0 2px var(--ink),1px 1px 0 2px rgba(0,0,0,.4)}
 button:focus-visible,a:focus-visible{outline:2px solid var(--turquoise);outline-offset:3px}
 
-header{display:flex;align-items:center;gap:16px;padding:max(12px,env(safe-area-inset-top)) var(--right) 26px var(--left);background:linear-gradient(#0d0c17f0,#0d0c1770 70%,transparent)}
-.brand{margin-right:auto}.brand a{font:700 13px var(--pix)}
-h1{margin:2px 0 0;font:700 clamp(26px,3.2vw,42px)/1 var(--pix);letter-spacing:-2px;color:#fff3dc;text-shadow:3px 3px 0 var(--ink)}
+header{position:relative;z-index:40;display:flex;align-items:center;gap:14px;padding:max(10px,env(safe-area-inset-top)) var(--right) 16px var(--left);background:linear-gradient(#0d0c17f0,#0d0c1770 70%,transparent)}
+.brand{position:relative;display:flex;align-items:center;gap:11px;margin-right:auto}
+h1{margin:0;white-space:nowrap;font:700 clamp(20px,2.8vw,34px)/1 var(--pix);letter-spacing:-1.6px;color:#fff3dc;text-shadow:3px 3px 0 var(--ink)}
 h1 em{font-style:normal;color:var(--amber)}
 nav{display:flex;align-items:center;gap:12px}nav .source{font-weight:700;font-size:15px}
 #lang{font-family:var(--pix);min-width:44px}
@@ -47,7 +47,7 @@ footer{min-width:0;padding:10px var(--right) max(12px,env(safe-area-inset-bottom
 #nogl b{display:block;font:700 18px var(--pix)}
 
 @media(max-width:700px){
- header{padding-bottom:16px;gap:10px}nav{gap:8px}nav .source{font-size:13px}
+ header{padding-bottom:12px;gap:10px}nav{gap:8px}nav .source{display:none}
  .card{max-width:none;margin:0 10px 8px;padding:12px 14px}
  h2{font-size:22px}#sceneNote{font-size:14px;margin-bottom:8px}
  .chips{display:none}.film{display:none}

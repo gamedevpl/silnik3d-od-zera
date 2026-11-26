@@ -1,6 +1,7 @@
 import {renderer} from './renderer.js?v=display2';
 import {loadRace} from './race.js?v=grip3';
 import {Sound} from './audio.js?v=relay1';
+import {initSiteMenu} from '../site-menu.js';
 
 const $=s=>document.querySelector(s),canvas=$('canvas'),screen=$('.screen');
 const labels=[...document.querySelectorAll('[data-pl]')].map(el=>[el,el.textContent]);
@@ -33,6 +34,14 @@ const {reset,advance,shoot,LAP}=simulation??{};
 const sound=new Sound(simulation?.geometry);
 screen.dataset.simulation=simulation?'wasm':'unavailable';
 let en=read('neon.lang')!=='pl',mode=simulation?'loading':'unavailable',race=simulation?reset():null,draw,flash='',flashUntil=0,last=0;
+let menuClosedAt=0;
+const siteMenu=initSiteMenu({
+ currentSite:'neon-canal',
+ getLang:()=>en?'en':'pl',
+ getGithubUrl:()=>'https://github.com/gamedevpl/silnik3d-od-zera/tree/main/demko',
+ githubSub:'silnik3d-od-zera',
+ onToggle:open=>{if(open&&mode==='run')pause();if(!open)menuClosedAt=performance.now();}
+});
 let best=Number(read('neon.lap.grip3'))||0;const tr=k=>words[k][+en];
 sound.setMute(read('neon.mute')==='1');
 function time(t){return t.toFixed(1)+' s';}
@@ -82,6 +91,7 @@ function panel(){
  document.documentElement.lang=en?'en':'pl';
  document.title=en?englishTitle:'Neonowy kanał · Silnik 3D od zera';
  $('#lang').textContent=en?'PL':'EN';$('#lang').setAttribute('aria-label',en?'Polski':'English');
+ siteMenu?.render();
  $('#sound').textContent=tr(sound.muted?'muted':'sound');$('#sound').setAttribute('aria-pressed',String(!sound.muted));
  $('#pause').disabled=!['run','paused'].includes(mode);$('#pause').textContent=tr(mode==='paused'?'resume':'pause');
  if(mode==='unavailable'){
@@ -118,7 +128,7 @@ function start(){
  play.classList.add('driving');play.focus({preventScroll:true});
 }
 // Keep the native button keyboard-accessible while the whole race view accepts a click or tap.
-$('.overlay').onclick=start;
+$('.overlay').onclick=()=>{if(siteMenu?.isOpen()||performance.now()-menuClosedAt<350)return;start();};
 $('#pause').onclick=()=>mode==='run'?pause():start();
 $('#lang').onclick=()=>{en=!en;save('neon.lang',en?'en':'pl');panel();};
 $('#sound').onclick=()=>{sound.unlock();sound.setMute(!sound.muted);save('neon.mute',sound.muted?'1':'0');panel();};

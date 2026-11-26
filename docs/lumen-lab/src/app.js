@@ -1,6 +1,7 @@
 // Page UI: one scene fills the screen, the card explains it, the footer lists the film's chapters.
 // The chat helper (if the browser has a built-in model) talks to window.LUMEN.
 import { CHAPTERS, SCENES, FILM, byId } from './scenes.js';
+import { initSiteMenu } from '../../site-menu.js';
 
 const $ = (s) => document.querySelector(s);
 const T = {
@@ -15,6 +16,12 @@ let lang = (() => { try { const l = localStorage.getItem('lang'); if (T[l]) retu
 let current = byId(new URLSearchParams(location.search).get('shot')) || byId('M-swing');
 let paused = false, t = 0, last = performance.now(), scale = Math.min(devicePixelRatio || 1, 1.5), slow = 0;
 const listeners = new Set();
+const siteMenu = initSiteMenu({
+  currentSite: 'lumen-lab',
+  getLang: () => lang,
+  getGithubUrl: () => 'https://github.com/gamedevpl/silnik3d-od-zera/tree/main/docs/lumen-lab',
+  githubSub: 'silnik3d-od-zera',
+});
 
 function secs(at) { return at.split(':').reduce((a, b) => a * 60 + +b, 0); }
 function filmUrl(at) { return `https://www.youtube.com/watch?v=${FILM.id}&t=${secs(at)}s`; }
@@ -39,6 +46,7 @@ function drawUI() {
   $('#chapters').innerHTML = CHAPTERS.map((ch, i) => `<button type="button" role="tab" data-chapter="${ch.id}" aria-selected="${ch === c}"><b>${ch.id === 'mood' ? '★ ' : `${i + 1}. `}${ch[lang]}</b><small>${ch.id === 'mood' ? (lang === 'pl' ? 'klimat' : 'mood') : ch.at}</small></button>`).join('');
   $(`#chapters [aria-selected="true"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   document.title = `${current[lang]} · Lumen Lab`;
+  siteMenu?.render();
 }
 
 function show(id) {

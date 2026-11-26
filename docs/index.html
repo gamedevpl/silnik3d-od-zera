@@ -42,6 +42,7 @@ a:hover{text-decoration:underline}
 /* header: same bar as gamedev.pl */
 header.top{position:sticky;top:0;z-index:100;background:rgba(22,28,34,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--panel-border)}
 header.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+header.top .brand{position:relative;display:flex;align-items:center;gap:12px;flex:none}
 .logo{display:flex;align-items:center;font-size:1.55em;font-weight:700;color:#fff;letter-spacing:-.5px}
 .logo:hover{text-decoration:none}
 .logo img{width:35px;height:30px;margin-right:10px}
@@ -212,7 +213,12 @@ footer .right a{color:var(--muted)}
 
 <header class="top">
   <div class="wrap">
-    <a class="logo" href="https://www.gamedev.pl"><img src="mascot.svg" alt="">gamedev<span class="tq">.pl</span></a>
+    <div class="brand">
+      <button id="menuBtn" class="menu-btn gdpl-menu-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="siteMenu" aria-label="Menu">
+        <svg viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="12" height="2" fill="currentColor"/><rect x="1" y="6" width="12" height="2" fill="currentColor"/><rect x="1" y="10" width="12" height="2" fill="currentColor"/></svg>
+      </button>
+      <a class="logo" href="https://www.gamedev.pl"><img src="mascot.svg" alt="">gamedev<span class="tq">.pl</span></a>
+    </div>
     <span class="crumb" data-t="crumb"></span>
     <nav class="links">
       <a href="#jak" data-t="navHow"></a>
@@ -304,5 +310,15 @@ footer .right a{color:var(--muted)}
 <script src="series.js"></script>
 <script src="notes.js"></script>
 <script src="app.js"></script>
+<script type="module">
+import { initSiteMenu } from "./site-menu.js";
+const menu = initSiteMenu({
+  currentSite: "silnik3d",
+  getLang: () => document.documentElement.lang || "pl",
+  getGithubUrl: () => "https://github.com/gamedevpl/silnik3d-od-zera",
+  githubSub: "silnik3d-od-zera",
+});
+document.addEventListener("silnik:lang", () => menu?.render());
+</script>
 </body>
 </html>
