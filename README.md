@@ -1,26 +1,81 @@
+<div align="center">
+
 # Silnik 3D w C++ od zera
 
-## Ćwiczenia po odcinku
+**Od pustego katalogu do własnego silnika 3D w C++17 i OpenGL 3.3 — prawdziwy Vim, prawdziwe błędy, zadania po każdym odcinku i kompilacja każdego etapu do przeglądarki.**
 
-Wybierz gałąź startową swojego odcinka. W jej README znajdziesz zadanie i instrukcje PL/EN. Podstawowe próby E00–E02 wymagają Git, Pythona 3 i kompilatora C++17.
+[**Strona serii ↗**](https://gamedevpl.github.io/silnik3d-od-zera/) · [**Playlista YouTube ↗**](https://www.youtube.com/playlist?list=PLFf6J3zhiCW4) · [English README](README.en.md) · [Demko: Neon Canal](demko/README.md) · [Lumen Lab](docs/lumen-lab/README.md)
 
-W E03–E06 polecenie `python3 check.py` buduje dołączoną bibliotekę GLFW. Potrzebne są także CMake 3.20+ i sesja graficzna z OpenGL 3.3. Na Linuksie domyślna konfiguracja GLFW buduje obsługę zarówno X11, jak i Waylanda. Na Debianie i Ubuntu doinstaluj nagłówki obu systemów przed uruchomieniem próby.
-| E13 · Słychać, że działa | Odtwórz kliknięcie zatrzasku raz, gdy ogniwo zasila warsztat. | [e13-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-start) | [e13-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-solution) | [ep13](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep13) |
-| E14 · Jeszcze jedna próba | Przywróć stan warsztatu i ukończ dwie jazdy windą w jednym uruchomieniu. | [e14-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-start) | [e14-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-solution) | [ep14](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep14) |
+![Stars](https://img.shields.io/github/stars/gamedevpl/silnik3d-od-zera?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-38bdf8?style=flat-square)
+![Stack](https://img.shields.io/badge/C%2B%2B17-OpenGL_3.3_%2B_WASM-00e4ac?style=flat-square)
+![Episodes](https://img.shields.io/badge/odcinki-Sezon_1_%2B_Sezon_2_(E00%E2%80%93E14)-f59e0b?style=flat-square)
 
-```sh
-sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev
-```
+<br>
 
-| Odcinek | Zadanie | Start | Rozwiązanie ćwiczenia | Tag końca odcinka |
-| --- | --- | --- | --- | --- |
-| E00 | Przywróć puls tła. | [e00-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-start) | [e00-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-solution) | `ep00` |
-| E01 | Ogranicz nadrabianie czasu po długiej klatce. | [e01-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-start) | [e01-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-solution) | `ep01` |
-| E02 | Wyprostuj boczne krawędzie kostki. | [e02-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [e02-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | `ep02` |
-| E09 · Nocna zmiana | Wyrównaj prędkość robota po skosie w `drive.hpp`. | [e09-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-start) | [e09-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution) | [`ep09`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09) |
-| E10 · Ściana | Poprowadź robota wzdłuż regału w `collision.hpp`. | [e10-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-start) | [e10-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution) | [`ep10`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep10) |
-| E11 · Podnieś ogniwo | W `cell.hpp` rozpoznaj pojedyncze naciśnięcie E. | [e11-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start) | [e11-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution) | [`ep11`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep11) |
-| E12 · Gniazdo zasila warsztat | Sprawdź dopasowanie całej podstawy ogniwa w `socket.hpp`. | [e12-start](https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-start) | [e12-solution](https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-solution) | [`ep12`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep12) |
+<a href="https://gamedevpl.github.io/silnik3d-od-zera/">
+  <img src="./docs/og.png" alt="Silnik 3D w C++ od zera — seria na YouTube" width="760">
+</a>
+
+</div>
+
+---
+
+## Ewolucja silnika — uruchom na żywo w przeglądarce
+
+Każdy tag odcinka (`ep00`–`ep14`) buduje się automatycznie przez Emscripten do WebAssembly, więc możesz odpalić silnik z dowolnego etapu bez instalowania czegokolwiek:
+
+<p align="center">
+  <a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep14&lang=pl">
+    <img src="./media/silnik3d/evolution.gif" alt="Ewolucja silnika 3D w C++ od zera: E02 druciana kostka, E06 światło i materiał, E08 galeria 3D, E14 gra warsztatowa Nocna zmiana" width="800">
+  </a>
+</p>
+
+<table>
+  <tr>
+    <td align="center" width="25%">
+      <a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep02&lang=pl"><img src="./media/silnik3d/ep02.jpg" width="190" alt="E02 Wireframe Cube"></a><br>
+      <sub><b><a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep02&lang=pl">E02 · Kostka ↗</a></b><br>Obrót i gimbal lock</sub>
+    </td>
+    <td align="center" width="25%">
+      <a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep06&lang=pl"><img src="./media/silnik3d/ep06.jpg" width="190" alt="E06 Light and Material"></a><br>
+      <sub><b><a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep06&lang=pl">E06 · Światło ↗</a></b><br>Normalne i chropowatość</sub>
+    </td>
+    <td align="center" width="25%">
+      <a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep08&lang=pl"><img src="./media/silnik3d/ep08.jpg" width="190" alt="E08 3D Gallery Scene"></a><br>
+      <sub><b><a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep08&lang=pl">E08 · Scena ↗</a></b><br>Uchwyty i galeria 3D</sub>
+    </td>
+    <td align="center" width="25%">
+      <a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep14&lang=pl"><img src="./media/silnik3d/ep14.jpg" width="190" alt="E14 Night Shift Workshop"></a><br>
+      <sub><b><a href="https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep14&lang=pl">E14 · Warsztat ↗</a></b><br>Sezon 2: pierwsza gra</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Co jeszcze żyje w tym repo?
+
+<table>
+  <tr>
+    <td align="center" width="50%" valign="top">
+      <a href="./demko/README.md"><img src="./media/demko/gameplay.gif" width="380" alt="Neon Canal gameplay"></a><br>
+      <b><a href="./demko/README.md">Neon Canal (Demko)</a></b> · <a href="https://gamedevpl.github.io/silnik3d-od-zera/demko/">Zagraj w przeglądarce ↗</a><br>
+      <sub>Wyścigowa gra 3D w C++17 / WASM i natywnym Metal na macOS — 7 statków, rozwidlenia, smuga, dopalacz i rakiety.</sub>
+    </td>
+    <td align="center" width="50%" valign="top">
+      <a href="./docs/lumen-lab/README.md"><img src="./media/lumen-lab/hero.gif" width="380" alt="Lumen Lab 40 years of lighting"></a><br>
+      <b><a href="./docs/lumen-lab/README.md">Lumen Lab</a></b> · <a href="https://gamedevpl.github.io/silnik3d-od-zera/lumen-lab/">Uruchom w WebGL2 ↗</a><br>
+      <sub>40 lat światła i cienia w grach (31 żywych scen: paleta, blob, lightmapa, stencil, shadow map, deferred, path tracing, SDF).</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Ćwiczenia po odcinkach
+
+Wybierz gałąź startową swojego odcinka — dostajesz dokładnie ten sam kod co w filmie, z jednym zepsutym miejscem i skryptem `check.py`, który sprawdza poprawkę:
 
 ```sh
 git clone -b e00-start https://github.com/gamedevpl/silnik3d-od-zera.git
@@ -28,227 +83,38 @@ cd silnik3d-od-zera
 python3 check.py
 ```
 
-Po rozpakowaniu paczki offline użyj w pierwszym poleceniu `silnik-3d.bundle silnik3d-od-zera` w miejscu adresu HTTPS.
-
-Do prób graficznych potrzebujesz Git, Pythona 3, kompilatora C++17, CMake 3.20+, Ninja i sesji graficznej z OpenGL. Uruchom wybraną komendę w katalogu paczki lub na gałęzi main klonu.
-
-[E02 in English](README.en.md)
-
-## Jak zacząć od E00
-
-W klonie zacznij od `git clone https://github.com/gamedevpl/silnik3d-od-zera.git` i `cd silnik3d-od-zera`. Jeśli korzystasz z paczki, rozpakuj `silnik-3d.zip` i otwórz terminal w katalogu z plikiem `replay`.
-
-Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka zawiera już plik `silnik-3d.bundle`. W klonie utwórz go poleceniem `git bundle create silnik-3d.bundle HEAD main --tags`. Następnie utwórz `work/engine` i przejdź do niego. W tym miejscu `git clone -q ../../silnik-3d.bundle ../../ref` tworzy kopię do podglądu, a `cp -R ../../ref/vendor .` umieszcza biblioteki w budowanym projekcie. Polecenia z tabeli poniżej uruchamiaj z katalogu zawierającego `replay`.
-
-Przejdź E00 w Vimie od [pierwszego zapisu pliku](#e00--co-zapisuje-vim-a-co-uruchamia-powłoka) do [pierwszego celu CMake](#e00--co-właściwie-zbudował-ninja).
-
-| Odcinek | Long | Short |
-|---|---|---|
-| E00 | `python3 replay setup` · `python3 probe-swaps`, `python3 replay clock` | `python3 replay pulse` |
-| E01 | `python3 replay 01` · `python3 replay landing` · `python3 replay steps` | `python3 replay race` |
-| E02 | Cały long: `python3 replay 02`. Same punkty z pierwszej minuty: `python3 replay corners`. | `python3 replay edges` |
-
-
-
-## E01 · jedna długa klatka bez OpenGL
-
-W grze zegar ma poruszyć skoczka. W tej próbie chcemy jedynie policzyć wywołania, jakie spowoduje jedna klatka trwająca 1/3 sekundy. Wystarczą Git, Vim, Python 3 i kompilator C++17.
-
-    git clone -b ep01-clock-coupled . clock-edit
-    cd clock-edit
-    vim clock.hpp
-
-Wpisz w Vimie `:!python3 ../frame 3`. Kompilator zatrzyma się na `player.update(tick)`. Wróć przez Enter. Wyszukaj `/player.update`, naciśnij Enter i wpisz `ct(`. Wpisz słowo `step`, naciśnij Esc i zapisz przez `:w`. Powtórz ostatnią komendę powłoki przez `:!!`. Tym razem sam zegar wykona 16 kroków po 20 ms, a 13,333 ms zachowa na później.
-
-Na początku dodaj `#include <algorithm>`. W funkcji advance zastąp `lag += elapsed;` przez `lag += std::min(elapsed, 0.25);`. Zapisz plik i ponów `:!!`. Zegar przyjął 250 z 333,333 ms. Wykonał 12 kroków i zachował 10 ms. Tagi `ep01-clock-uncapped` i `ep01-clock-capped` zawierają obie poprawne wersje do porównania. Gra nadal używa starej pętli w draw(). Końcowy tag `ep01` podpina Clock do skoczka.
-
-Z katalogu z plikiem replay uruchom `python3 replay steps`, aby porównać wynik gry przed przeniesieniem pętli i po nim. W chwili 1,800000 s przebiegi przy 30 i 240 FPS mają 89 i 90 kroków. Przy 1,833333 s oba mają 91. Przy danej częstotliwości renderowania skok zachował swój wcześniejszy przebieg.
-
-
-## E02 Short · skąd się wzięła przekątna
-
-W katalogu rozpakowanego zestawu, obok pliku `replay`, przygotuj początek sesji. Potrzebujesz Git, Vima, Pythona 3 i kompilatora C++17.
-
-    git clone -b ep02-marked-rings silnik-3d.bundle ref
-    cd ref
-    vim mesh.hpp
-
-W klonie z GitHuba użyj `git clone -b ep02-marked-rings . ref` w pierwszym wierszu. Jeśli chcesz zobaczyć skok w oknie, w katalogu `ref` wykonaj jednorazowo `cmake -S . -B build -G Ninja`. W zwykłym Vimie odpowiednikiem filmowego `:Run` jest `:!cmake --build build && ./build/engine`. Zamknij okno gry, żeby wrócić do edycji.
-
-1. Wpisz `:18` i Enter. `yy` kopiuje tylną krawędź, `p` wkleja kopię. Zapisz `:w` i uruchom próbę. Nadal widać dwie ramki. Z Vima możesz to sprawdzić także bez grafiki poleceniem `:!python3 ../replay edges --source .`. Są już 12 wywołań, a lista bocznych połączeń jest pusta.
-2. W kopii, w wierszu 19, wpisz `0f+`, potem `2x` i `:w`. Powtórz polecenie próbnika. Pokazuje m.in. `1->6`. Liczba wywołań nadal wynosi 12.
-3. Wpisz `:e corners.hpp`. Spośród przednich rogów tylko 1 i 2 mają takie samo x jak szóstka. Jedynie dwójka ma również to samo y. Wróć przez `:b#`. Wpisz `/next`, Enter. Kursor stoi na słowie `next` w drugim argumencie.
-4. Wpisz `ciw`, potem literę `i`, Esc i `:w`. `:!!` powtarza poprzednią komendę powłoki. Jeśli ostatnio uruchamiałeś grę, ponownie wpisz pełne polecenie próbnika. Tym razem dostaniesz `0->4 1->5 2->6 3->7`. Ponownie uruchom grę, aby zobaczyć poprawioną kostkę podczas skoku.
-
-Tag `ep02-crossed-sides` pozwala zacząć od pomyłki. Po otwarciu mesh.hpp wpisz `:19` i Enter przed krokiem 3. Tag `ep02-wire` zawiera poprawkę. Polecenie `python3 replay edges` z katalogu zestawu porównuje trzy zapisane etapy.
-
-## E02 · skąd minus przy roll?
-
-W katalogu głównym klonu utwórz drugi katalog poleceniem `git clone -b ep02-euler . sign-edit`. W paczce offline użyj `git clone -b ep02-euler silnik-3d.bundle sign-edit`. Wykonaj `cd sign-edit` i `vim axes.cpp`.
-
-Wyszukaj `/roll.turn`. Oba wywołania przekazują 45°. Wpisz `:e attitude.hpp` i wyszukaj `/roll -=`. Kontroler odejmuje argument od roll. Zajrzyj do `:e ../steer.cpp` i znajdź `/pose.turn(`. Klawisz Z przekazuje −1° w każdym z 45 kroków. W ten sposób zwiększa roll o 45°. Wróć przez `:b axes.cpp`. Pod wierszem dwóch wywołań otwórz nowy wiersz klawiszem `o` i wpisz:
-
-    std::printf("roll = %g deg\n", roll.roll / radians(1));
-
-Naciśnij Esc i zapisz `:w`. Wykonaj `:!c++ -std=c++17 axes.cpp -o axes && ./axes 90`. W oddzielnym przebiegu próbnika roll wynosi −45°, a największa odległość między końcami odpowiadających osi wynosi 0,000. Wróć przez Enter, usuń dodany wydruk przez `u`, zapisz przez `:w`. Zmień ostatni argument polecenia z 90 na 60 i powtórz pomiar. Odstęp wyniesie 0,383.
-
-## E02 · czy inna oś cofnie obrót?
-
-W terminalu, obok `replay`, uruchom `python3 steer ep02-euler`. Biały pierścień zaznacza start żółtego narożnika 6. Naciśnij Y, poczekaj na koniec obrotu, a potem naciśnij Z. Y dodaje 45° yaw, Z dodaje 45° roll. Przy pochyleniu 90° narożnik wraca do pierścienia. Zamknij próbnik klawiszem Esc, uruchom `python3 steer ep02` i powtórz te same ruchy. Tym razem narożnik mija start. Zerem przywrócisz pozycję początkową. Pośredni etap z filmu, który składa kwaterniony z trzech kątów, możesz sprawdzić przez `python3 steer ep02-quat-euler`. Także tutaj po Z szóstka wraca do pierścienia.
-
-Do tej próby wystarczą Git, Python 3 i kompilator C++17. Aby poeksperymentować ze źródłem w świeżym katalogu zestawu, wykonaj:
-
-    git clone -b ep02-quat-euler silnik-3d.bundle ref
-    cd ref
-    vim attitude.hpp
-
-W pełnym klonie z GitHuba zacznij w katalogu, w którym leżą skrypty `steer` i `replay`, i użyj `git clone -b ep02-quat-euler . ref` w pierwszym wierszu. Jeśli masz już katalog `ref` utworzony z pliku bundle obok tych skryptów, przejdź w nim do etapu poleceniem `git -C ref switch --detach ep02-quat-euler` z katalogu paczki, po czym wykonaj dwa pozostałe wiersze. W pliku zmień `else roll -= angle;` na `else roll += angle;`, zapisz przez `:w` i uruchom `:!python3 ../steer . --trace`. Po Z największy odstęp narożników od startu wynosi teraz 2,000000. Po cofnięciu zmiany przez `u` i zapisie powtórz próbę.
-
-Program kompiluje nagłówek `attitude.hpp` z wybranego etapu. W Vimie otwartym w klonie `ref` obok skryptu z paczki wpisz `:!python3 ../steer .`, aby sprawdzić swój zapisany plik. Okno korzysta z Tkinter i Pillow 10.1 lub nowszej. Możesz wykonać to samo ćwiczenie liczbowo bez obu bibliotek przez `python3 steer ep02-euler --trace` i `python3 steer ep02 --trace`. Ostatnie wiersze podają największą odległość narożnika od jego własnej pozycji startowej. Wyniki po Z wynoszą 0,000000 i 1,780891.
-
-## E02 · Pełny obrót
-
-Polecenie `python3 replay turns` kompiluje pięć wersji mesh.hpp i mierzy pozycję narożnika 6 względem środka kostki przy skali 200. Porównaj pierwsze trzy pomiary. Wpisanie 360 bezpośrednio do aboutY przesuwa róg; po zamianie 360 stopni na radiany róg wraca na miejsce. Dwie ostatnie próby obracają kostkę o +45° wokół Y i −45° wokół Z.
-
-Po rozpakowaniu ZIP-a zacznij w katalogu z tym plikiem README:
-
-    git clone silnik-3d.bundle ref
-    git -C ref worktree add --detach ../turn ep02-turn-360
-    vim turn/mesh.hpp
-    python3 replay turns --source turn
-
-W klonie Git zacznij na gałęzi main:
-
-    git worktree add --detach ../turn ep02-turn-360
-    vim ../turn/mesh.hpp
-    python3 replay turns --source ../turn
-
-W Vimie zamień `aboutY(p,360)` na `aboutY(p,radians(360))`, zapisz i wyjdź przez `:wq`. Narożnik powinien wrócić z (−18, 101) do (276, 210).
-
-## E00 · Co zapisuje Vim, a co uruchamia powłoka
-
-Na macOS lub Linuksie do próby z początku filmu wystarczą Vim i kompilator C++. Zacznij w pustym katalogu.
-
-    mkdir -p work/engine
-    cd work/engine
-    vim main.cpp
-
-Wpisz `int main() {}` i zapisz przez `:w`. Wykonaj `:!c++ main.cpp -o hello`, wróć do edytora klawiszem Enter, a potem uruchom `:!./hello; echo $?`. Zobaczysz jedynie kod wyjścia 0. Dopisz `#include <cstdio>` nad main i `std::puts("engine online");` w jego ciele, po czym zapisz plik. Ponownie uruchom hello. Stary program wciąż nic nie wypisuje. Polecenie `:!ls -1t main.cpp hello` pokaże nowszy main.cpp na górze. Powtórz kompilację, a potem uruchomienie. Tym razem zobaczysz „engine online” i zero.
-
-## E00 · Co właściwie zbudował Ninja?
-
-Kontynuuj w swoim nowym katalogu `work/engine`, w którym `main.cpp` wypisuje „engine online”. Do tego kroku potrzebujesz też CMake 3.20 lub nowszego oraz programu Ninja w PATH. W Vimie otwórz `:e CMakeLists.txt`, wpisz poniższe trzy wiersze i zapisz przez `:w`.
-
-    cmake_minimum_required(VERSION 3.20)
-    project(Engine LANGUAGES C CXX)
-    set(CMAKE_CXX_STANDARD 17)
-
-Uruchom `:!cmake -S . -B build -G Ninja`, naciśnij Enter, aby wrócić do Vima, i spróbuj `:!cmake --build build && ./build/engine`. CMake wygenerował reguły w `build/build.ninja`. Ninja zgłasza `no work to do`, a powłoka nie znajduje pliku `build/engine`.
-
-Wróć klawiszem Enter. W trybie normalnym naciśnij `G`, następnie `o` i dopisz `add_executable(engine main.cpp)`. Naciśnij Esc, zapisz przez `:w` i wykonaj `:!!`. To samo polecenie przebuduje projekt i uruchomi program. Tym razem po kompilacji i linkowaniu pojawi się „engine online”.
-
-## E00 · Od pierwszego include do uruchomienia GLAD
-
-Przed ćwiczeniem sprawdź w terminalu `cmake --version` i `ninja --version`. Oba narzędzia muszą być w PATH także w Vimie. Jeśli są w jednym katalogu bin, dodaj go przez `export PATH="/ścieżka/do/bin:$PATH"`. Próba GLFW wymaga sesji graficznej.
-
-W filmie oba opisy bibliotek trafiają do projektu jednym zaznaczeniem sześciu wierszy. Możesz zacząć dokładnie przed naprawą drugiego błędu. Z katalogu rozpakowanej paczki wykonaj `git clone -b ep00-unlinked-glfw silnik-3d.bundle proba-glfw`. Z klonu Git użyj `git clone -b ep00-unlinked-glfw . proba-glfw`. Następnie:
-
-    cd proba-glfw
-    vim CMakeLists.txt
-
-W Vimie uruchom `:!cmake -S . -B build -G Ninja`. Naciśnij Enter i przetestuj `:!cmake --build build && ./build/engine`. Zobaczysz błąd dotyczący `GLFW/glfw3.h`, chociaż w projekcie jest już `add_subdirectory(vendor/glfw)`. Naciśnij Enter. Wyszukaj `/PRIVATE glad`, zatwierdź Enterem i klawiszem `w` przejdź na `glad`. Naciśnij `i`, wpisz `glfw ` ze spacją, naciśnij Esc i zapisz przez `:w`. Teraz `:!!` powtarza całe polecenie i program wypisuje `GLFW ready`. Różnicę widać też przez `git diff ep00-unlinked-glfw ep00-glfw-ready -- CMakeLists.txt`.
-
-Po ćwiczeniu zamknij Vima przez `:q` i wykonaj `cd ..` w terminalu. W głównym katalogu paczki lub klonu uruchom `python3 replay setup` w sesji graficznej. Pierwsze dwie kompilacje zatrzymują się na brakujących nagłówkach GLAD i GLFW. Trzecia uruchamia GLFW. Kolejne dwie tworzą okno 640 × 360 i odczytują wersję kontekstu, najpierw domyślną, potem po zażądaniu OpenGL 3.3 core. Na Macu użytym w filmie były to 2.1 i 4.1. Wynik na Twoim komputerze zależy od sterownika. Dwie ostatnie próby ładują funkcje OpenGL przed uaktywnieniem kontekstu i po nim. Tę jedną zmianę możesz porównać w klonie.
-
-    git diff ep00-loader-before ep00-loader-after -- main.cpp
-
-## E01 · dlaczego kwadrat stanął przy 240 FPS?
-
-Uruchom `python3 replay steps`. Próbnik kompiluje trzy wersje pętli w draw() i końcowy zegar, po czym liczy rzeczywiste wywołania Jumper.update w ukrytym oknie OpenGL. Po 0,667 s warunek na czas pojedynczej klatki daje 20 kroków przy 30 FPS i zero przy 240 FPS. Zbieranie czasu daje 20 i 33. Pętla rozliczająca każdy pełny krok daje 33 i 33, także po wydzieleniu clock.hpp.
-
-Przy 2,000000 s zapas zapisany w double jest odrobinę mniejszy od kroku 20 ms. Oba liczniki pokazują 99. Cztery ostatnie wiersze próby wypisują zapas z pełną dokładnością oraz kolejną klatkę: przy 30 FPS jest w niej już 101 kroków, przy 240 FPS jest 100.
-
-Aby zmienić warunek samodzielnie, z katalogu zawierającego ten plik wykonaj:
-
-    git worktree add --detach ../test-clock ep01-inline-bank
-
-W `../test-clock/main.cpp` zamień `if (lag >= 0.02)` na `while (lag >= 0.02)`, zapisz i uruchom:
-
-    python3 replay steps --source ../test-clock
-
-## E01 · lądowanie na podłodze
-
-Grawitacja i drugie odbicie. Uruchom `python3 replay landing`. W klatce 20 przy 30 FPS porównaj `ep01-fall`, `ep01-clamp` i `ep01-bounce`. Po samym ustawieniu wysokości na zero prędkość wynosi −263,3. Po przywróceniu +270 kwadrat w klatce 21 znów znajduje się nad podłogą. Każdy etap możesz też samodzielnie skompilować i otworzyć jego okno.
-
-Do tej próby liczbowej wystarczą Git, Python 3 i kompilator C++17. W katalogu zestawu utwórz kopię do edycji:
-
-    git worktree add --detach ../skok ep01-clamp
-
-W `../skok/frame.hpp` dopisz `speed = 120;` pod wciętym `height = 0;` w warunku kontaktu. Zapisz plik. Z tego samego katalogu wywołaj:
-
-    python3 replay landing --source ../skok
-
-W klatce 20 otrzymasz prędkość +120,0. Klatkę później wysokość wynosi już 3,1.
-
-## E02 · punkty / corner experiment
-
-Na gałęzi main uruchom `python3 replay corners`. The command traces six builds from one old square through eight projected corners. To change the second corner yourself, make a clean worktree:
-
-    git worktree add --detach ../e02-points ep02-stacked-corners
-    c++ -std=c++17 -I../e02-points corner-trace.cpp -o ../e02-points/points
-    ../e02-points/points
-
-Zmień corners[2] na corners[3] w pliku ../e02-points/mesh.hpp i powtórz obie ostatnie komendy.
-
-## E02 · test przy 89° / the 89° test
-
-Na gałęzi main uruchom `python3 replay 02`. From main this repeats the 60°, 89° and 90° Euler test and compares all three controllers at 90°. Requires Git, Python 3 and a C++17 compiler. Własny kąt sprawdzisz w osobnym katalogu roboczym:
-
-    git worktree add --detach ../e02-angles ep02-euler
-    cd ../e02-angles
-    c++ -std=c++17 axes.cpp -o axes
-    ./axes 89
-    ./axes 90
-
-## Short E01 · skok przy 15 FPS
-
-W katalogu zestawu uruchom `python3 replay race`. Pięć prób porównuje czas pierwszego kontaktu z ziemią przy wybranej liczbie klatek i przy 240 FPS. Próbnik zatrzymuje skok po pierwszym kontakcie wewnątrz kroku fizyki. Dzięki temu wykrywa też lądowanie, po którym postać odbiłaby się przed kolejną klatką. Podany czas oznacza chwilę klatki zawierającej kontakt. Dokładność ogranicza czas jednej klatki.
-
-Polecenie `python3 replay frame` porównuje jedną klatkę z filmu przed poprawką i po niej. Wystarczą Git, Python 3 i kompilator C++17. Możesz też własnoręcznie zmienić warunek.
-
-Na gałęzi main otwórz etap z nieudanym testem w osobnym katalogu.
-
-    git worktree add --detach ref ep01-matched-tick
-    cd ref
-    vim clock.hpp
-
-W Vimie wpisz `:!python3 ../frame 15` i naciśnij Enter. Próbnik C++ korzysta z clock.hpp z bieżącego katalogu. Po pierwszym przebiegu zostaje 33,333 ms. Naciśnij Enter, by wrócić do edytora. W clock.hpp zmień `if (lag >= tick)` na `while (lag >= tick)`, zapisz przez `:w` i ponów tę samą komendę. W tej samej klatce 66,667 ms zmieszczą się dwa kroki, a reszta wyniesie zero. Wywołanie clock.advance znajdziesz przez `:e ../clock-trace.cpp` i `13G`. Aby porównać również lądowania, wpisz `:!python3 ../race 15`.
-
-From the ref directory, open clock.hpp in Vim and run `:!python3 ../frame 15`. Replace if with while, save with `:w`, and repeat the same command. The remaining time drops from 33.333 ms to zero.
-
-Kod z sesji Gamedev.pl. Każdy odcinek rozwija jeden projekt.
-
-## Powtórz próbę z filmu
-
-Otwórz terminal w sklonowanym repozytorium na gałęzi `main`. Potrzebujesz Git, Pythona 3 i kompilatora C++17. E00 i E01 wymagają też CMake, Ninja i sesji graficznej z OpenGL. Wybierz swój odcinek.
-
-| Odcinek | Polecenie | Co obserwować |
-|---|---|---|
-| E00 | `python3 replay clock` | Argument cosinusa i kolor jednego piksela w dwóch chwilach |
-| E01 | `python3 replay 01` | Wysokość skoku i czas lądowania przy 30 i 240 FPS |
-| E02 | `python3 replay 02` | Odległość osi po dwóch obrotach kostki przy nachyleniu 90° |
-
-Skrypt pobiera etapy z lokalnej historii Git i buduje je w tymczasowym katalogu. Twój kod zostaje na bieżącej gałęzi. Zmianę warunku zegara możesz prześledzić poleceniem `git diff ep01-single-step ep01 -- clock.hpp`.
-
-For the E01 Short, run `python3 replay race`. It measures the first rendered frame containing a landing at 15 or 30 FPS and at 240 FPS.
-
-### Reproduce the experiment
-
-From a clone on `main`, run one command from the table above. E00 measures the colour of a pixel over one second. E01 compares jumps at two frame rates. E02 compares yaw and roll after pitching the cube. You need Git, Python 3 and a C++17 compiler. The first two episodes also need CMake 3.20+, Ninja and a graphical OpenGL session. The tests build the tagged sources in temporary directories. Use a Git clone with its tags for these commands.
-
-## Budowanie
-
-Potrzebujesz kompilatora C++17, CMake 3.20+ i Ninja. GLFW i GLAD znajdują się w katalogu `vendor/` wraz z licencjami. Na macOS potrzebne są Command Line Tools, a na Linuksie także pakiety deweloperskie systemu okienkowego obsługiwanego przez GLFW.
+*W paczce offline zastąp adres HTTPS ścieżką `silnik-3d.bundle silnik3d-od-zera`. E00–E02 wymagają Git, Pythona 3 i kompilatora C++17; od E03 potrzebne są też CMake 3.20+, Ninja i OpenGL 3.3 (na Debianie/Ubuntu: `sudo apt install pkg-config xorg-dev libwayland-dev libxkbcommon-dev`).*
+
+### Sezon 1 — Od pustego katalogu do sceny 3D (`E00`–`E08`)
+
+| Odcinek | Zadanie | Start | Rozwiązanie | Tag | Przeglądarka |
+| --- | --- | --- | --- | --- | --- |
+| **E00** · Pierwsze okno | Przywróć puls tła w `frame.hpp` | [`e00-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-start) | [`e00-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e00-solution) | [`ep00`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep00) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep00&lang=pl) |
+| **E01** · Pętla gry i stały krok | Ogranicz nadrabianie po długiej klatce w `clock.hpp` | [`e01-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-start) | [`e01-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e01-solution) | [`ep01`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep01) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep01&lang=pl) |
+| **E02** · Kostka i gimbal lock | Wyprostuj boczne krawędzie kostki w `mesh.hpp` | [`e02-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-start) | [`e02-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e02-solution) | [`ep02`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep02) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep02&lang=pl) |
+| **E03** · Pierwsza pełna ściana | Pobierz trzeci wierzchołek trójkąta w `face.hpp` | [`e03-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e03-start) | [`e03-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e03-solution) | [`ep03`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep03) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep03&lang=pl) |
+| **E04** · Kamera i głębia | Włącz test głębi w `depth.hpp` | [`e04-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e04-start) | [`e04-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e04-solution) | [`ep04`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep04) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep04&lang=pl) |
+| **E05** · Tekstura w ruchu | Dobierz filtr dla mipmap w `texture.hpp` | [`e05-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e05-start) | [`e05-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e05-solution) | [`ep05`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep05) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep05&lang=pl) |
+| **E06** · Światło i materiał | Przekaż właściwą chropowatość w `lighting.hpp` | [`e06-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e06-start) | [`e06-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e06-solution) | [`ep06`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep06) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep06&lang=pl) |
+| **E07** · Siatka jako zasób | Jeden odczyt dla dwóch ścieżek w `asset_cache.hpp` | [`e07-path-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e07-path-start) | [`e07-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e07-solution) | [`ep07`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep07) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep07&lang=pl) |
+| **E08** · Scena i uchwyty | Odrzuć uchwyt starej generacji w `scene.hpp` | [`e08-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e08-start) | [`e08-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e08-solution) | [`ep08`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep08) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep08&lang=pl) |
+
+### Sezon 2 · Nocna zmiana — pierwsza gra na własnym silniku (`E09`–`E14`)
+
+| Odcinek | Zadanie | Start | Rozwiązanie | Tag | Przeglądarka |
+| --- | --- | --- | --- | --- | --- |
+| **E09** · Pierwsza jazda robota | Wyrównaj prędkość po skosie w `drive.hpp` | [`e09-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-start) | [`e09-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e09-solution) | [`ep09`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep09) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep09&lang=pl) |
+| **E10** · Ściana | Poprowadź robota wzdłuż regału w `collision.hpp` | [`e10-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-start) | [`e10-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e10-solution) | [`ep10`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep10) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep10&lang=pl) |
+| **E11** · Podnieś ogniwo | Rozpoznaj pojedyncze naciśnięcie `E` w `cell.hpp` | [`e11-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-start) | [`e11-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e11-solution) | [`ep11`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep11) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep11&lang=pl) |
+| **E12** · Gniazdo zasila warsztat | Sprawdź całą podstawę ogniwa w `socket.hpp` | [`e12-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-start) | [`e12-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e12-solution) | [`ep12`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep12) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep12&lang=pl) |
+| **E13** · Słychać, że działa | Odtwórz kliknięcie zatrzasku raz w `sound.hpp` | [`e13-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-start) | [`e13-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e13-solution) | [`ep13`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep13) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep13&lang=pl) |
+| **E14** · Jeszcze jedna próba | Wyzeruj stan windy po `R` w `shift.hpp` | [`e14-start`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-start) | [`e14-solution`](https://github.com/gamedevpl/silnik3d-od-zera/tree/e14-solution) | [`ep14`](https://github.com/gamedevpl/silnik3d-od-zera/tree/ep14) | [Uruchom ↗](https://gamedevpl.github.io/silnik3d-od-zera/play/?ep=ep14&lang=pl) |
+
+---
+
+## Budowanie natywne (C++17 · CMake · Ninja)
+
+GLFW i GLAD leżą w katalogu `vendor/` wraz z licencjami. Z głównego katalogu repozytorium:
 
 ```sh
 cmake -S . -B build -G Ninja
@@ -256,67 +122,181 @@ cmake --build build
 ./build/engine
 ```
 
-Zamknij okno, aby zakończyć program. Nagrania powstały z kompilacji natywnej na macOS.
+---
 
-## Etapy serii
+## Powtórz eksperymenty z filmów (E00–E02)
 
-- `start` – pusty katalog.
-- `ep00-hello` – skompiluj przez `c++ main.cpp -o hello` i uruchom `./hello`.
-- `ep00-window` – pierwsze pomarańczowe okno.
-- `ep00-frozen` – kolor utknął. Stąd startuje Short E00.
-- `ep00` – pulsujące tło; dokładnie ten projekt otwiera long E01.
-- `ep01-variable` – kwadrat skacze, wysokość zależy od czasu klatki.
-- `ep01-clock` – zegar jest napisany, ale jeszcze niepodłączony.
-- `ep01-single-step` – przy 30 FPS zegar wykonuje tylko jeden zaległy krok. Stąd startuje próba z Shorta E01.
-- `ep01` – kwadrat jest aktualizowany w krokach 20 ms.
+Na gałęzi `main` leżą próbniki (`replay`, `steer`, `frame`, `probe`), które odtwarzają dokładnie pomiary pokazane w pierwszych trzech odcinkach bez psucia Twojej gałęzi:
 
-Na przykład `git diff ep00-frozen ep00 -- frame.hpp` pokazuje poprawkę zatrzymanej animacji. Polecenia `:Run`, `:TryBuild` i `:Rates` z filmu należą do narzędzi nagraniowych Vima. W powyższym przepisie można uruchomić samodzielnie każdy etap od `ep00-window`.
+| Odcinek | Long | Short |
+| --- | --- | --- |
+| **E00** | `python3 replay setup` · `python3 probe-swaps` · `python3 replay clock` | `python3 replay pulse` |
+| **E01** | `python3 replay 01` · `python3 replay landing` · `python3 replay steps` | `python3 replay race` |
+| **E02** | `python3 replay 02` · `python3 replay corners` · `python3 replay turns` · `python3 steer ep02` | `python3 replay edges` |
 
-## E02 — od kwadratu do kostki
+<details>
+<summary><b>E00 · Krok po kroku w Vimie (pierwszy plik, Ninja, GLAD/GLFW, zegar)</b></summary>
 
-Na ep02-flat osiem wierzchołków daje cztery pozycje na ekranie. ep02-wire łączy osiem rzutowanych narożników. Żółty punkt pozwala śledzić orientację podczas skoku.
+### Jak zacząć od E00
 
-W ep02-euler kolejność obrotów to Y(yaw) · X(pitch) · Z(roll). ep02-quat-euler składa trzy kwaterniony z tych samych kątów. W ep02 kontroler przechowuje jedną orientację i mnoży ją z prawej strony przez przyrost wokół lokalnej osi.
+W klonie zacznij od `git clone https://github.com/gamedevpl/silnik3d-od-zera.git` i `cd silnik3d-od-zera`. Jeśli korzystasz z paczki, rozpakuj `silnik-3d.zip` i otwórz terminal w katalogu z plikiem `replay`.
 
-    c++ -std=c++17 axes.cpp -o axes
-    ./axes 60
-    ./axes 90
+Aby dokładnie powtórzyć ruchy w Vimie, zacznij w tym samym katalogu. Paczka zawiera już plik `silnik-3d.bundle`. W klonie utwórz go poleceniem `git bundle create silnik-3d.bundle HEAD main --tags`. Następnie utwórz `work/engine` i przejdź do niego. W tym miejscu `git clone -q ../../silnik-3d.bundle ../../ref` tworzy kopię do podglądu, a `cp -R ../../ref/vendor .` umieszcza biblioteki w budowanym projekcie.
 
-Test porównuje obrócone osie bazowe po yaw +45° i roll −45°. Wypisuje największą odległość końców odpowiadających sobie wektorów jednostkowych. Do prób z filmu ustaw TURN=yaw lub TURN=roll i PITCH=60 lub PITCH=90 przy uruchamianiu engine. Bez tych zmiennych kostka skacze i obraca się wokół dwóch osi. Render jest ortograficzny, krawędzie rysuje test nożycowy OpenGL z E01.
+### Co zapisuje Vim, a co uruchamia powłoka
 
-Przy końcu `python3 replay 01` pojawiają się dwie klatki przy 30 FPS. W drugiej przed wywołaniem kroku jest 46,667 ms. Pojedynczy warunek zostawia 26,667 ms, pętla 6,667 ms. Pomiar kompiluje rzeczywisty clock.hpp z obu etapów.
+```sh
+mkdir -p work/engine && cd work/engine && vim main.cpp
+```
 
-At the end of `python3 replay 01`, compare two frames at 30 FPS. On frame two the clock has 46.667 ms before the first step. The single check leaves 26.667 ms, the loop leaves 6.667 ms. The test compiles each checkpoint’s clock.hpp.
+Wpisz `int main() {}` i zapisz `:w`. Wykonaj `:!c++ main.cpp -o hello`, potem `:!./hello; echo $?` (kod wyjścia `0`). Dopisz `#include <cstdio>` i `std::puts("engine online");`, zapisz plik i uruchom `./hello` — stary plik binarny nic nie wypisuje (`:!ls -1t main.cpp hello`). Przekompiluj i uruchom ponownie, żeby zobaczyć `engine online`.
 
-W E00 polecenie `python3 replay 00` najpierw liczy prezentacje bufora. Próbnik prosi okno o zamknięcie przy ósmej prezentacji. W ep00-one-frame program sam kończy się po jednej, w ep00-draw-loop dochodzi do ośmiu. Po przeniesieniu rysowania do frame.hpp (ep00-window) ponownie otrzymujemy osiem. Każdy wiersz RGB pochodzi z odczytu piksela przed zamianą buforów.
-From work/engine, run `python3 ../../probe-swaps .` to measure the source you just saved. In stock Vim type `:!python3 ../../probe-swaps .`. This is the terminal equivalent of the filmed :Swaps shortcut.
+### Co właściwie zbudował Ninja?
 
-Na początku `python3 replay 01` odtwarza cztery wersje rysowania kwadratu. W kolumnach bg_test i box_test jest faktyczny wynik glIsEnabled(GL_SCISSOR_TEST) przy czyszczeniu tła i kwadratu. Po 30 klatkach porównaj kolory środka i rogu. Próbnik czyta ten sam tylny bufor przed prezentacją, ze stałym zegarem 30 Hz. W katalogu work/engine polecenie `python3 ../../probe-scissor .` mierzy zapisany kod.
+W Vimie otwórz `:e CMakeLists.txt`, wpisz:
 
-The first part of `python3 replay 01` runs four versions of the square. bg_test and box_test report glIsEnabled(GL_SCISSOR_TEST) at the background and box clears. Compare the centre and corner colours 30 frames apart. The diagnostic samples the same back buffer before presentation using a fixed 30 Hz clock. From work/engine run `python3 ../../probe-scissor .` to measure your own saved code.
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(Engine LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+```
 
-W pionowym E02 uruchom `python3 replay edges`. Program kompiluje mesh.hpp z trzech etapów i zapisuje końce odcinków przekazanych do paper.line. Dwie ramki mają osiem odcinków. W obu kolejnych wersjach jest dwanaście. W ep02-crossed-sides wśród par jest 1→6, w ep02-wire jest 2→6. Wymagane Git, Python 3 i kompilator C++17.
+Uruchom `:!cmake -S . -B build -G Ninja` oraz `:!cmake --build build && ./build/engine` — Ninja zgłosi `no work to do`. Dopisz `add_executable(engine main.cpp)`, zapisz `:w` i powtórz `:!!`.
 
-For the vertical E02 experiment run `python3 replay edges`. This compiles mesh.hpp at three checkpoints and records the endpoints sent to paper.line. The two loops contain eight edges. Both later versions contain twelve. The crossed build includes 1→6, the repaired build includes 2→6. Requires Git, Python 3 and a C++17 compiler.
+### Od pierwszego include do uruchomienia GLAD
 
-### Short E00
+```sh
+git clone -b ep00-unlinked-glfw . proba-glfw && cd proba-glfw && vim CMakeLists.txt
+```
 
-W katalogu po rozpakowaniu paczki lub na gałęzi main uruchom `python3 replay pulse`. Python buduje i uruchamia rzeczywisty projekt C++. Wszystkie cztery próby zaczynają się w 0,20 s. W trzeciej elapsed zmienia się z 0,000 na 1,000, ale argument cosinusa pozostaje równy 0,360. W czwartej argument zmienia się z 0,000 na 1,800 i piksel zmienia kolor.
+(W paczce offline użyj `silnik-3d.bundle` zamiast `.`). Po `:!cmake -S . -B build -G Ninja` i `:!cmake --build build && ./build/engine` brakuje `glfw` przy `PRIVATE glad`. Dopisz `glfw ` przed `glad`, zapisz `:w` i powtórz `:!!` — program wypisze `GLFW ready`. Różnicę pokaże `git diff ep00-unlinked-glfw ep00-glfw-ready -- CMakeLists.txt`.
 
-    git worktree add --detach ../pulse-edit ep00-unused-elapsed
+Z katalogu głównego uruchom `python3 replay setup` (porównanie 7 etapów budowania i wersji kontekstu OpenGL) oraz `git diff ep00-loader-before ep00-loader-after -- main.cpp`.
 
-W `../pulse-edit/frame.hpp` zmień tylko `cos(start * 1.8)` na `cos(elapsed * 1.8)`. Po zapisie uruchom w dotychczasowym katalogu:
+### Short E00 · zegar i zatrzymany puls
 
-    python3 replay pulse --source ../pulse-edit
+```sh
+python3 replay pulse
+git worktree add --detach ../pulse-edit ep00-unused-elapsed
+```
 
-### E00 · zegar i pomarańczowy piksel
+W `../pulse-edit/frame.hpp` zmień `cos(start * 1.8)` na `cos(elapsed * 1.8)` i uruchom `python3 replay pulse --source ../pulse-edit`.
 
-W 4:04 zobaczysz pomiar liczby klatek. Po rozpakowaniu paczki użyj `python3 probe-swaps` w jej głównym katalogu. W 5:11 zaczynają się cztery próby z zegarem. Powtórz je z tego samego katalogu poleceniem `python3 replay clock`. Próbnik ustawia pierwszą klatkę na 0,2 s, potem porównuje argument cosinusa i piksel z odczytem przy 1,2 s.
+Dla pomiaru `static` z 5:11:
 
-W katalogu głównym klonu dodaj osobny katalog na ćwiczenie:
+```sh
+git worktree add --detach ref ep00-static-elapsed
+cd ref && python3 ../probe . arg --start-time 0.2
+```
 
-    git worktree add --detach ref ep00-static-elapsed
-    cd ref
-    python3 ../probe . arg --start-time 0.2
+Usuń `static` w `ref/frame.hpp` i powtórz polecenie (drugi argument wzrośnie z `0` do `1,800`). Z `work/engine` możesz też mierzyć liczbę zamian buforów przez `python3 ../../probe-swaps .`.
 
-Przed edycją oba argumenty wynoszą zero. W ref/frame.hpp usuń tylko static z deklaracji elapsed. Powtórz ostatnie polecenie. Drugi argument wzrośnie do 1,800. Obie zapisane wersje porównasz przez git diff ep00-static-elapsed ep00 -- frame.hpp w ref.
+</details>
+
+<details>
+<summary><b>E01 · Krok po kroku (stały krok 20 ms, lądowanie, skok przy 15 i 240 FPS)</b></summary>
+
+### Jedna długa klatka bez OpenGL
+
+```sh
+git clone -b ep01-clock-coupled . clock-edit && cd clock-edit && vim clock.hpp
+```
+
+Uruchom `:!python3 ../frame 3` — kompilator zatrzyma się na `player.update(tick)`. Zmień `tick` na `step` i powtórz `:!!` (16 kroków po 20 ms, 13,333 ms reszty). Dodaj `#include <algorithm>` i zmień `lag += elapsed;` na `lag += std::min(elapsed, 0.25);` — zegar przyjmie 250 ms, zrobi 12 kroków i zostawi 10 ms.
+
+### Dlaczego kwadrat stanął przy 240 FPS?
+
+`python3 replay steps` porównuje 30 i 240 FPS (warunek `if` vs pętla `while`). Własna próba:
+
+```sh
+git worktree add --detach ../test-clock ep01-inline-bank
+# zamień if (lag >= 0.02) na while (lag >= 0.02) w ../test-clock/main.cpp
+python3 replay steps --source ../test-clock
+```
+
+### Lądowanie na podłodze i test nożycowy
+
+`python3 replay landing` porównuje `ep01-fall`, `ep01-clamp` i `ep01-bounce`. Własna zmiana:
+
+```sh
+git worktree add --detach ../skok ep01-clamp
+# dopisz speed = 120; pod height = 0; w ../skok/frame.hpp
+python3 replay landing --source ../skok
+```
+
+`python3 replay 01` oraz `python3 ../../probe-scissor .` badają `GL_SCISSOR_TEST` i różnicę kroków przy 30 vs 240 FPS.
+
+### Short E01 · skok przy 15 FPS
+
+```sh
+python3 replay race
+git worktree add --detach ref ep01-matched-tick && cd ref && vim clock.hpp
+```
+
+W Vimie uruchom `:!python3 ../frame 15` (zostaje 33,333 ms). Zmień `if (lag >= tick)` na `while (lag >= tick)`, zapisz `:w` i ponów `:!!` (reszta spada do 0; `:!python3 ../race 15` porównuje lądowania).
+
+</details>
+
+<details>
+<summary><b>E02 · Krok po kroku (krawędzie kostki, stopnie/radiany, minus przy roll, gimbal lock)</b></summary>
+
+### Short E02 · skąd się wzięła przekątna
+
+```sh
+git clone -b ep02-marked-rings . ref && cd ref && vim mesh.hpp
+```
+
+(W paczce offline użyj `silnik-3d.bundle` zamiast `.`). W Vimie `:!python3 ../replay edges --source .` sprawdza krawędzie bez grafiki (`ep02-crossed-sides` daje `1->6`, naprawiony `ep02-wire` daje `0->4 1->5 2->6 3->7`). `python3 replay edges` porównuje trzy etapy naraz.
+
+### Punkty i pełny obrót (stopnie vs radiany)
+
+```sh
+python3 replay corners
+python3 replay turns
+git worktree add --detach ../turn ep02-turn-360
+# zamień aboutY(p,360) na aboutY(p,radians(360)) w ../turn/mesh.hpp
+python3 replay turns --source ../turn
+```
+
+### Test przy 89° i 90°, minus przy roll i sterowanie kostką
+
+```sh
+python3 replay 02
+python3 steer ep02-euler        # Y potem Z przy pochyleniu 90° wraca do pierścienia
+python3 steer ep02-quat-euler   # kwaterniony z 3 kątów nadal wracają
+python3 steer ep02              # jedna orientacja, lokalne osie — omija start
+```
+
+Bez Tkinter/Pillow uruchom `python3 steer ep02-euler --trace` (`0,000000`) i `python3 steer ep02 --trace` (`1,780891`).
+Test osi w C++: `c++ -std=c++17 axes.cpp -o axes && ./axes 60 && ./axes 90`.
+W silniku natywnym ustaw `TURN=yaw` lub `TURN=roll` i `PITCH=60` lub `PITCH=90`.
+
+</details>
+
+<details>
+<summary><b>Lista tagów pośrednich (E00–E02)</b></summary>
+
+- `start` – pusty katalog
+- `ep00-hello` – `c++ main.cpp -o hello && ./hello`
+- `ep00-window` – pierwsze pomarańczowe okno
+- `ep00-frozen` – kolor utknął (start Shorta E00)
+- `ep00` – pulsujące tło (start longa E01)
+- `ep01-variable` – skok zależny od FPS
+- `ep01-clock` – zegar jeszcze niepodłączony
+- `ep01-single-step` – 1 zaległy krok przy 30 FPS (start Shorta E01)
+- `ep01` – stały krok 20 ms
+- `ep02-flat` / `ep02-wire` / `ep02-euler` / `ep02-quat-euler` / `ep02` – etapy kostki i obrotów
+
+</details>
+
+---
+
+## Więcej projektów od [gamedev.pl](https://www.gamedev.pl)
+
+- **[FX Lab](https://github.com/gamedevpl/fx-lab)** — 32 interaktywne efekty graficzne WebGL2 & WebGPU
+- **[Game Design Codex (GDC)](https://github.com/gamedevpl/gdc)** — 22 grywalne mechaniki gier 3D
+- **[www.gamedev.pl](https://github.com/gamedevpl/www.gamedev.pl)** — otwarty kod platformy gamedev.pl
+
+## Licencja
+
+Kod serii udostępniony na licencji MIT (biblioteki GLFW i GLAD w [`vendor/`](./vendor/) zawierają własne pliki licencji).
